@@ -1,0 +1,90 @@
+.sidebarContainer {
+    width: 300px;
+    background-color: #0d0030;
+    padding: 20px;
+    height: 100vh;
+    transform: translateX(0); /* Ensure it's visible on larger screens */
+    transition: transform 0.3s ease;
+  }
+  
+  .burgerIcon {
+    display: none;
+    cursor: pointer;
+  }
+  
+  /* Mobile Styles */
+  @media (max-width: 768px) {
+    .sidebarContainer {
+      width: 100%;
+      transform: translateX(-100%); /* Hide the sidebar initially on mobile */
+      display: block;
+    }
+  
+    .sidebarContainer.open {
+      transform: translateX(0); /* Show the sidebar when open on mobile */
+    }
+  
+    .burgerIcon {
+      display: block; /* Display the burger icon on mobile */
+      padding: 10px;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1000; /* Ensure the burger icon is on top */
+    }
+  }
+  
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  li {
+    padding: 10px 0;
+  }
+  
+  .listItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.3s ease;
+  }
+  
+  .listItem:hover {
+    background-color: #35345e;
+  }
+  
+  .listItem.active {
+    background-color: #190353;
+  }
+  
+  .icon {
+    margin-right: 10px;
+  }
+  
+  .dropdownIcon {
+    margin-left: auto;
+  }
+  
+  ul > li > ul {
+    padding-left: 20px;
+    background-color: #30305cb6;
+  }
+  
+  ul > li > ul > li {
+    padding: 10px 20px;
+  }
+  
+  ul > li > ul > li:hover {
+    background-color: #30305cb6;
+    cursor: pointer;
+  }
+  .sidebarTitle {
+    font-size: 1.5rem; /* Adjust size as needed */
+    margin: 16px 0; /* Spacing around the title */
+    text-align: center; /* Center the title */
+  }
+  
