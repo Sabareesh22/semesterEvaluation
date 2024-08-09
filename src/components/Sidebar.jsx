@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './Sidebar.css';
 import { ExpandMore, ExpandLess, Menu } from '@mui/icons-material';
 import { School, Assignment, SwapHoriz, People, Book } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
 
 const Sidebar = () => {
   const [open, setOpen] = useState({ COE: false, HOD: false, Faculty: false });
@@ -15,13 +16,17 @@ const Sidebar = () => {
     setIsMobileOpen(prevState => !prevState);
   };
 
+  const closeMobileMenu = () => {
+    if (isMobileOpen) setIsMobileOpen(false);
+  };
+
   return (
     <>
-      <div className="burgerIcon" onClick={toggleMobileMenu}>
-        <Menu />
+      <div className={`burgerIcon ${isMobileOpen ? 'open' : ''}`} onClick={toggleMobileMenu}>
+        <Menu className={isMobileOpen ? 'whiteIcon' : ''} /> {/* Add whiteIcon class when open */}
       </div>
       <div className={`sidebarContainer ${isMobileOpen ? 'open' : ''}`}>
-        <h2 className="sidebarTitle">Semester Allocation</h2> {/* Add this line for the title */}
+        <h2 className="sidebarTitle">Semester Allocation</h2>
         <ul>
           <li>
             <div
@@ -34,9 +39,9 @@ const Sidebar = () => {
             </div>
             {open.COE && (
               <ul>
-                <li><Assignment className="icon" /> Create Semester Evaluation</li>
-                <li><People className="icon" /> Faculty Allocation Requests</li>
-                <li><SwapHoriz className="icon" /> Faculty Change Requests</li>
+                <li><Link to="/createSemesterEvaluation" onClick={closeMobileMenu}><Assignment className="icon" /> Create Semester Evaluation</Link></li>
+                <li><Link to="/facultyAllocationRequests" onClick={closeMobileMenu}><People className="icon" /> Faculty Allocation Requests</Link></li>
+                <li><Link to="/facultyChangeRequests" onClick={closeMobileMenu}><SwapHoriz className="icon" /> Faculty Change Requests</Link></li>
               </ul>
             )}
           </li>
@@ -51,7 +56,7 @@ const Sidebar = () => {
             </div>
             {open.HOD && (
               <ul>
-                <li><Assignment className="icon" /> Faculty Allocation</li>
+                <li><Link to="/facultyAllocation" onClick={closeMobileMenu}><Assignment className="icon" /> Faculty Allocation</Link></li>
               </ul>
             )}
           </li>
@@ -66,7 +71,7 @@ const Sidebar = () => {
             </div>
             {open.Faculty && (
               <ul>
-                <li><Assignment className="icon" /> Semester Paper Allocation</li>
+                <li><Link to="/facultyApproval" onClick={closeMobileMenu}><Assignment className="icon" /> Semester Paper Allocation</Link></li>
               </ul>
             )}
           </li>

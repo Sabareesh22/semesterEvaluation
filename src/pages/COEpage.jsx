@@ -76,49 +76,55 @@ const COEpage = () => {
                     </Button>
                 </label>
             </div>
+
             <div className='coeTableContainer'>
-            {data.length > 0 && (
-                <TableContainer component={Paper}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                {Object.keys(data[0]).map((key) => (
-                                    <TableCell key={key}>{key}</TableCell>
-                                ))}
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {data.map((row, index) => (
-                                <TableRow key={index}>
-                                    {Object.values(row).map((value, idx) => (
-                                        <TableCell key={idx}>{value}</TableCell>
+                {data.length > 0 ? (
+                    <TableContainer component={Paper}>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    {Object.keys(data[0]).map((key) => (
+                                        <TableCell key={key}>{key}</TableCell>
                                     ))}
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            )}
-           
+                            </TableHead>
+                            <TableBody>
+                                {data.map((row, index) => (
+                                    <TableRow key={index}>
+                                        {Object.values(row).map((value, idx) => (
+                                            <TableCell key={idx}>{value}</TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                ) : (
+                    <div className="uploadPrompt">
+                        <h3>...Upload your XLSX file of Semester Data...</h3>
+                    </div>
+                )}
             </div>
-            {data.length > 0 &&
-   <Button
-   variant="contained"
-   component="span"
-   sx={{
-       backgroundColor: "#0d0030",
-       color: "white",
-       '&:hover': {
-           backgroundColor: '#0f8000',
-           boxShadow: 'none',
-       },
-       height: '56px',
-   }}
->
-   Submit Semester Data
-</Button>
-            }
-         
+
+            <div className="submitButtonContainer">
+                {data.length > 0 && (
+                    <Button
+                        variant="contained"
+                        component="span"
+                        sx={{
+                            backgroundColor: "#0d0030",
+                            color: "white",
+                            '&:hover': {
+                                backgroundColor: '#0f8000',
+                                boxShadow: 'none',
+                            },
+                            height: '56px',
+                        }}
+                    >
+                        Submit Semester Data
+                    </Button>
+                )}
+            </div>
         </div>
     );
 }
