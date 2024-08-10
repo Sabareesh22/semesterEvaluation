@@ -3,12 +3,15 @@ import {
   Card,
   CardContent,
   Typography,
-  Button,
   Grid,
   Modal,
   Box,
   TextareaAutosize,
+  IconButton,
+  Button,
 } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 const FacultyChangeRequests = () => {
   const requests = [
@@ -74,12 +77,19 @@ const FacultyChangeRequests = () => {
             <Card style={{ width: '100%' }}>
               <CardContent style={{ padding: '16px', position: 'relative' }}>
                 <div style={{ position: 'absolute', top: 16, right: 16 }}>
-                  <Button variant="contained" color="success" onClick={() => handleApprove(request)} style={{ marginRight: '5px' }}>
-                    Approve
-                  </Button>
-                  <Button variant="contained" color="error" onClick={() => handleOpenModal(request)}>
-                    Reject
-                  </Button>
+                  <IconButton 
+                    color="success" 
+                    onClick={() => handleApprove(request)} 
+                    style={{ marginRight: '5px' }}
+                  >
+                    <CheckCircleIcon />
+                  </IconButton>
+                  <IconButton 
+                    color="error" 
+                    onClick={() => handleOpenModal(request)}
+                  >
+                    <CancelIcon />
+                  </IconButton>
                 </div>
                 <Typography variant="h6" style={{ fontSize: '1.1rem' }}>
                   Change Request: {request.oldFaculty} to {request.newFaculty}
@@ -127,7 +137,12 @@ const FacultyChangeRequests = () => {
             value={reason}
             onChange={(e) => setReason(e.target.value)}
           />
-          <Button variant="contained" color="error" onClick={handleReject}>
+          <Button 
+            variant="contained" 
+            color="error" 
+            onClick={handleReject}
+            style={{ marginTop: '10px' }}
+          >
             Submit
           </Button>
         </Box>

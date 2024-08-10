@@ -15,10 +15,7 @@ import {
   TextareaAutosize,
   Modal,
   Box,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl
+  Pagination,
 } from '@mui/material';
 
 const FacultyAllocationRequests = () => {
@@ -30,11 +27,11 @@ const FacultyAllocationRequests = () => {
     { hodName: 'Dr. Emily Davis', department: 'EEE' },
   ];
 
-
   const [selectedHOD, setSelectedHOD] = useState(null);
   const [reason, setReason] = useState('');
   const [openModal, setOpenModal] = useState(false);
-  const [selectedSemesterCode, setSelectedSemesterCode] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const coursesPerPage = 1; // Number of courses to display per page
 
   const dummyCourses = {
     CSE: [
@@ -42,7 +39,7 @@ const FacultyAllocationRequests = () => {
         courseName: 'Course 1',
         department: 'CSE',
         faculties: ['Faculty C1', 'Faculty C2', 'Faculty C3', 'Faculty C4', 'Faculty C5'],
-        allocations: [25, 50, 75, 100, 25]
+        allocations: [25, 50, 75, 100, 25],
       },
     ],
     ECE: [
@@ -50,7 +47,7 @@ const FacultyAllocationRequests = () => {
         courseName: 'Course 2',
         department: 'ECE',
         faculties: ['Faculty E1', 'Faculty E2', 'Faculty E3', 'Faculty E4', 'Faculty E5'],
-        allocations: [50, 75, 100, 125, 25]
+        allocations: [50, 75, 100, 125, 25],
       },
     ],
     MECH: [
@@ -58,7 +55,7 @@ const FacultyAllocationRequests = () => {
         courseName: 'Course 3',
         department: 'MECH',
         faculties: ['Faculty M1', 'Faculty M2', 'Faculty M3', 'Faculty M4', 'Faculty M5'],
-        allocations: [75, 100, 125, 150, 25]
+        allocations: [75, 100, 125, 150, 25],
       },
     ],
     CIVIL: [
@@ -66,7 +63,7 @@ const FacultyAllocationRequests = () => {
         courseName: 'Course 4',
         department: 'CIVIL',
         faculties: ['Faculty V1', 'Faculty V2', 'Faculty V3', 'Faculty V4', 'Faculty V5'],
-        allocations: [100, 125, 150, 175, 25]
+        allocations: [100, 125, 150, 175, 25],
       },
     ],
     EEE: [
@@ -74,7 +71,7 @@ const FacultyAllocationRequests = () => {
         courseName: 'Course 5',
         department: 'EEE',
         faculties: ['Faculty E1', 'Faculty E2', 'Faculty E3', 'Faculty E4', 'Faculty E5'],
-        allocations: [125, 150, 175, 200, 25]
+        allocations: [125, 150, 175, 200, 25],
       },
     ],
   };
@@ -84,7 +81,7 @@ const FacultyAllocationRequests = () => {
   };
 
   const handleApprove = () => {
-    alert(`Allocation Approved for ${selectedSemesterCode}`);
+    alert(`Allocation Approved for ${selectedHOD}`);
     setSelectedHOD(null);
   };
 
@@ -101,6 +98,10 @@ const FacultyAllocationRequests = () => {
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => setOpenModal(false);
 
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+  };
+
   return (
     <div style={{ padding: 16 }}>
       {selectedHOD ? (
@@ -111,7 +112,6 @@ const FacultyAllocationRequests = () => {
           <Typography variant="h5" style={{ marginTop: 16 }}>
             Faculty Allocation for {selectedHOD} ({requests.find(request => request.hodName === selectedHOD)?.department})
           </Typography>
-
 
           <div style={{ marginTop: '20px', textAlign: 'right' }}>
             <Button variant="contained" color="success" onClick={handleApprove} style={{ marginRight: '10px' }}>
@@ -124,16 +124,16 @@ const FacultyAllocationRequests = () => {
 
           <TableContainer component={Paper} style={{ marginTop: '20px', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
             <Table style={{ borderCollapse: 'collapse' }}>
-              <TableHead>
+              <TableHead sx={{backgroundColor:"#0d0030",color:"white"}}>
                 <TableRow>
-                  <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Course</TableCell>
-                  <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Department</TableCell>
-                  <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Faculty</TableCell>
-                  <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Allocation</TableCell>
+                  <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Course</TableCell>
+                  <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Department</TableCell>
+                  <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Faculty</TableCell>
+                  <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Allocation</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {dummyCourses[requests.find(request => request.hodName === selectedHOD)?.department].map((course, courseIndex) => (
+                {dummyCourses[requests.find(request => request.hodName === selectedHOD)?.department].slice((currentPage - 1) * coursesPerPage, currentPage * coursesPerPage).map((course, courseIndex) => (
                   <React.Fragment key={courseIndex}>
                     {course.faculties.map((faculty, i) => (
                       <TableRow key={i}>
@@ -154,6 +154,15 @@ const FacultyAllocationRequests = () => {
               </TableBody>
             </Table>
           </TableContainer>
+
+          <Pagination
+            count={dummyCourses[requests.find(request => request.hodName === selectedHOD)?.department].length}
+            page={currentPage}
+            onChange={handlePageChange}
+            rowsPerPage={coursesPerPage}
+            color="primary"
+            style={{ marginTop: '10px', display: 'flex', justifyContent: 'center' }}
+          />
 
           <Modal
             open={openModal}
@@ -190,26 +199,39 @@ const FacultyAllocationRequests = () => {
           </Modal>
         </div>
       ) : (
-        <Grid container spacing={2} direction="column">
+        <Grid container spacing={2} direction="row" justifyContent="flex-start">
           {requests.map((request, index) => (
-            <Grid item xs={12} key={index}>
-              <Card style={{ width: '100%', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-                <CardContent style={{ padding: '24px 16px' }}>
-                  <Grid container justifyContent="space-between" alignItems="center">
-                    <Grid item>
-                      <Typography variant="h6">
-                        HOD Name: {request.hodName}
-                      </Typography>
-                      <Typography variant="subtitle1" color="textSecondary">
-                        Department: {request.department}
-                      </Typography>
-                    </Grid>
-                    <Grid item>
-                      <Button variant="contained" color="primary" onClick={() => handleViewClick(request.hodName)}>
-                        View
-                      </Button>
-                    </Grid>
-                  </Grid>
+            <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+              <Card 
+                style={{ 
+                  maxWidth: '300px', 
+                  width: '100%', 
+                  height: '150px', 
+                  borderRadius: '8px', 
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)', 
+                  margin: '0 auto', 
+                  position: 'relative',
+                }}
+              >
+                <CardContent style={{ padding: '16px', paddingBottom: '50px' }}>
+                  <Typography variant="h6">
+                    HOD Name: {request.hodName}
+                  </Typography>
+                  <Typography variant="subtitle1" color="textSecondary">
+                    Department: {request.department}
+                  </Typography>
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={() => handleViewClick(request.hodName)} 
+                    style={{ 
+                      position: 'absolute', 
+                      bottom: '10px', 
+                      right: '10px' 
+                    }}
+                  >
+                    View
+                  </Button>
                 </CardContent>
               </Card>
             </Grid>

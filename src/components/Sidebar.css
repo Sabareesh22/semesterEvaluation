@@ -1,11 +1,11 @@
 .sidebarContainer {
-  width: 300px;
-  background-color: #0d0030;
-  padding: 20px;
-  color: white;
-  height: 100vh;
-  transform: translateX(0);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  width: 300px; /* Width of the sidebar */
+  background-color: #0d0030; /* Sidebar background color */
+  padding: 20px; /* Padding around content */
+  color: white; /* Text color */
+  height: 100vh; /* Full height */
+  transform: translateX(0); /* Initial position */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition */
   position: fixed; /* Keep the sidebar fixed */
   left: 0; /* Align to the left */
   top: 0; /* Align to the top */
@@ -17,21 +17,21 @@
 /* Mobile Styles */
 @media (max-width: 768px) {
   .sidebarContainer {
-    width: 100%;
-    transform: translateX(-100%); /* Hide the sidebar initially on mobile */
+    width: 100%; /* Full width on mobile */
+    transform: translateX(-100%); /* Hide initially */
   }
 
   .sidebarContainer.open {
-    transform: translateX(0); /* Show the sidebar when open on mobile */
+    transform: translateX(0); /* Show when open */
   }
 
   .burgerIcon {
-    display: block; /* Display the burger icon on mobile */
-    padding: 10px;
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1000; /* Ensure the burger icon is on top */
+    display: block; /* Show burger icon */
+    padding: 10px; /* Padding for icon */
+    position: fixed; /* Fixed position */
+    top: 10px; /* Position at the top */
+    left: 10px; /* Position on the left */
+    z-index: 1000; /* Ensure it's on top */
   }
 }
 
@@ -40,101 +40,109 @@
   body {
     margin-left: 300px; /* Leave space for the sidebar */
   }
-  
+
   .sidebarContainer {
-    position: fixed; /* Keep the sidebar fixed */
-    left: 0; /* Attach to the left corner */
+    position: fixed; /* Keep fixed */
+    left: 0; /* Align to left */
     transform: none; /* Reset transform */
   }
 
   .burgerIcon {
-    display: none; /* Hide the burger icon in laptop view */
+    display: none; /* Hide burger icon */
   }
 }
 
 ul {
-  list-style-type: none;
-  padding: 0;
+  list-style-type: none; /* Remove default styles */
+  padding: 0; /* Remove padding */
 }
 
 li {
-  padding: 10px 0;
+  padding: 10px 0; /* Spacing between items */
 }
 
 .listItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  cursor: pointer;
-  position: relative;
-  transition: background-color 0.3s ease; /* Subtle background transition */
-  border-radius: 5px; /* Rounded corners for items */
+  display: flex; /* Use flexbox */
+  justify-content: space-between; /* Space between icon and text */
+  align-items: center; /* Center items vertically */
+  padding: 15px 20px; /* Padding for list items */
+  cursor: pointer; /* Pointer cursor on hover */
+  position: relative; /* Position for hover effect */
+  transition: background-color 0.3s ease; /* Subtle transition */
+  border-radius: 5px; /* Rounded corners */
 }
 
 .listItem:hover {
-  background-color: #35345e; /* Slightly darker for a more pronounced hover effect */
+  background-color: #35345e; /* Darker hover color */
 }
 
 .listItem.active {
-  background-color: #190353; /* Active state color */
+  background-color: #190353; /* Active item color */
 }
 
 .icon {
-  margin-right: 10px;
-  color: #f1f1f1; /* Light color for icons */
+  margin-right: 10px; /* Space between icon and text */
+  color: #f1f1f1; /* Icon color */
 }
 
 .dropdownIcon {
-  margin-left: auto;
-  color: #f1f1f1; /* Light color for dropdown icons */
+  margin-left: auto; /* Push dropdown icon to the right */
+  color: #f1f1f1; /* Color for dropdown icons */
 }
 
 ul > li > ul {
-  padding-left: 20px;
-  /* Base color for dropdown */
+  display: flex;
+  flex-direction: column;
+  padding-left: 20px; /* Indentation for dropdown items */
   border-radius: 5px; /* Rounded corners */
   transition: background-color 0.3s ease; /* Smooth transition */
 }
 
 ul > li > ul > li {
-  padding: 10px 20px;
+  display: flex; 
+  
+/* Use flexbox for dropdown items */
+  align-items: center; /* Center vertically */
+   /* Padding for nested items */
   transition: background-color 0.3s ease; /* Smooth transition */
+}
+ul > li > ul > li >a{
+  display: flex;
 }
 
 ul > li > ul > li:hover {
-  border-radius: 5px;
-  background-color: #35345e; /* Softer hover color */
-  cursor: pointer;
+  border-radius: 5px; /* Rounded corners on hover */
+  background-color: #35345e; /* Hover color */
+  cursor: pointer; /* Pointer cursor */
 }
 
 .sidebarTitle {
   font-size: 1.5rem; /* Title size */
-  margin: 16px 0;
-  text-align: center;
+  margin: 16px 0; /* Spacing above and below */
+  text-align: center; /* Center the title */
   font-weight: bold; /* Bold title */
-  color: #f1f1f1; /* Light color for better visibility */
+  color: #f1f1f1; /* Title color */
 }
 
 .burgerIcon {
-  display: none;
-  cursor: pointer;
+  display: none; /* Hidden by default */
+  cursor: pointer; /* Pointer cursor */
   color: black; /* Default color */
-  transition: color 0.3s ease; /* Smooth transition for color */
+  transition: color 0.3s ease; /* Smooth color transition */
 }
 
 .burgerIcon.open .MuiSvgIcon-root {
-  color: white; /* Change to white when sidebar is open */
+  color: white; /* Change color when open */
 }
 
 /* Mobile Styles */
 @media (max-width: 768px) {
   .burgerIcon {
-    display: block; /* Display the burger icon on mobile */
-    padding: 10px;
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1000; /* Ensure the burger icon is on top */
+    display: block; /* Show burger icon on mobile */
+    padding: 10px; /* Padding for burger icon */
+    position: fixed; /* Fixed position */
+    top: 10px; /* Position at the top */
+    left: 10px; /* Position on the left */
+    z-index: 1000; /* Ensure it's on top */
   }
 }

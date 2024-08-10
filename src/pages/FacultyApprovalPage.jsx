@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Button,
   Typography,
   Table,
   TableBody,
@@ -12,7 +11,11 @@ import {
   Modal,
   Box,
   TextareaAutosize,
+  IconButton,
+  Button,
 } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 const FacultyApprovalPage = () => {
   const [openModal, setOpenModal] = useState(false);
@@ -21,24 +24,18 @@ const FacultyApprovalPage = () => {
 
   const dummyAllocations = [
     {
-      courseName: 'Course 1',
-      department: 'CSE',
-      allocatedPapers: 5,
+      semCode: 'SEEFEB23',
+      courses: [
+        { courseName: 'Course 1', department: 'CSE', allocatedPapers: 5, approved: true },
+        { courseName: 'Course 2', department: 'ECE', allocatedPapers: 4, approved: false },
+      ],
     },
     {
-      courseName: 'Course 2',
-      department: 'ECE',
-      allocatedPapers: 4,
-    },
-    {
-      courseName: 'Course 3',
-      department: 'MECH',
-      allocatedPapers: 6,
-    },
-    {
-      courseName: 'Course 4',
-      department: 'CIVIL',
-      allocatedPapers: 3,
+      semCode: 'SEEJUL23',
+      courses: [
+        { courseName: 'Course 3', department: 'MECH', allocatedPapers: 6, approved: true },
+        { courseName: 'Course 4', department: 'CIVIL', allocatedPapers: 3, approved: false },
+      ],
     },
   ];
 
@@ -71,42 +68,62 @@ const FacultyApprovalPage = () => {
       <Typography variant="h4" gutterBottom>
         Faculty Course Allocations
       </Typography>
-      <TableContainer component={Paper} style={{ marginTop: '20px', width: '80%', marginLeft: 'auto', marginRight: 'auto' }}>
-        <Table style={{ borderCollapse: 'collapse' }}>
-          <TableHead>
-            <TableRow>
-              <TableCell align="center" style={{ border: '1px solid black' }}>Course</TableCell>
-              <TableCell align="center" style={{ border: '1px solid black' }}>Department</TableCell>
-              <TableCell align="center" style={{ border: '1px solid black' }}>Allocated Papers</TableCell>
-              <TableCell align="center" style={{ border: '1px solid black' }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {dummyAllocations.map((allocation, index) => (
-              <TableRow key={index}>
-                <TableCell align="center" style={{ border: '1px solid black' }}>{allocation.courseName}</TableCell>
-                <TableCell align="center" style={{ border: '1px solid black' }}>{allocation.department}</TableCell>
-                <TableCell align="center" style={{ border: '1px solid black' }}>{allocation.allocatedPapers}</TableCell>
-                <TableCell align="center" style={{ border: '1px solid black' }}>
-                  <Button variant="contained" color="success" onClick={() => handleApprove(allocation)}>Approve</Button>
-                  <Button variant="contained" color="error" onClick={() => handleOpenModal(allocation)} style={{ marginLeft: '10px' }}>
-                    Reject
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
 
+      {/* Always visible course allocations table */}
+      <div>
+        {dummyAllocations.map((allocationGroup, index) => (
+          <div key={index} style={{ marginTop: '40px' }}>
+            <Typography variant="h5" gutterBottom>
+              {allocationGroup.semCode}
+            </Typography>
+            <TableContainer component={Paper} style={{ marginTop: '20px', width: '100%' }}>
+              <Table style={{ borderCollapse: 'collapse' }}>
+                <TableHead sx={{color:"white"}}>
+                  <TableRow>
+                    <TableCell sx={{color:"white"}} align="center" style={{ border: '1px solid black' }}>Course</TableCell>
+                    <TableCell sx={{color:"white"}} align="center" style={{ border: '1px solid black' }}>Department</TableCell>
+                    <TableCell sx={{color:"white"}} align="center" style={{ border: '1px solid black' }}>Allocated Papers</TableCell>
+                    <TableCell sx={{color:"white"}} align="center" style={{ border: '1px solid black' }}>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {allocationGroup.courses.map((course, courseIndex) => (
+                    <TableRow key={courseIndex}>
+                      <TableCell align="center" style={{ border: '1px solid black' }}>{course.courseName}</TableCell>
+                      <TableCell align="center" style={{ border: '1px solid black' }}>{course.department}</TableCell>
+                      <TableCell align="center" style={{ border: '1px solid black' }}>{course.allocatedPapers}</TableCell>
+                      <TableCell align="center" style={{ border: '1px solid black' }}>
+                        {course.approved ? (
+                          <Typography variant="body2" color="success.main">Approved</Typography>
+                        ) : (
+                          <>
+                            <IconButton color="success" onClick={() => handleApprove(course)}>
+                              <CheckCircleIcon />
+                            </IconButton>
+                            <IconButton color="error" onClick={() => handleOpenModal(course)} style={{ marginLeft: '5px' }}>
+                              <CancelIcon />
+                            </IconButton>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </div>
+        ))}
+      </div>
+
+      {/* Rejection Reason Modal */}
       <Modal open={openModal} onClose={handleCloseModal}>
         <Box
           sx={{
-            width: 400,
+            width: 300,
             bgcolor: 'background.paper',
             borderRadius: 2,
             boxShadow: 24,
-            p: 4,
+            p: 3,
             margin: 'auto',
             marginTop: '20%',
             textAlign: 'center'
@@ -121,11 +138,11 @@ const FacultyApprovalPage = () => {
             style={{
               width: '100%',
               margin: '10px auto',
-              backgroundColor:"white",
+              backgroundColor: "white",
               padding: '10px',
               fontSize: '16px',
               display: 'block',
-              color:"black",
+              color: "black",
               border: '1px solid #ccc',
               borderRadius: '4px',
             }}
@@ -133,7 +150,7 @@ const FacultyApprovalPage = () => {
             onChange={(e) => setReason(e.target.value)}
           />
           <Box display="flex" justifyContent="space-between" marginTop={2}>
-            <Button variant="contained" sx={{backgroundColor:"blue"}} onClick={handleCloseModal} style={{ width: '48%' }}>
+            <Button variant="contained" sx={{ backgroundColor: "blue" }} onClick={handleCloseModal} style={{ width: '48%' }}>
               Cancel
             </Button>
             <Button variant="contained" color="error" onClick={handleReject} style={{ width: '48%' }}>

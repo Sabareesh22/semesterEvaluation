@@ -23,10 +23,10 @@ const Sidebar = () => {
   return (
     <>
       <div className={`burgerIcon ${isMobileOpen ? 'open' : ''}`} onClick={toggleMobileMenu}>
-        <Menu className={isMobileOpen ? 'whiteIcon' : ''} /> {/* Add whiteIcon class when open */}
+        <Menu className={isMobileOpen ? 'whiteIcon' : ''} />
       </div>
       <div className={`sidebarContainer ${isMobileOpen ? 'open' : ''}`}>
-        <h2 className="sidebarTitle">Semester Allocation</h2>
+        <h2 className="sidebarTitle">Allocation</h2>
         <ul>
           <li>
             <div
@@ -34,14 +34,14 @@ const Sidebar = () => {
               onClick={() => toggleDropdown('COE')}
             >
               <School className="icon" />
-              COE Portal
+              COE
               {open.COE ? <ExpandLess className="dropdownIcon" /> : <ExpandMore className="dropdownIcon" />}
             </div>
             {open.COE && (
               <ul>
-                <li><Link to="/createSemesterEvaluation" onClick={closeMobileMenu}><Assignment className="icon" /> Create Semester Evaluation</Link></li>
-                <li><Link to="/facultyAllocationRequests" onClick={closeMobileMenu}><People className="icon" /> Faculty Allocation Requests</Link></li>
-                <li><Link to="/facultyChangeRequests" onClick={closeMobileMenu}><SwapHoriz className="icon" /> Faculty Change Requests</Link></li>
+                <li><Link to="/createSemesterEvaluation" onClick={closeMobileMenu}><Assignment className="icon" /> Create Evaluation</Link></li>
+                <li><Link to="/facultyAllocationRequests" onClick={closeMobileMenu}><People className="icon" /> Alloc Requests</Link></li>
+                <li><Link to="/facultyChangeRequests" onClick={closeMobileMenu}><SwapHoriz className="icon" /> Change Requests</Link></li>
               </ul>
             )}
           </li>
@@ -51,12 +51,12 @@ const Sidebar = () => {
               onClick={() => toggleDropdown('HOD')}
             >
               <People className="icon" />
-              HOD Portal
+              HOD
               {open.HOD ? <ExpandLess className="dropdownIcon" /> : <ExpandMore className="dropdownIcon" />}
             </div>
             {open.HOD && (
               <ul>
-                <li><Link to="/facultyAllocation" onClick={closeMobileMenu}><Assignment className="icon" /> Faculty Allocation</Link></li>
+                <li><Link to="/facultyAllocation" onClick={closeMobileMenu}><Assignment className="icon" /> Allocation</Link></li>
               </ul>
             )}
           </li>
@@ -66,12 +66,12 @@ const Sidebar = () => {
               onClick={() => toggleDropdown('Faculty')}
             >
               <Book className="icon" />
-              Faculty Portal
+              Faculty
               {open.Faculty ? <ExpandLess className="dropdownIcon" /> : <ExpandMore className="dropdownIcon" />}
             </div>
             {open.Faculty && (
               <ul>
-                <li><Link to="/facultyApproval" onClick={closeMobileMenu}><Assignment className="icon" /> Semester Paper Allocation</Link></li>
+                <li><Link to="/facultyApproval" onClick={closeMobileMenu}><Assignment className="icon" /> Paper Allocation</Link></li>
               </ul>
             )}
           </li>
