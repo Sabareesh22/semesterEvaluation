@@ -41,8 +41,9 @@ const FacultyApprovalPage = () => {
   // Fetch replacement requests from the new API
   const fetchReplacementRequests = async () => {
     try {
-      const response = await axios.get(`${apiHost}/api/allocations/new-faculty/12`); // Replace '13' with the actual faculty ID
+      const response = await axios.get(`${apiHost}/api/allocations/new-faculty/13`); // Replace '12' with the actual faculty ID
       setReplacementRequests(response.data.results);
+      console.log(response.data.results)
     } catch (error) {
       console.error('Error fetching replacement requests:', error);
     }
@@ -64,15 +65,15 @@ const FacultyApprovalPage = () => {
     setSelectedCourse(null);
   };
 
-  const handleApprove = async (course) => {
+  const handleApproveAllocation = async (course) => {
     try {
       await axios.put(`${apiHost}/api/facultyPaperAllocation/status`, {
         facultyId: 13, // Replace with actual faculty ID
         semCode: course.semcode,
         courseId: course.courseId,
-        status: 1,
+        status:1,
       });
-  
+
       toast.success(`${course.courseName} approved successfully.`);
       // Refetch the allocations after successful approval
       fetchAllocations();
@@ -81,7 +82,7 @@ const FacultyApprovalPage = () => {
     }
   };
 
-  const handleReject = async () => {
+  const handleRejectAllocation = async () => {
     if (reason.trim() === '') {
       toast.error('Please provide a reason for rejection.');
     } else {
@@ -90,20 +91,62 @@ const FacultyApprovalPage = () => {
           facultyId: 13, // Replace with actual faculty ID
           semCode: selectedCourse.semcode,
           courseId: selectedCourse.courseId,
-          status: '-1',
-          remark:reason, // Optional: send reason to backend
+          status: -1,
+          remark: reason, // Optional: send reason to backend
         });
-        fetchAllocations()
-        fetchReplacementRequests()
+        fetchAllocations();
         toast.success(`${selectedCourse.courseName} rejected successfully.`);
-        setAllocations(prevAllocations => prevAllocations.map(allocation => 
-          allocation.semcode === selectedCourse.semcode && allocation.courseId === selectedCourse.courseId 
-            ? { ...allocation, status: -2 } 
-            : allocation
-        ));
         handleCloseModal();
       } catch (error) {
         toast.error('Failed to reject the course.');
+      }
+    }
+  };
+
+  const handleApproveReplacement = async (course) => {
+
+    console.log(course)
+    console.log( {old_faculty: course.old_facutly, // Replace with the actual old faculty ID
+      new_faculty:course.new_facutly , // You may need to adjust this depending on your data
+      course: course.courseId,
+      semcode: course.semcode,
+      status: 1})
+    try {
+      await axios.put(`${apiHost}/api/facultyChangeRequests/status`, {
+        old_faculty: course.old_faculty
+        , // Replace with the actual old faculty ID
+        new_faculty:course.new_faculty , // You may need to adjust this depending on your data
+        course: course.courseId,
+        semcode: course.semcode,
+        status: 1,
+      });
+
+      toast.success(`${course.courseName} replacement approved successfully.`);
+      // Refetch the replacement requests after successful approval
+      fetchReplacementRequests();
+    } catch (error) {
+      toast.error('Failed to approve the replacement request.');
+    }
+  };
+
+  const handleRejectReplacement = async () => {
+    if (reason.trim() === '') {
+      toast.error('Please provide a reason for rejection.');
+    } else {
+      try {
+        await axios.put(`${apiHost}/api/facultyChangeRequests/status`, {
+          old_faculty: selectedCourse.old_faculty, // Replace with the actual old faculty ID
+          new_faculty: selectedCourse.new_faculty, // You may need to adjust this depending on your data
+          course: selectedCourse.courseId,
+          semcode: selectedCourse.semcode,
+          status: -1,
+          remark: reason, // Optional: send reason to backend
+        });
+        fetchReplacementRequests();
+        toast.success(`${selectedCourse.courseName} replacement rejected successfully.`);
+        handleCloseModal();
+      } catch (error) {
+        toast.error('Failed to reject the replacement request.');
       }
     }
   };
@@ -153,7 +196,7 @@ const FacultyApprovalPage = () => {
                     <TableCell align="center" style={{ border: '1px solid black' }}>{course.courseCode}</TableCell>
                     <TableCell align="center" style={{ border: '1px solid black' }}>{course.paperCount}</TableCell>
                     <TableCell align="center" style={{ border: '1px solid black' }}>
-                    {course.status === '2' ? (
+                      {course.status === '2' ? (
                         <Typography variant="body2" color="success.main">Approved</Typography>
                       ) : course.status === '1' ? (
                         <Typography variant="body2" color="warning.main">COE approval Pending</Typography>
@@ -161,9 +204,9 @@ const FacultyApprovalPage = () => {
                         <Typography variant="body2" color="error.main">Rejected by COE</Typography>
                       ) : course.status === '-1' ? (
                         <Typography variant="body2" color="error.main">Rejected by You</Typography>
-                      ) :  (
+                      ) : (
                         <>
-                          <IconButton color="success" onClick={() => handleApprove(course)}>
+                          <IconButton color="success" onClick={() => handleApproveAllocation(course)}>
                             <CheckCircleIcon />
                           </IconButton>
                           <IconButton color="error" onClick={() => handleOpenModal(course)} style={{ marginLeft: '5px' }}>
@@ -181,13 +224,11 @@ const FacultyApprovalPage = () => {
       ))}
 
       {/* Display grouped replacement requests */}
-
-      {
-        Object.values(groupedReplacementRequests)?.length>0 &&
+      {Object.values(groupedReplacementRequests)?.length > 0 && (
         <Typography variant="h4" gutterBottom style={{ marginTop: '40px' }}>
-        Replacement requests From HOD
-      </Typography>
-      }
+          Replacement requests From HOD
+        </Typography>
+      )}
       
       {Object.keys(groupedReplacementRequests).map((semesterCode, index) => (
         <div key={index} style={{ marginTop: '40px' }}>
@@ -215,9 +256,13 @@ const FacultyApprovalPage = () => {
                         <Typography variant="body2" color="success.main">Approved</Typography>
                       ) : course.status === '1' ? (
                         <Typography variant="body2" color="warning.main">COE approval Pending</Typography>
+                      ) : course.status === '-2' ? (
+                        <Typography variant="body2" color="error.main">Rejected by COE</Typography>
+                      ) : course.status === '-1' ? (
+                        <Typography variant="body2" color="error.main">Rejected by You</Typography>
                       ) : (
                         <>
-                          <IconButton color="success" onClick={() => handleApprove(course)}>
+                          <IconButton color="success" onClick={() => handleApproveReplacement(course)}>
                             <CheckCircleIcon />
                           </IconButton>
                           <IconButton color="error" onClick={() => handleOpenModal(course)} style={{ marginLeft: '5px' }}>
@@ -272,7 +317,7 @@ const FacultyApprovalPage = () => {
             <Button variant="contained" sx={{ backgroundColor: "blue" }} onClick={handleCloseModal} style={{ width: '48%' }}>
               Cancel
             </Button>
-            <Button variant="contained" color="error" onClick={handleReject} style={{ width: '48%' }}>
+            <Button variant="contained" color="error" onClick={selectedCourse?.old_faculty!==undefined ? handleRejectReplacement : handleRejectAllocation} style={{ width: '48%' }}>
               Confirm Reject
             </Button>
           </Box>

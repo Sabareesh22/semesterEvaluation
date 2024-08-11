@@ -28,7 +28,8 @@ import 'react-toastify/dist/ReactToastify.css';
 const FacultyAllocationTable = ({ selectedSemesterCode, courses }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [allocations, setAllocations] = useState({});
-  const [paperCounts, setPaperCounts] = useState([]); // New state for paper counts
+  const [paperCounts, setPaperCounts] = useState({});
+  const [statuses, setStatuses] = useState({});
   const [openModal, setOpenModal] = useState(false);
   const [suggestedFaculties, setSuggestedFaculties] = useState([]); // New state for storing suggested faculties
   const [oldFaculty, setOldFaculty] = useState(null);
@@ -66,82 +67,83 @@ const handleCloseModal = () => {
 const handleSubmit = async () => {
   try {
     const response = await axios.post(`${apiHost}/api/facultyChangeRequests`, {
-      old_faculty: selectedFaculty,
-      new_faculty: currentRow.facultyId, // Assuming old_faculty is the currently selected faculty in the row
+      old_faculty:  currentRow.facultyId,
+      new_faculty:selectedFaculty, // Assuming old_faculty is the currently selected faculty in the row
       course: currentRow.courseId,
       semcode: selectedSemesterCode.value,
       remark: selectedReason, // Include the reason as the remark
     });
-
+    fetchFacultyStatuses();
     toast.success('Faculty change request submitted successfully.');
     handleCloseModal();
   } catch (error) {
     toast.error('Error submitting faculty change request: ' + (error.response?.data?.message || 'Unknown error'));
   }
 };
+const fetchPaperCounts = async () => {
+  const newPaperCounts = {};
+  const newStatuses = {}; // Object to store statuses
 
+  if (courses.length > 0) {
+    for (const course of courses) {
+      const { courseId, faculties } = course;
 
+      for (const faculty of faculties) {
+        try {
+          const response = await axios.get(`${apiHost}/api/paperCount`, {
+            params: {
+              course: courseId,
+              faculty: faculty.facultyId, // Send facultyId here
+              semcode: selectedSemesterCode.value,
+            },
+          });
+
+          // Store the paper count and status for the specific faculty
+          newPaperCounts[faculty.facultyId] = response.data.results.paper_count; // Store paper count by facultyId
+          newStatuses[faculty.facultyId] = response.data.results.status; // Store status by facultyId
+        } catch (error) {
+          console.error('Error fetching paper count:', error);
+        }
+      }
+    }
+  }
+
+  setPaperCounts(newPaperCounts); // Update state with paper counts
+  setStatuses(newStatuses); // Update state with statuses
+};
+const fetchFacultyStatuses = async () => {
+  const newStatuses = {};
+
+  if (courses.length > 0) {
+    for (const course of courses) {
+      for (const faculty of course.faculties) {
+        try {
+          const response = await axios.get(`${apiHost}/api/check-old-faculty`, {
+            params: {
+              old_faculty: faculty.facultyId,
+              semcode: selectedSemesterCode.value,
+            },
+          });
+          console.log("status",response.data.code)
+          newStatuses[faculty.facultyId] = response.data.code;
+          console.log(newStatuses)
+        } catch (error) {
+          console.error('Error fetching faculty status:', error);
+          toast.error('Error fetching faculty status.');
+        }
+      }
+    }
+  }
+
+  setFacultyStatuses(newStatuses); // Update state with fetched statuses
+};
 useEffect(() => {
-  const fetchPaperCounts = async () => {
-    const newPaperCounts = {};
-
-    if (courses.length > 0) {
-      for (const course of courses) {
-        const { courseId, faculties } = course;
-
-        for (const faculty of faculties) {
-          try {
-            const response = await axios.get(`${apiHost}/api/paperCount`, {
-              params: {
-                course: courseId,
-                facultyId: faculty.facultyId, // Send facultyId here
-                semcode: selectedSemesterCode.value,
-              },
-            });
-            // Store the paper count for the specific faculty
-            newPaperCounts[faculty.facultyId] = response.data.results; // Store paper count by facultyId
-          } catch (error) {
-            // console.error('Error fetching paper count:', error);
-            // toast.error('Error fetching paper count.');
-          }
-        }
-      }
-    }
-
-    setPaperCounts(newPaperCounts); // Update state with paper counts
-  };
-
-  fetchPaperCounts();
-  const fetchFacultyStatuses = async () => {
-    const newStatuses = {};
-
-    if (courses.length > 0) {
-      for (const course of courses) {
-        for (const faculty of course.faculties) {
-          try {
-            const response = await axios.get(`${apiHost}/api/check-old-faculty`, {
-              params: {
-                old_faculty: faculty.facultyId,
-                semcode: selectedSemesterCode.value,
-              },
-            });
-            console.log(response.data.code)
-            newStatuses[faculty.facultyId] = response.data.code;
-            console.log(newStatuses)
-          } catch (error) {
-            console.error('Error fetching faculty status:', error);
-            toast.error('Error fetching faculty status.');
-          }
-        }
-      }
-    }
-
-    setFacultyStatuses(newStatuses); // Update state with fetched statuses
-  };
-
-  fetchFacultyStatuses();
-}, [selectedSemesterCode, courses]);
   
+  fetchFacultyStatuses();
+  fetchPaperCounts();
+}, [selectedSemesterCode, courses]);
+
+
 
   const handleInputChange = (event, courseName, facultyId, facultyName, courseId, index) => {
     const value = parseInt(event.target.value) || 0; // Allow negative values for direct input
@@ -197,7 +199,7 @@ useEffect(() => {
           paperCount: allocationValue,
           semCode: selectedSemesterCode.value,
         }]);
-
+        fetchPaperCounts()
         toast.success(response.data.message || 'Faculty allocated successfully.');
       } catch (error) {
         toast.error('Error allocating faculty: ' + (error.response?.data?.message || 'Unknown error'));
@@ -277,47 +279,121 @@ useEffect(() => {
         )}
         <TableCell align="center" style={{ border: '1px solid black' }}>{faculty.facultyName}</TableCell>
         <TableCell align="center" style={{ border: '1px solid black' }}>
-          {console.log(paperCounts)}
-          <TextField
-            type="number"
-            size="small"
-            disabled={facultyStatuses[faculty.facultyId] !== 0}
-            variant="outlined"
-            value={allocations[course.courseId]?.[faculty.facultyId] || ''}
-            onChange={(e) => handleInputChange(e, course.courseName, faculty.facultyId, faculty.facultyName, course.courseId)}
-            placeholder={paperCounts[faculty.facultyId]?.length > 0 ? paperCounts[faculty.facultyId][i] : 0}
-          />
+                    <TextField
+                      type="number"
+                      size="small"
+                      disabled={facultyStatuses[faculty.facultyId] !== 0}
+                      variant="outlined"
+                      value={allocations[course.courseId]?.[faculty.facultyId] || ''}
+                      onChange={(e) => handleInputChange(e, course.courseName, faculty.facultyId, faculty.facultyName, course.courseId)}
+                      placeholder={paperCounts[faculty.facultyId] || 0} // Updated to use paperCounts
+                    />
+                  </TableCell>
+                  {console.log(paperCounts,statuses
+
+                  )}
+                 {
+  (facultyStatuses[faculty.facultyId] !== undefined && facultyStatuses[faculty.facultyId] !== null) ? (
+    facultyStatuses[faculty.facultyId] === 0 ? (
+      statuses[faculty.facultyId] == 0 ? (
+        <TableCell align="center" style={{ border: '1px solid black' }}>
+          <Typography variant="body1" color="orangered">
+            Waiting for Faculty Approval
+          </Typography>
         </TableCell>
-             <TableCell align="center" style={{ border: '1px solid black' }}>
-             {facultyStatuses[faculty.facultyId] === 0 ? 
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => handleAllocate(course.courseId, faculty.facultyId, course.paperCount)}
-          >
-            Allocate
-          </Button> : <Typography  variant="body1" color="red">
-              Cannot Allocate While Change Request is active
-            </Typography>
+      ) : statuses[faculty.facultyId] == 1 ? (
+        <TableCell align="center" style={{ border: '1px solid black' }}>
+          <Typography variant="body1" color="orangered">
+            Waiting for COE Approval
+          </Typography>
+        </TableCell>
+      ) : statuses[faculty.facultyId] == 2 ? (
+        <TableCell align="center" style={{ border: '1px solid black' }}>
+          <Typography variant="body1" color="green">
+            Approved By COE
+          </Typography>
+        </TableCell>
+      ) : null
+    ) : facultyStatuses[faculty.facultyId] == 3 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="green">
+          Replace - Approved by COE
+        </Typography>
+      </TableCell>
+    ) : facultyStatuses[faculty.facultyId] == 2 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="orangered">
+          Replace - Waiting for COE Approval
+        </Typography>
+      </TableCell>
+    ) : facultyStatuses[faculty.facultyId] == 1 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="orangered">
+          Replace - Waiting for Faculty Approval
+        </Typography>
+      </TableCell>
+    ) : null
+  ) : (
+    (statuses[faculty.facultyId] == 0 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="orangered">
+          Waiting for Faculty Approval
+        </Typography>
+      </TableCell>
+    ) : statuses[faculty.facultyId] == 1 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="orangered">
+          Waiting for COE Approval
+        </Typography>
+      </TableCell>
+    ) : statuses[faculty.facultyId] == 2 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="green">
+          Approved By COE
+        </Typography>
+      </TableCell>
+    ) : null)
+  )
 }
-        </TableCell>
+
 
         <TableCell align="center" style={{ border: '1px solid black' }}>
-          {facultyStatuses[faculty.facultyId] === 1 && (
-            <Typography variant="body1" color="red">
-              Replace request active - Faculty Approval Pending
-            </Typography>
-          )}
-          {facultyStatuses[faculty.facultyId] === 2 && (
-            <Typography variant="body1" color="red">
-              Replace request active - initiated COE approval pending
-            </Typography>
-          )}
-          {(facultyStatuses[faculty.facultyId] === 0 || !facultyStatuses[faculty.facultyId]) && (
-            <IconButton onClick={() => handleOpenModal(faculty.facultyId, course.courseId)}>
-              <RotateLeftIcon />
-            </IconButton>
-          )}
+        {facultyStatuses[faculty.facultyId] === 1 && (
+  <Typography variant="body1" color="red">
+    Replace request active - Faculty Approval Pending
+  </Typography>
+)}
+{facultyStatuses[faculty.facultyId] === 2 && (
+  <Typography variant="body1" color="red">
+    Replace request active - initiated COE approval pending
+  </Typography>
+)}
+{facultyStatuses[faculty.facultyId] === 0 ? (
+  // If facultyStatuses is 0, check statuses
+  statuses[faculty.facultyId] === 0 ? (
+    <Typography variant="body1" color="orangered">
+      Waiting for Faculty Approval
+    </Typography>
+  ) : statuses[faculty.facultyId] === 1 ? (
+    <Typography variant="body1" color="orangered">
+      Waiting for COE Approval
+    </Typography>
+  ) : statuses[faculty.facultyId] === 2 ? (
+    <Typography variant="body1" color="green">
+      Approved By COE
+    </Typography>
+  ) : (
+    <IconButton onClick={() => handleOpenModal(faculty.facultyId, course.courseId)}>
+      <RotateLeftIcon />
+    </IconButton>
+  )
+) : facultyStatuses[faculty.facultyId] === null || facultyStatuses[faculty.facultyId] === undefined ? (
+  // If facultyStatuses is not present, show the icon
+  <IconButton onClick={() => handleOpenModal(faculty.facultyId, course.courseId)}>
+    <RotateLeftIcon />
+  </IconButton>
+) : null}
+
         </TableCell>
       </TableRow>
       

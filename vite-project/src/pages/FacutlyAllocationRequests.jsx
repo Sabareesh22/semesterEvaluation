@@ -30,19 +30,19 @@ const FacultyAllocationRequests = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const coursesPerPage = 1; // Display one course per page
-
+  
+  const fetchRequests = async () => {
+    console.log('Fetching faculty allocation requests...');
+    try {
+      const response = await axios.get(`${apiHost}/api/facultyPaperAllocationRequests`);
+      console.log('API Response:', response.data); // Log the entire response
+      setRequests(response.data.results); // Update state with fetched results
+    } catch (error) {
+      console.error('Error fetching faculty allocation requests:', error);
+    }
+  };
+  
   useEffect(() => {
-    const fetchRequests = async () => {
-      console.log('Fetching faculty allocation requests...');
-      try {
-        const response = await axios.get(`${apiHost}/api/facultyPaperAllocationRequests`);
-        console.log('API Response:', response.data); // Log the entire response
-        setRequests(response.data.results); // Update state with fetched results
-      } catch (error) {
-        console.error('Error fetching faculty allocation requests:', error);
-      }
-    };
-
     fetchRequests();
   }, []);
 
@@ -61,15 +61,15 @@ const FacultyAllocationRequests = () => {
       for (let i = 0; i < facultyInfo.length; i++) {
         const facultyId = facultyInfo[i].id; // Use facultyId directly
         const courseId = courseInfo[i].id;
-        console.log(selectedRequest)
+        console.log(selectedRequest);
         await axios.put(`${apiHost}/api/facultyPaperAllocation/status`, {
           facultyId,
           courseId,
-          semCode:selectedRequest.semCode,
+          semCode: selectedRequest.semCode,
           status: 2, // Status for approval
         });
-       
       }
+      fetchRequests();
       toast.success('Allocations approved successfully!');
       setSelectedHOD(null);
       setSelectedRequest(null);
@@ -255,42 +255,48 @@ const FacultyAllocationRequests = () => {
         </div>
       ) : (
         <Grid container spacing={2} direction="row" justifyContent="flex-start">
-          {requests?.map((request, index) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-              <Card 
-                style={{ 
-                  maxWidth: '300px', 
-                  width: '100%', 
-                  height: '150px', 
-                  borderRadius: '8px', 
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)', 
-                  margin: '0 auto', 
-                  position: 'relative',
-                }}
-              >
-                <CardContent style={{ padding: '16px', paddingBottom: '50px' }}>
-                  <Typography variant="h6">
-                    HOD Name: {request.hodName}
-                  </Typography>
-                  <Typography variant="subtitle1" color="textSecondary">
-                    Department: {request.hodFacultyId} {/* Update based on your data structure */}
-                  </Typography>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    onClick={() => handleViewClick(request)} // Pass the entire request object
-                    style={{ 
-                      position: 'absolute', 
-                      bottom: '10px', 
-                      right: '10px' 
-                    }}
-                  >
-                    View
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+          {requests.length > 0 ? (
+            requests.map((request, index) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+                <Card 
+                  style={{ 
+                    maxWidth: '300px', 
+                    width: '100%', 
+                    height: '150px', 
+                    borderRadius: '8px', 
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)', 
+                    margin: '0 auto', 
+                    position: 'relative',
+                  }}
+                >
+                  <CardContent style={{ padding: '16px', paddingBottom: '50px' }}>
+                    <Typography variant="h6">
+                      HOD Name: {request.hodName}
+                    </Typography>
+                    <Typography variant="subtitle1" color="textSecondary">
+                      Department: {request.hodFacultyId} {/* Update based on your data structure */}
+                    </Typography>
+                    <Button 
+                      variant="contained" 
+                      color="primary" 
+                      onClick={() => handleViewClick(request)} // Pass the entire request object
+                      style={{ 
+                        position: 'absolute', 
+                        bottom: '10px', 
+                        right: '10px' 
+                      }}
+                    >
+                      View
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))
+          ) : (
+            <Typography variant="h6" style={{ textAlign: 'center', width: '100%', marginTop: '20px' }}>
+              No requests yet...
+            </Typography>
+          )}
         </Grid>
       )}
     </div>

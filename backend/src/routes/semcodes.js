@@ -335,7 +335,7 @@ router.get('/allocations/hod/:hodId', async (req, res) => {
         JOIN 
             master_hod h ON bcm.department = h.department
         WHERE 
-            h.id = ? AND fa.status = '0'  -- Filter for the specific HOD and active allocations
+            h.id = ?   -- Filter for the specific HOD and active allocations
         ORDER BY 
             fa.id;  -- Order by allocation ID or any other relevant field
     `;
@@ -381,7 +381,7 @@ router.put('/facultyPaperAllocation/status', async (req, res) => {
     // Base update query
     let updateQuery = `
         UPDATE faculty_paper_allocation
-        SET status = ?
+        SET status = '?'
     `;
 
     // Add the remark update if provided
@@ -421,6 +421,8 @@ router.get('/allocations/new-faculty/:facultyId', async (req, res) => {
             mc.course_name, 
             mc.course_code,
             ms.id AS semcode,
+            fcr.old_faculty,
+            fcr.new_faculty,
             ms.semcode AS semester_code, 
             fpa.paper_count AS paper_count,
             fcr.status 
@@ -445,6 +447,8 @@ router.get('/allocations/new-faculty/:facultyId', async (req, res) => {
         const allocations = rows.map(row => ({
             semcode: row.semcode,
             status: row.status,
+            old_faculty:row.old_faculty,
+            new_faculty:row.new_faculty,
             semesterCode: row.semester_code,
             courseName: row.course_name,
             courseId: row.course,
@@ -507,17 +511,16 @@ WHERE
 // GET route to retrieve paper count based on various parameters
 router.get('/paperCount', async (req, res) => {
     const { faculty, course, semcode } = req.query;
-    console.log(req.query)
-    // Constructing the base query
+    console.log(req.query);
+
     let query = `
-        SELECT paper_count,status
+        SELECT paper_count, status
         FROM faculty_paper_allocation 
         WHERE 1=1
     `;
     
     const params = [];
 
-    // Adding conditions based on provided query parameters
     if (faculty) {
         query += ' AND faculty = ?';
         params.push(faculty);
@@ -534,12 +537,14 @@ router.get('/paperCount', async (req, res) => {
     try {
         const [rows] = await db.query(query, params);
 
-        // Check if any rows were returned
-       
-
-        // Return the paper counts
-        const paperCounts = rows.map(row => row.paper_count);
-        res.status(200).json({ results: paperCounts });
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'No records found' });
+        }
+        console.log(rows)
+        // Assuming we are only interested in the first record
+        const { paper_count, status } = rows[0];
+        console.log({ results: {paper_count:paper_count,status: status} })
+        res.status(200).json({ results: {paper_count:paper_count,status: status} });
     } catch (error) {
         console.error('Error fetching paper count:', error);
         res.status(500).json({ message: 'Internal Server Error' });
@@ -576,21 +581,22 @@ router.post('/facultyChangeRequests', async (req, res) => {
 
 // PUT route to update the status of a faculty change request based on matching fields
 router.put('/facultyChangeRequests/status', async (req, res) => {
-    const { faculty, course, semcode, status } = req.body; // Get fields from the request body
-
+    console.log(req.body);
+    const { old_faculty, new_faculty, course, semcode, status, remark } = req.body; // Get fields from the request body
+   
     // Validate the input
-    if (faculty == null || course == null || semcode == null || status == null) {
+    if (old_faculty == null || new_faculty == null || course == null || semcode == null || status == null) {
         return res.status(400).json({ message: 'Faculty, course, semcode, and status are required.' });
     }
 
     // Query to find the record with matching fields
     const checkQuery = `
         SELECT id FROM faculty_change_requests
-        WHERE faculty = ? AND course = ? AND semcode = ?
+        WHERE old_faculty = ? AND new_faculty = ? AND course = ? AND semcode = ?
     `;
 
     try {
-        const [rows] = await db.query(checkQuery, [faculty, course, semcode]);
+        const [rows] = await db.query(checkQuery, [old_faculty, new_faculty, course, semcode]);
 
         if (rows.length === 0) {
             return res.status(404).json({ message: 'No matching change request found.' });
@@ -601,13 +607,34 @@ router.put('/facultyChangeRequests/status', async (req, res) => {
         // Update the status of the matching record
         const updateQuery = `
             UPDATE faculty_change_requests
-            SET status = ?
+            SET status = '?', remark = ?
             WHERE id = ?
         `;
 
-        await db.query(updateQuery, [status, requestId]);
+        await db.query(updateQuery, [status, remark || null, requestId]); // Store remark as null if not provided
 
-        res.status(200).json({ message: 'Status updated successfully.' });
+        // Check if the status is 2
+        if (status === 2) {
+            // Insert the new faculty into faculty_paper_allocation
+            const insertQuery = `
+                INSERT INTO faculty_paper_allocation (faculty, course, paper_count, semcode, status, remark)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
+            const paperCount = 0; // Set the paper count as required, defaulting to 0 or modify as needed
+            const insertValues = [new_faculty, course, paperCount, semcode, '2', remark || null];
+
+            await db.query(insertQuery, insertValues);
+        }
+
+        // Remove the old faculty from faculty_paper_allocation
+        const deleteQuery = `
+            DELETE FROM faculty_paper_allocation
+            WHERE faculty = ? AND course = ? AND semcode = ?
+        `;
+        
+        await db.query(deleteQuery, [old_faculty, course, semcode]);
+
+        res.status(200).json({ message: 'Status updated successfully and old faculty removed.' });
     } catch (error) {
         console.error('Error updating faculty change request status:', error);
         res.status(500).json({ message: 'Internal Server Error' });
@@ -671,7 +698,6 @@ router.get('/check-old-faculty', async (req, res) => {
 
         const status = result[0].status;
         let code;
-
         switch (status) {
             case '0':
                 code = 1;
@@ -693,6 +719,63 @@ router.get('/check-old-faculty', async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
+router.get('/facultyChangeRequests', async (req, res) => {
+    console.log(req.query);
+    
+    // Constructing the base query
+    let query = `
+        SELECT 
+            fcr.id AS request_id,
+            fcr.remark,
+            old_faculty.id AS old_faculty_id,
+            old_faculty.name AS old_faculty_name,
+            old_faculty.faculty_id AS old_faculty_unique_id,
+            new_faculty.id AS new_faculty_id,
+            new_faculty.name AS new_faculty_name,
+            new_faculty.faculty_id AS new_faculty_unique_id,
+            mc.id AS course_id,
+            mc.course_name,
+            mc.course_code,
+            ms.id AS semcode_id,
+            ms.semcode
+        FROM 
+            faculty_change_requests fcr
+        JOIN 
+            master_faculty old_faculty ON fcr.old_faculty = old_faculty.id
+        JOIN 
+            master_faculty new_faculty ON fcr.new_faculty = new_faculty.id
+        JOIN 
+            master_courses mc ON fcr.course = mc.id
+        JOIN 
+            master_semcode ms ON fcr.semcode = ms.id
+        WHERE fcr.status='1'
+    `;
+    
+    const params = [];
+
+    // Adding conditions based on provided query parameters (if needed)
+    if (req.query.semcode) {
+        query += ' WHERE ms.semcode = ?';
+        params.push(req.query.semcode);
+    }
+
+    try {
+        const [rows] = await db.query(query, params);
+
+        // Check if any rows were returned
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'No records found' });
+        }
+
+        // Return the faculty change requests
+        res.status(200).json({ results: rows });
+    } catch (error) {
+        console.error('Error fetching faculty change requests:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
 
 
 // Export the router
