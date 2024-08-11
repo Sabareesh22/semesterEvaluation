@@ -371,34 +371,45 @@ router.get('/allocations/hod/:hodId', async (req, res) => {
 
 // PUT route to change the status of faculty paper allocation based on facultyId and courseId
 router.put('/facultyPaperAllocation/status', async (req, res) => {
-    const { facultyId, courseId, status,semCode } = req.body; // Get facultyId, courseId, and new status from the request body
-    console.log(req.body)
+    const { facultyId, courseId, status, semCode, remark } = req.body; // Get facultyId, courseId, status, semCode, and remark from the request body
+   console.log(req.body)
     // Validate the input
-    if (facultyId == null || courseId == null || status == null || typeof status !== 'number') {
+    if (facultyId == null || courseId == null || status == null ) {
         return res.status(400).json({ message: 'Invalid input. Faculty ID, Course ID, and Status are required.' });
     }
 
-    // Update query to change the status based on facultyId and courseId
-    const updateQuery = `
+    // Base update query
+    let updateQuery = `
         UPDATE faculty_paper_allocation
-        SET status = '?'
-        WHERE faculty = ? AND course = ? AND semcode =?
+        SET status = ?
     `;
 
+    // Add the remark update if provided
+    const queryParams = [status];
+    if (remark !== undefined) {
+        updateQuery += `, remark = ?`;
+        queryParams.push(remark);
+    }
+
+    updateQuery += ` WHERE faculty = ? AND course = ? AND semcode = ?`;
+
+    queryParams.push(facultyId, courseId, semCode);
+
     try {
-        const [updateResult] = await db.query(updateQuery, [status, facultyId, courseId,semCode]);
+        const [updateResult] = await db.query(updateQuery, queryParams);
 
         // Check if any rows were affected
         if (updateResult.affectedRows === 0) {
             return res.status(404).json({ message: 'Allocation not found for the specified faculty and course.' });
         }
 
-        res.status(200).json({ message: 'Status updated successfully.' });
+        res.status(200).json({ message: 'Status and remark updated successfully.' });
     } catch (error) {
         console.error('Error updating status:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
 
 
 router.get('/allocations/new-faculty/:facultyId', async (req, res) => {

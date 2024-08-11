@@ -86,14 +86,15 @@ const FacultyApprovalPage = () => {
       toast.error('Please provide a reason for rejection.');
     } else {
       try {
-        await axios.post(`${apiHost}/api/allocations/status`, {
+        await axios.put(`${apiHost}/api/facultyPaperAllocation/status`, {
           facultyId: 13, // Replace with actual faculty ID
           semCode: selectedCourse.semcode,
           courseId: selectedCourse.courseId,
-          status: -2,
-          reason, // Optional: send reason to backend
+          status: '-1',
+          remark:reason, // Optional: send reason to backend
         });
-
+        fetchAllocations()
+        fetchReplacementRequests()
         toast.success(`${selectedCourse.courseName} rejected successfully.`);
         setAllocations(prevAllocations => prevAllocations.map(allocation => 
           allocation.semcode === selectedCourse.semcode && allocation.courseId === selectedCourse.courseId 
@@ -152,11 +153,15 @@ const FacultyApprovalPage = () => {
                     <TableCell align="center" style={{ border: '1px solid black' }}>{course.courseCode}</TableCell>
                     <TableCell align="center" style={{ border: '1px solid black' }}>{course.paperCount}</TableCell>
                     <TableCell align="center" style={{ border: '1px solid black' }}>
-                      {course.status === '2' ? (
+                    {course.status === '2' ? (
                         <Typography variant="body2" color="success.main">Approved</Typography>
                       ) : course.status === '1' ? (
                         <Typography variant="body2" color="warning.main">COE approval Pending</Typography>
-                      ) : (
+                      ) : course.status === '-2' ? (
+                        <Typography variant="body2" color="error.main">Rejected by COE</Typography>
+                      ) : course.status === '-1' ? (
+                        <Typography variant="body2" color="error.main">Rejected by You</Typography>
+                      ) :  (
                         <>
                           <IconButton color="success" onClick={() => handleApprove(course)}>
                             <CheckCircleIcon />
