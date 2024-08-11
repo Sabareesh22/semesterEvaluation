@@ -401,6 +401,55 @@ router.put('/facultyPaperAllocation/status', async (req, res) => {
 });
 
 
+router.get('/allocations/new-faculty/:facultyId', async (req, res) => {
+    const { facultyId } = req.params;
+
+    const query = `
+        SELECT 
+            mc.id AS course,
+            mc.course_name, 
+            mc.course_code,
+            ms.id AS semcode,
+            ms.semcode AS semester_code, 
+            fpa.paper_count AS paper_count,
+            fcr.status 
+        FROM 
+            faculty_paper_allocation fpa
+        JOIN 
+            master_courses mc ON fpa.course = mc.id
+        JOIN 
+            master_semcode ms ON fpa.semcode = ms.id
+        JOIN 
+            faculty_change_requests fcr ON fcr.course = fpa.course 
+                                        AND fcr.semcode = fpa.semcode
+                                        AND fcr.old_faculty = fpa.faculty
+        WHERE 
+            fcr.new_faculty = ?;
+    `;
+
+    try {
+        const [rows] = await db.query(query, [facultyId]);
+
+        // Parse the results
+        const allocations = rows.map(row => ({
+            semcode: row.semcode,
+            status: row.status,
+            semesterCode: row.semester_code,
+            courseName: row.course_name,
+            courseId: row.course,
+            courseCode: row.course_code,
+            paperCount: row.paper_count
+        }));
+
+        res.status(200).json({ results: allocations });
+    } catch (error) {
+        console.error('Error fetching new faculty allocations:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+
+
 router.get('/allocations/faculty/:facultyId', async (req, res) => {
     const { facultyId } = req.params;
 
