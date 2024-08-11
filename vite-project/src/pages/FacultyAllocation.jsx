@@ -24,44 +24,119 @@ import 'react-toastify/dist/ReactToastify.css';
 const FacultyAllocationTable = ({ selectedSemesterCode, courses }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [allocations, setAllocations] = useState({});
+  const [paperCounts, setPaperCounts] = useState([]); // New state for paper counts
 
-  const handleInputChange = (event, courseName, faculty, index) => {
-    const value = Math.max(0, parseInt(event.target.value) || 0);
-    const courseAllocations = allocations[courseName] || {};
+  useEffect(() => {
+    const fetchPaperCount = async () => {
+      if (courses[currentPage]) {
+        const { courseId } = courses[currentPage];
+        try {
+          const response = await axios.get(`${apiHost}/api/paperCount`, {
+            params: {
+              course: courseId,
+              semcode: selectedSemesterCode.value, // Adjust this if needed
+            },
+          });
+          setPaperCounts(response.data.results); // Set the paper counts from API response
+        } catch (error) {
+          console.error('Error fetching paper count:', error);
+          toast.error('Error fetching paper count.');
+        }
+      }
+    };
+
+    fetchPaperCount();
+  }, [currentPage, selectedSemesterCode, courses]); // Depend on currentPage and selectedSemesterCode
+
+  const handleInputChange = (event, courseName, facultyId, facultyName, courseId, index) => {
+    const value = parseInt(event.target.value) || 0; // Allow negative values for direct input
+    const courseAllocations = allocations[courseId] || {};
     const facultyCount = courses[currentPage].faculties.length;
 
     // Ensure the value is in multiples of 25
     let allocationValue = Math.ceil(value / 25) * 25;
+    if (allocationValue - value === 1) {
+      allocationValue = Math.max(Math.floor(value / 25) * 25, 0);
+    }
+    // Create a copy of the current allocations to modify
+    let newAllocations = { ...courseAllocations };
 
     // Update allocation for the selected faculty
-    let newAllocations = { ...courseAllocations, [faculty]: allocationValue };
+    newAllocations[facultyId] = allocationValue;
 
     // Recalculate allocations for all except the last faculty
     let sumAllocations = 0;
     for (let i = 0; i < facultyCount - 1; i++) {
-        const currentFaculty = courses[currentPage].faculties[i];
-        sumAllocations += newAllocations[currentFaculty] || 0;
+      const currentFacultyId = courses[currentPage].faculties[i].facultyId;
+      sumAllocations += newAllocations[currentFacultyId] || 0;
     }
 
     // Calculate remaining papers for the last faculty
     const remainingPapers = courses[currentPage].paperCount - sumAllocations;
-    const lastFaculty = courses[currentPage].faculties[facultyCount - 1];
+    const lastFacultyId = courses[currentPage].faculties[facultyCount - 1].facultyId;
 
+    // Check if the total allocation exceeds the paper count
     if (remainingPapers < 0) {
-        toast.error(`Total allocation exceeds the paper count.`);
-        return;
+      toast.error(`Total allocation exceeds the paper count.`);
+      return;
     }
 
-    // Update the last faculty's allocation with the remaining papers
-    newAllocations[lastFaculty] = remainingPapers;
+    // Update last faculty's allocation based on remaining papers
+    newAllocations[lastFacultyId] = Math.max(0, remainingPapers); // Ensure it's non-negative
 
     // Update the state with the new allocations
     setAllocations(prev => ({
-        ...prev,
-        [courseName]: newAllocations,
+      ...prev,
+      [courseId]: newAllocations,
     }));
-};
+  };
 
+  const handleAllocate = async (courseId, facultyId, paperCount, AllocationSum) => {
+    const allocationValue = allocations[courseId]?.[facultyId];
+
+    if (allocationValue > 0) {
+      try {
+        const response = await axios.post(`${apiHost}/api/allocateFaculty`, [{
+          facultyId,
+          courseId,
+          paperCount: allocationValue,
+          semCode: selectedSemesterCode.value,
+        }]);
+
+        toast.success(response.data.message || 'Faculty allocated successfully.');
+      } catch (error) {
+        toast.error('Error allocating faculty: ' + (error.response?.data?.message || 'Unknown error'));
+      }
+    } else {
+      if (AllocationSum === paperCount) {
+        // Logic for when allocation matches paper count can be added here
+      } else {
+        toast.error('Allocation value must be greater than zero.');
+      }
+    }
+  };
+
+  const handleAllocateAll = async (courseId, faculties, paperCount) => {
+    let AllocationSum = 0;
+    Object.values(allocations[courseId]).forEach(v => {
+      AllocationSum += v;
+    });
+    if (AllocationSum !== paperCount) {
+      toast.error('Error allocating all faculties.');
+      return;
+    }
+    try {
+      for (const faculty of faculties) {
+        await handleAllocate(courseId, faculty.facultyId, paperCount, AllocationSum);
+      }
+    } catch (error) {
+      if (AllocationSum === paperCount) {
+        // Logic for successful allocation
+      } else {
+        toast.error('Error allocating all faculties.');
+      }
+    }
+  };
 
   const handlePageChange = (event, value) => {
     setCurrentPage(value - 1);
@@ -78,51 +153,78 @@ const FacultyAllocationTable = ({ selectedSemesterCode, courses }) => {
         <Table style={{ borderCollapse: 'collapse' }}>
           <TableHead sx={{ backgroundColor: "#0d0030", color: "white", fontWeight: "bold" }}>
             <TableRow>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Course</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Paper Count</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" rowSpan={2} style={{ border: '1px solid black' }}>Course</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" rowSpan={2} style={{ border: '1px solid black' }}>Paper Count</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" rowSpan={2} style={{ border: '1px solid black' }}>Added Paper Count</TableCell> {/* New Column */}
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Faculty</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Allocation</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {currentCourse && currentCourse.faculties.map((faculty, i) => (
-              <TableRow key={i}>
-                {i === 0 && (
+            {currentCourse && currentCourse.faculties.map((faculty) => (
+              <TableRow key={faculty.facultyId}>
+                {currentCourse.faculties.indexOf(faculty) === 0 && (
                   <>
-                    <TableCell rowSpan={currentCourse.faculties.length} align="center" style={{ border: '1px solid black' }}>{currentCourse.courseName}</TableCell>
-                    <TableCell rowSpan={currentCourse.faculties.length} align="center" style={{ border: '1px solid black' }}>{currentCourse.paperCount}</TableCell>
+                    <TableCell rowSpan={currentCourse.faculties.length} align="center" style={{ border: '1px solid black' }}>
+                      {currentCourse.courseName}
+                    </TableCell>
+                    <TableCell rowSpan={currentCourse.faculties.length} align="center" style={{ border: '1px solid black' }}>
+                      {currentCourse.paperCount}
+                    </TableCell>
+                    <TableCell rowSpan={currentCourse.faculties.length} align="center" style={{ border: '1px solid black' }}>
+                      {paperCounts[currentCourse.courseId] || 0} {/* Displaying added paper count */}
+                    </TableCell>
                   </>
                 )}
-                <TableCell align="center" style={{ border: '1px solid black' }}>{faculty}</TableCell>
+                <TableCell align="center" style={{ border: '1px solid black' }}>{faculty.facultyName}</TableCell>
                 <TableCell align="center" style={{ border: '1px solid black' }}>
                   <TextField
                     type="number"
                     size="small"
                     variant="outlined"
-                    value={allocations[currentCourse.courseName]?.[faculty] || ''}
-                    onChange={(e) => handleInputChange(e, currentCourse.courseName, faculty, i)}
-                    disabled={i === currentCourse.faculties.length - 1} // Disable the input for the last faculty
+                    value={allocations[currentCourse.courseId]?.[faculty.facultyId] || ''}
+                    onChange={(e) => handleInputChange(e, currentCourse.courseName, faculty.facultyId, faculty.facultyName, currentCourse.courseId)}
                   />
                 </TableCell>
                 <TableCell align="center" style={{ border: '1px solid black' }}>
-                  <Button variant="contained" color="primary">Allocate</Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleAllocate(currentCourse.courseId, faculty.facultyId, currentCourse.paperCount)}
+                  >
+                    Allocate
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
+            {currentCourse && (
+              <TableRow>
+                <TableCell colSpan={5} align="right" style={{ border: '1px solid black' }}>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => handleAllocateAll(currentCourse.courseId, currentCourse.faculties, currentCourse.paperCount)}
+                  >
+                    Allocate All
+                  </Button>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
-      <Pagination
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]} // Options for rows per page
         count={courses.length}
-        page={currentPage + 1}
-        onChange={handlePageChange}
-        color="primary"
-        style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}
+        rowsPerPage={5} // Default rows per page
+        page={currentPage}
+        onPageChange={handlePageChange}
       />
     </div>
   );
 };
+
 
 const FacultyUploadTable = ({ headers, data, onCancel, onSubmit }) => {
   const [page, setPage] = useState(0);

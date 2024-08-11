@@ -79,8 +79,8 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
         
         // If semcode does not exist, return an error response
         if (semcodeCheck[0].count === 0) {
-            console.log("No Eligible Faculty")
-            return res.status(404).json({ message: 'No Eligible Faculty. So Upload Eligible faculty List' });
+            console.log("No Eligible Faculty");
+            return res.status(404).json({ message: 'No Eligible Faculty. So Upload Eligible Faculty List' });
         }
 
         // Proceed to fetch the courses if semcode exists
@@ -90,6 +90,7 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
                 bcm.paper_count,
                 mc.id AS course_id,
                 mc.course_name, 
+                mf.id AS faculty_id,
                 mf.name AS faculty_name
             FROM 
                 board_course_mapping bcm
@@ -109,29 +110,35 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
 
         // Parse the data to fit the structure needed by the React component
         const courses = {};
-        
+
         rows.forEach(row => {
-            const { course_name, faculty_name,paper_count } = row;
+            const { course_id, course_name, faculty_id, faculty_name, paper_count } = row;
             if (!courses[course_name]) {
                 courses[course_name] = {
+                    courseId: course_id,
                     courseName: course_name,
                     paperCount: paper_count,
                     department: `Department ${departmentId}`,
                     faculties: []
                 };
             }
-            courses[course_name].faculties.push(faculty_name);
+            courses[course_name].faculties.push({
+                facultyId: faculty_id,
+                facultyName: faculty_name
+            });
         });
 
         // Convert the courses object to an array
         const parsedCourses = Object.values(courses);
-    console.log(parsedCourses)
+
+        console.log(parsedCourses);
         res.status(200).json({ results: parsedCourses });
     } catch (error) {
         console.error('Error fetching courses:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
 
 // POST route to upload eligible faculty data
 router.post('/uploadEligibleFaculty', async (req, res) => {
@@ -172,8 +179,299 @@ router.post('/uploadEligibleFaculty', async (req, res) => {
     }
 });
 
-// Export the router
-module.exports = router;
+router.post('/allocateFaculty', async (req, res) => {
+    const { facultyId, courseId, paperCount, semCode } = req.body[0];
+
+    if (facultyId == null || courseId == null || paperCount == null || semCode == null) {
+        return res.status(400).json({ message: 'All fields are required: faculty, course, paper_count, and semCode' });
+    }
+
+    const checkQuery = `
+        SELECT * FROM faculty_paper_allocation 
+        WHERE faculty = ? AND course = ? AND semcode = ?
+    `;
+
+    try {
+        const [existingAllocations] = await db.query(checkQuery, [facultyId, courseId, semCode]);
+
+        if (existingAllocations.length > 0) {
+            // Record already exists, ignore insertion
+            return res.status(200).json({ message: 'Allocation already exists. Ignored.' });
+        }
+
+        const insertQuery = `
+            INSERT INTO faculty_paper_allocation (faculty, course, paper_count, semcode) 
+            VALUES (?, ?, ?, ?)
+        `;
+        const [insertResult] = await db.query(insertQuery, [facultyId, courseId, paperCount, semCode]);
+        res.status(201).json({ message: 'Faculty paper allocation added successfully', allocationId: insertResult.insertId });
+
+    } catch (error) {
+        console.error('Error processing faculty paper allocation:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+// Add this route to your existing Express router
+
+// GET route to retrieve faculty and course information based on department
+router.get('/facultyPaperAllocationRequests', async (req, res) => {
+
+    const query = `
+        SELECT 
+    GROUP_CONCAT(
+        CONCAT(
+            c.id, ':',
+            c.course_name, ':',
+            c.course_code
+        ) 
+        SEPARATOR '|'
+    ) AS course_info,
+    GROUP_CONCAT(
+        CONCAT(
+            f.id, ':', f.faculty_id, ':', f.name, ':', fa.paper_count
+        ) 
+        SEPARATOR '|'
+    ) AS faculty_info,
+    SUM(fa.paper_count) AS paperCount,
+    h.id AS hod_id,
+    h.faculty AS hod_faculty_id,
+    hf.name AS hod_name,
+    fa.semcode  -- Include semcode in the SELECT statement
+FROM 
+    faculty_paper_allocation fa
+JOIN 
+    master_faculty f ON fa.faculty = f.id
+JOIN 
+    master_courses c ON fa.course = c.id
+JOIN 
+    board_course_mapping bcm ON c.id = bcm.course
+JOIN 
+    master_hod h ON bcm.department = h.department
+JOIN 
+    master_faculty hf ON h.faculty = hf.id
+WHERE 
+    fa.status = '0' 
+GROUP BY 
+    h.id,    -- Group by HOD information
+    fa.semcode  -- Group by semcode as well
+ORDER BY 
+    h.id;  -- Order by HOD id or any other relevant field
+    `;
+
+    try {
+        const [rows] = await db.query(query);
+
+        // Parse the results
+        const parsedResults = rows.map(row => ({
+            hodId: row.hod_id,
+            hodFacultyId: row.hod_faculty_id,
+            hodName: row.hod_name,
+            semCode : row.semcode,
+            paperCount: row.paperCount,
+            courseInfo: row.course_info ? row.course_info.split('|').map(course => {
+                const [id, name, code] = course.split(':');
+                return { id, name, code };
+            }) : [],
+            facultyInfo: row.faculty_info ? row.faculty_info.split('|').map(faculty => {
+                const [id, facultyId, name, paperCount] = faculty.split(':');
+                return { id, facultyId, name, paperCount };
+            }) : []
+        }));
+
+        res.status(200).json({ results: parsedResults });
+    } catch (error) {
+        console.error('Error fetching faculty and course information:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+// Add this route to your existing Express router
+
+// GET route to retrieve allocation details based on HOD ID
+router.get('/allocations/hod/:hodId', async (req, res) => {
+    const { hodId } = req.params;
+
+    const query = `
+        SELECT 
+            fa.id,
+            fa.faculty,
+            fa.course,
+            fa.paper_count,
+            fa.semcode,
+            fa.status,
+            f.faculty_id,
+            f.name AS faculty_name,
+            c.course_name,
+            c.course_code,
+            h.id AS hod_id
+        FROM 
+            faculty_paper_allocation fa
+        JOIN 
+            master_faculty f ON fa.faculty = f.id
+        JOIN 
+            master_courses c ON fa.course = c.id
+        JOIN 
+            board_course_mapping bcm ON c.id = bcm.course
+        JOIN 
+            master_hod h ON bcm.department = h.department
+        WHERE 
+            h.id = ? AND fa.status = '0'  -- Filter for the specific HOD and active allocations
+        ORDER BY 
+            fa.id;  -- Order by allocation ID or any other relevant field
+    `;
+
+    try {
+        const [rows] = await db.query(query, [hodId]);
+
+        // Parse the results
+        const parsedResults = rows.map(row => ({
+            allocationId: row.id,
+            facultyId: row.faculty,
+            facultyDetails: {
+                facultyId: row.faculty_id,
+                facultyName: row.faculty_name
+            },
+            courseDetails: {
+                courseId: row.course,
+                courseName: row.course_name,
+                courseCode: row.course_code
+            },
+            paperCount: row.paper_count,
+            semesterCode: row.semcode,
+            status: row.status,
+            hodId: row.hod_id
+        }));
+
+        res.status(200).json({ results: parsedResults });
+    } catch (error) {
+        console.error('Error fetching faculty paper allocations:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+// PUT route to change the status of faculty paper allocation based on facultyId and courseId
+router.put('/facultyPaperAllocation/status', async (req, res) => {
+    const { facultyId, courseId, status,semCode } = req.body; // Get facultyId, courseId, and new status from the request body
+    console.log(req.body)
+    // Validate the input
+    if (facultyId == null || courseId == null || status == null || typeof status !== 'number') {
+        return res.status(400).json({ message: 'Invalid input. Faculty ID, Course ID, and Status are required.' });
+    }
+
+    // Update query to change the status based on facultyId and courseId
+    const updateQuery = `
+        UPDATE faculty_paper_allocation
+        SET status = '?'
+        WHERE faculty = ? AND course = ? AND semcode =?
+    `;
+
+    try {
+        const [updateResult] = await db.query(updateQuery, [status, facultyId, courseId,semCode]);
+
+        // Check if any rows were affected
+        if (updateResult.affectedRows === 0) {
+            return res.status(404).json({ message: 'Allocation not found for the specified faculty and course.' });
+        }
+
+        res.status(200).json({ message: 'Status updated successfully.' });
+    } catch (error) {
+        console.error('Error updating status:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+
+router.get('/allocations/faculty/:facultyId', async (req, res) => {
+    const { facultyId } = req.params;
+
+    const query = `
+       SELECT 
+    fpa.semcode,
+    fpa.course,
+    mc.course_name,
+    mc.course_code,
+    fpa.paper_count,
+    fpa.status,
+    ms.semcode AS semester_code
+FROM 
+    faculty_paper_allocation fpa
+JOIN 
+    master_courses mc ON fpa.course = mc.id
+JOIN 
+    master_semcode ms ON fpa.semcode = ms.id
+WHERE 
+    fpa.faculty = ?;
+    `;
+
+    try {
+        const [rows] = await db.query(query, [facultyId]);
+
+        // Parse the results
+        const allocations = rows.map(row => ({
+            semcode: row.semcode,
+            status:row.status,
+            semesterCode :row.semester_code,
+            courseName: row.course_name,
+            courseId:row.course,
+            courseCode: row.course_code,
+            paperCount: row.paper_count
+        }));
+
+        res.status(200).json({ results: allocations });
+    } catch (error) {
+        console.error('Error fetching allocations:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+// GET route to retrieve paper count based on various parameters
+router.get('/paperCount', async (req, res) => {
+    const { faculty, course, semcode, status } = req.query;
+    console.log(req.query)
+    // Constructing the base query
+    let query = `
+        SELECT paper_count 
+        FROM faculty_paper_allocation 
+        WHERE 1=1
+    `;
+    
+    const params = [];
+
+    // Adding conditions based on provided query parameters
+    if (faculty) {
+        query += ' AND faculty = ?';
+        params.push(faculty);
+    }
+    if (course) {
+        query += ' AND course = ?';
+        params.push(course);
+    }
+    if (semcode) {
+        query += ' AND semcode = ?';
+        params.push(semcode);
+    }
+    if (status) {
+        query += ' AND status = ?';
+        params.push(status);
+    }
+
+    try {
+        const [rows] = await db.query(query, params);
+
+        // Check if any rows were returned
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'No allocations found for the specified criteria.' });
+        }
+
+        // Return the paper counts
+        const paperCounts = rows.map(row => row.paper_count);
+        res.status(200).json({ results: paperCounts });
+    } catch (error) {
+        console.error('Error fetching paper count:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
 
 // Export the router
 module.exports = router;
