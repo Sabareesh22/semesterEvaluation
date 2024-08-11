@@ -489,20 +489,20 @@ router.get('/paperCount', async (req, res) => {
 
 
 router.post('/facultyChangeRequests', async (req, res) => {
-    const { faculty, course, semcode, remark, status } = req.body;
+    const { old_faculty,new_faculty, course, semcode,remark } = req.body;
 
     // Validate the input
-    if (faculty == null || course == null || semcode == null || status == null) {
-        return res.status(400).json({ message: 'All fields are required: faculty, course, semcode, and status' });
+    if (old_faculty == null||new_faculty==null || course == null || semcode == null ) {
+        return res.status(400).json({ message: 'All fields are required: faculty, course, semcode' });
     }
 
     const insertQuery = `
-        INSERT INTO faculty_change_requests (faculty, course, semcode, remark, status) 
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO faculty_change_requests (old_faculty,new_faculty, course, semcode,remark) 
+        VALUES (?,?, ?, ?,?)
     `;
     
     try {
-        const values = [faculty, course, semcode, remark, status];
+        const values = [old_faculty,new_faculty, course, semcode,remark];
         const [insertResult] = await db.query(insertQuery, values);
         
         res.status(201).json({ message: 'Faculty change request added successfully', requestId: insertResult.insertId });
@@ -588,5 +588,52 @@ router.get('/facultyReplaceSuggest', async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
+
+router.get('/check-old-faculty', async (req, res) => {
+    const { old_faculty, semcode } = req.query;
+     console.log(req.query)
+    // SQL query to get the status of old_faculty for the given semcode
+    const checkFacultyQuery = `
+        SELECT status 
+        FROM faculty_change_requests 
+        WHERE old_faculty = ? 
+        AND semcode = ?
+        LIMIT 1;
+    `;
+
+    try {
+        const [result] = await db.query(checkFacultyQuery, [old_faculty, semcode]);
+
+        if (result.length === 0) {
+            return res.status(200).json({ code: 0, message: 'No record found for the given old_faculty and semcode.' });
+        }
+
+        const status = result[0].status;
+        let code;
+
+        switch (status) {
+            case '0':
+                code = 1;
+                break;
+            case '1':
+                code = 2;
+                break;
+            case '2':
+                code = 3;
+                break;
+            default:
+                code = 0;
+                break;
+        }
+        console.log("code : "+code)
+        res.status(200).json({ code, message: `Status code: ${code}` });
+    } catch (error) {
+        console.error('Error checking old faculty status:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+
 // Export the router
 module.exports = router;

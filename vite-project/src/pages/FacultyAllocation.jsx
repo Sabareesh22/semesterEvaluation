@@ -7,6 +7,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Typography,
   Button,
   IconButton,
   TablePagination,
@@ -30,14 +31,14 @@ const FacultyAllocationTable = ({ selectedSemesterCode, courses }) => {
   const [paperCounts, setPaperCounts] = useState([]); // New state for paper counts
   const [openModal, setOpenModal] = useState(false);
   const [suggestedFaculties, setSuggestedFaculties] = useState([]); // New state for storing suggested faculties
-
+  const [oldFaculty, setOldFaculty] = useState(null);
 const [selectedFaculty, setSelectedFaculty] = useState(null);
 const [selectedReason, setSelectedReason] = useState('');
+const [facultyStatuses, setFacultyStatuses] = useState({});
 const [currentRow, setCurrentRow] = useState(null); // To track which row is being edited
 const handleOpenModal = async (facultyId, courseId) => {
-  setSelectedFaculty(facultyId);
-  setCurrentRow({ facultyId, courseId }); // Store current row info
-  
+  setOldFaculty(facultyId); // Store the old faculty
+  setCurrentRow({ facultyId, courseId });
   try {
     // Fetch suggested faculties from the API
     const response = await axios.get(`${apiHost}/api/facultyReplaceSuggest`, {
@@ -63,46 +64,83 @@ const handleCloseModal = () => {
   setSelectedReason('');
 };
 const handleSubmit = async () => {
-  // Add your logic for submitting the replacement here
-  // Use currentRow to get the courseId and facultyId
-  // Example: await axios.post('your_api_endpoint', { facultyId: selectedFaculty, reason: selectedReason });
+  try {
+    const response = await axios.post(`${apiHost}/api/facultyChangeRequests`, {
+      old_faculty: selectedFaculty,
+      new_faculty: currentRow.facultyId, // Assuming old_faculty is the currently selected faculty in the row
+      course: currentRow.courseId,
+      semcode: selectedSemesterCode.value,
+      remark: selectedReason, // Include the reason as the remark
+    });
 
-  // Close the modal after submission
-  handleCloseModal();
+    toast.success('Faculty change request submitted successfully.');
+    handleCloseModal();
+  } catch (error) {
+    toast.error('Error submitting faculty change request: ' + (error.response?.data?.message || 'Unknown error'));
+  }
 };
 
-  useEffect(() => {
-    const fetchPaperCounts = async () => {
-      const newPaperCounts = {};
-  
-      if (courses.length > 0) {
-        for (const course of courses) {
-          const { courseId, faculties } = course;
-  
-          for (const faculty of faculties) {
-            try {
-              const response = await axios.get(`${apiHost}/api/paperCount`, {
-                params: {
-                  course: courseId,
-                  facultyId: faculty.facultyId, // Send facultyId here
-                  semcode: selectedSemesterCode.value,
-                },
-              });
-              // Store the paper count for the specific faculty
-              newPaperCounts[faculty.facultyId] = response.data.results; // Store paper count by facultyId
-            } catch (error) {
-              // console.error('Error fetching paper count:', error);
-              // toast.error('Error fetching paper count.');
-            }
+
+useEffect(() => {
+  const fetchPaperCounts = async () => {
+    const newPaperCounts = {};
+
+    if (courses.length > 0) {
+      for (const course of courses) {
+        const { courseId, faculties } = course;
+
+        for (const faculty of faculties) {
+          try {
+            const response = await axios.get(`${apiHost}/api/paperCount`, {
+              params: {
+                course: courseId,
+                facultyId: faculty.facultyId, // Send facultyId here
+                semcode: selectedSemesterCode.value,
+              },
+            });
+            // Store the paper count for the specific faculty
+            newPaperCounts[faculty.facultyId] = response.data.results; // Store paper count by facultyId
+          } catch (error) {
+            // console.error('Error fetching paper count:', error);
+            // toast.error('Error fetching paper count.');
           }
         }
       }
-  
-      setPaperCounts(newPaperCounts); // Update state with paper counts
-    };
-  
-    fetchPaperCounts();
-  }, [selectedSemesterCode, courses]);
+    }
+
+    setPaperCounts(newPaperCounts); // Update state with paper counts
+  };
+
+  fetchPaperCounts();
+  const fetchFacultyStatuses = async () => {
+    const newStatuses = {};
+
+    if (courses.length > 0) {
+      for (const course of courses) {
+        for (const faculty of course.faculties) {
+          try {
+            const response = await axios.get(`${apiHost}/api/check-old-faculty`, {
+              params: {
+                old_faculty: faculty.facultyId,
+                semcode: selectedSemesterCode.value,
+              },
+            });
+            console.log(response.data.code)
+            newStatuses[faculty.facultyId] = response.data.code;
+            console.log(newStatuses)
+          } catch (error) {
+            console.error('Error fetching faculty status:', error);
+            toast.error('Error fetching faculty status.');
+          }
+        }
+      }
+    }
+
+    setFacultyStatuses(newStatuses); // Update state with fetched statuses
+  };
+
+  fetchFacultyStatuses();
+}, [selectedSemesterCode, courses]);
   
 
   const handleInputChange = (event, courseName, facultyId, facultyName, courseId, index) => {
@@ -175,9 +213,14 @@ const handleSubmit = async () => {
 
   const handleAllocateAll = async (courseId, faculties, paperCount) => {
     let AllocationSum = 0;
-    Object.values(allocations[courseId]).forEach(v => {
-      AllocationSum += v;
-    });
+    try {
+      Object.values(allocations[courseId]).forEach(v => {
+        AllocationSum += v;
+      });
+    } catch (error) {
+      toast.error('Please Allocate Something');
+    }
+   
     if (AllocationSum !== paperCount) {
       toast.error('Error allocating all faculties.');
       return;
@@ -219,45 +262,83 @@ const handleSubmit = async () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {courses.slice(currentPage * 1, currentPage * 1 + 1).map((course, index) => (
-              course.faculties.map((faculty, i) => (
-                <TableRow key={faculty.facultyId}>
-                  {i === 0 && (
-                    <>
-                      <TableCell rowSpan={course.faculties.length} align="center" style={{ border: '1px solid black' }}>
-                        {course.courseName}
-                      </TableCell>
-                      <TableCell rowSpan={course.faculties.length} align="center" style={{ border: '1px solid black' }}>
-                        {course.paperCount}
-                      </TableCell>
-                      
-                    </>
-                  )}
-                  <TableCell align="center" style={{ border: '1px solid black' }}>{faculty.facultyName}</TableCell>
-                  <TableCell align="center" style={{ border: '1px solid black' }}>
-                    <TextField
-                      type="number"
-                      size="small"
-                      variant="outlined"
-                      value={allocations[course.courseId]?.[faculty.facultyId] || ''}
-                      onChange={(e) => handleInputChange(e, course.courseName, faculty.facultyId, faculty.facultyName, course.courseId)}
-                      placeholder={paperCounts[faculty.facultyId]?.length>0?paperCounts[faculty.facultyId][i]:0}
-                    />
-                  </TableCell>
-                  <TableCell align="center" style={{ border: '1px solid black' }}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => handleAllocate(course.courseId, faculty.facultyId, course.paperCount)}
-                    >
-                      Allocate
-                    </Button>
-                  </TableCell>
-                  <TableCell align="center" style={{ border: '1px solid black' }}>
-  <IconButton onClick={() => handleOpenModal(faculty.facultyId, course.courseId, '')}>
-    <RotateLeftIcon />
-  </IconButton>
-</TableCell>
+  {courses.slice(currentPage * 1, currentPage * 1 + 1).map((course, index) => (
+    course.faculties.map((faculty, i) => (
+      <TableRow key={faculty.facultyId}>
+        {i === 0 && (
+          <>
+            <TableCell rowSpan={course.faculties.length} align="center" style={{ border: '1px solid black' }}>
+              {course.courseName}
+            </TableCell>
+            <TableCell rowSpan={course.faculties.length} align="center" style={{ border: '1px solid black' }}>
+              {course.paperCount}
+            </TableCell>
+          </>
+        )}
+        <TableCell align="center" style={{ border: '1px solid black' }}>{faculty.facultyName}</TableCell>
+        <TableCell align="center" style={{ border: '1px solid black' }}>
+          {console.log(paperCounts)}
+          <TextField
+            type="number"
+            size="small"
+            disabled={facultyStatuses[faculty.facultyId] !== 0}
+            variant="outlined"
+            value={allocations[course.courseId]?.[faculty.facultyId] || ''}
+            onChange={(e) => handleInputChange(e, course.courseName, faculty.facultyId, faculty.facultyName, course.courseId)}
+            placeholder={paperCounts[faculty.facultyId]?.length > 0 ? paperCounts[faculty.facultyId][i] : 0}
+          />
+        </TableCell>
+             <TableCell align="center" style={{ border: '1px solid black' }}>
+             {facultyStatuses[faculty.facultyId] === 0 ? 
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleAllocate(course.courseId, faculty.facultyId, course.paperCount)}
+          >
+            Allocate
+          </Button> : <Typography  variant="body1" color="red">
+              Cannot Allocate While Change Request is active
+            </Typography>
+}
+        </TableCell>
+
+        <TableCell align="center" style={{ border: '1px solid black' }}>
+          {facultyStatuses[faculty.facultyId] === 1 && (
+            <Typography variant="body1" color="red">
+              Replace request active - Faculty Approval Pending
+            </Typography>
+          )}
+          {facultyStatuses[faculty.facultyId] === 2 && (
+            <Typography variant="body1" color="red">
+              Replace request active - initiated COE approval pending
+            </Typography>
+          )}
+          {(facultyStatuses[faculty.facultyId] === 0 || !facultyStatuses[faculty.facultyId]) && (
+            <IconButton onClick={() => handleOpenModal(faculty.facultyId, course.courseId)}>
+              <RotateLeftIcon />
+            </IconButton>
+          )}
+        </TableCell>
+      </TableRow>
+      
+    ))
+  ))}
+  {console.log(currentCourse)}
+   {currentCourse && (
+              <TableRow>
+                <TableCell colSpan={6} align="center" style={{ border: '1px solid black' }}>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => handleAllocateAll(currentCourse.courseId, currentCourse.faculties, currentCourse.paperCount)}
+                  >
+                    Allocate All
+                  </Button>
+                </TableCell>
+              </TableRow>
+            )}
+</TableBody>
+
 <Modal
       open={openModal}
       onClose={handleCloseModal}
@@ -286,44 +367,29 @@ const handleSubmit = async () => {
         {}
         <Select
   placeholder="Select Faculty"
-  value={selectedFaculty}
-  onChange={setSelectedFaculty}
-  options={suggestedFaculties} // Use the suggested faculties here
+  value={suggestedFaculties.find(fac => fac.value === selectedFaculty)}
+  onChange={option => setSelectedFaculty(option.value)}
+  options={suggestedFaculties}
   styles={{ container: (provided) => ({ ...provided, width: '100%' }) }}
 />
 
 
-        <TextField
-          placeholder='Reason'
-         
-          onChange={(e) => setReason(e.target.value)}
-          variant="outlined"
-          margin="normal"
-          fullWidth
-        />
+
+<TextField
+  placeholder='Reason'
+  value={selectedReason}
+  onChange={(e) => setSelectedReason(e.target.value)} // Change this line
+  variant="outlined"
+  margin="normal"
+  fullWidth
+/>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
           <Button variant="outlined" color="secondary" onClick={handleCloseModal} style={{ marginRight: '10px' }}>Cancel</Button>
           <Button variant="contained" color="primary" onClick={handleSubmit}>Submit</Button>
         </div>
       </div>
     </Modal>
-                </TableRow>
-              ))
-            ))}
-            {currentCourse && (
-              <TableRow>
-                <TableCell colSpan={5} align="right" style={{ border: '1px solid black' }}>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={() => handleAllocateAll(currentCourse.courseId, currentCourse.faculties, currentCourse.paperCount)}
-                  >
-                    Allocate All
-                  </Button>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
+              
         </Table>
       </TableContainer>
       <TablePagination
@@ -336,7 +402,6 @@ const handleSubmit = async () => {
     </div>
   );
 };
-
 
 const FacultyUploadTable = ({ headers, data, onCancel, onSubmit }) => {
   const [page, setPage] = useState(0);
