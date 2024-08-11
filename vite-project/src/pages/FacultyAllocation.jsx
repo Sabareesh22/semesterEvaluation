@@ -12,6 +12,9 @@ import {
   TablePagination,
   TextField,
 } from '@mui/material';
+import { Modal, Box } from '@mui/material';
+import RotateLeftIcon from '@mui/icons-material/RotateLeft';
+import CloseIcon from '@mui/icons-material/Close';
 import Select from 'react-select';
 import axios from 'axios';
 import apiHost from '../../config/config';
@@ -25,6 +28,48 @@ const FacultyAllocationTable = ({ selectedSemesterCode, courses }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [allocations, setAllocations] = useState({});
   const [paperCounts, setPaperCounts] = useState([]); // New state for paper counts
+  const [openModal, setOpenModal] = useState(false);
+  const [suggestedFaculties, setSuggestedFaculties] = useState([]); // New state for storing suggested faculties
+
+const [selectedFaculty, setSelectedFaculty] = useState(null);
+const [selectedReason, setSelectedReason] = useState('');
+const [currentRow, setCurrentRow] = useState(null); // To track which row is being edited
+const handleOpenModal = async (facultyId, courseId) => {
+  setSelectedFaculty(facultyId);
+  setCurrentRow({ facultyId, courseId }); // Store current row info
+  
+  try {
+    // Fetch suggested faculties from the API
+    const response = await axios.get(`${apiHost}/api/facultyReplaceSuggest`, {
+      params: {
+        courseId: courseId,
+        semcode: selectedSemesterCode.value,
+        facultyId: facultyId,
+      },
+    });
+
+    // Set the fetched faculties as options in the select
+    setSuggestedFaculties(response.data.results.map(fac => ({ value: fac.id, label: fac.name })));
+  } catch (error) {
+    toast.error('Error fetching suggested faculties: ' + (error.response?.data?.message || 'Unknown error'));
+  }
+  
+  setOpenModal(true);
+};
+
+const handleCloseModal = () => {
+  setOpenModal(false);
+  setSelectedFaculty(null);
+  setSelectedReason('');
+};
+const handleSubmit = async () => {
+  // Add your logic for submitting the replacement here
+  // Use currentRow to get the courseId and facultyId
+  // Example: await axios.post('your_api_endpoint', { facultyId: selectedFaculty, reason: selectedReason });
+
+  // Close the modal after submission
+  handleCloseModal();
+};
 
   useEffect(() => {
     const fetchPaperCounts = async () => {
@@ -170,7 +215,7 @@ const FacultyAllocationTable = ({ selectedSemesterCode, courses }) => {
              
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Faculty</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Allocation</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}></TableCell>
+              <TableCell colSpan={2} sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}> Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -208,6 +253,60 @@ const FacultyAllocationTable = ({ selectedSemesterCode, courses }) => {
                       Allocate
                     </Button>
                   </TableCell>
+                  <TableCell align="center" style={{ border: '1px solid black' }}>
+  <IconButton onClick={() => handleOpenModal(faculty.facultyId, course.courseId, '')}>
+    <RotateLeftIcon />
+  </IconButton>
+</TableCell>
+<Modal
+      open={openModal}
+      onClose={handleCloseModal}
+      aria-labelledby="modal-title"
+      aria-describedby="modal-description"
+    >
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 400, // You can adjust this width as needed
+        backgroundColor: 'white',
+        border: '2px solid #000',
+        boxShadow: 24,
+        padding: '20px',
+        borderRadius: '8px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        <h2 id="modal-title">Select Faculty and Reason</h2>
+        <CloseIcon style={{ cursor: 'pointer', position: 'absolute', top: '10px', right: '10px' }} onClick={handleCloseModal} />
+        <br></br>
+        {}
+        <Select
+  placeholder="Select Faculty"
+  value={selectedFaculty}
+  onChange={setSelectedFaculty}
+  options={suggestedFaculties} // Use the suggested faculties here
+  styles={{ container: (provided) => ({ ...provided, width: '100%' }) }}
+/>
+
+
+        <TextField
+          placeholder='Reason'
+         
+          onChange={(e) => setReason(e.target.value)}
+          variant="outlined"
+          margin="normal"
+          fullWidth
+        />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+          <Button variant="outlined" color="secondary" onClick={handleCloseModal} style={{ marginRight: '10px' }}>Cancel</Button>
+          <Button variant="contained" color="primary" onClick={handleSubmit}>Submit</Button>
+        </div>
+      </div>
+    </Modal>
                 </TableRow>
               ))
             ))}

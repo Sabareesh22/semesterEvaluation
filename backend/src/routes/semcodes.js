@@ -554,6 +554,39 @@ router.put('/facultyChangeRequests/status', async (req, res) => {
     }
 });
 
+// GET route to retrieve faculty and semcode information
+router.get('/facultyReplaceSuggest', async (req, res) => {
+    const { courseId, semcode, facultyId } = req.query;
+     console.log(req.query)
+    // Validate the input
+    if (courseId == null || semcode == null || facultyId == null) {
+        return res.status(400).json({ message: 'courseId, semcode, and facultyId are required.' });
+    }
 
+    const query = `
+        SELECT f.id, f.faculty_id, CONCAT(f.name,' - ',ms.semcode) name 
+        FROM faculty_paper_allocation fpa
+        INNER JOIN master_faculty f ON fpa.faculty = f.id
+        INNER JOIN master_semcode ms ON ms.id = fpa.semcode
+        WHERE fpa.course = ? 
+          AND fpa.semcode != ? 
+          AND fpa.faculty != ?;
+    `;
+
+    try {
+        const [rows] = await db.query(query, [courseId, semcode, facultyId]);
+
+        // Check if any rows were returned
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'No matching faculty found.' });
+        }
+
+        // Send the results
+        res.status(200).json({ results: rows });
+    } catch (error) {
+        console.error('Error fetching faculty and semcode information:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
 // Export the router
 module.exports = router;
