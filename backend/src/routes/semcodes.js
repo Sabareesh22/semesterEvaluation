@@ -83,7 +83,7 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
             return res.status(404).json({ message: 'No Eligible Faculty. So Upload Eligible Faculty List' });
         }
 
-        // Proceed to fetch the courses if semcode exists
+        // Query to fetch the courses
         const query = `
             SELECT 
                 bcm.id,
@@ -108,6 +108,21 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
 
         const [rows] = await db.query(query, [departmentId]);
 
+        // Query to fetch eligible faculties
+        const eligibleFacultiesQuery = `
+            SELECT 
+                faculty AS faculty_id
+            FROM 
+                eligible_faculty
+            WHERE 
+                semcode = ? AND department = ?;
+        `;
+
+        const [eligibleRows] = await db.query(eligibleFacultiesQuery, [semcode, departmentId]);
+
+        // Create a set of eligible faculty IDs for quick lookup
+        const eligibleFacultyIds = new Set(eligibleRows.map(row => row.faculty_id));
+
         // Parse the data to fit the structure needed by the React component
         const courses = {};
 
@@ -122,10 +137,14 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
                     faculties: []
                 };
             }
-            courses[course_name].faculties.push({
-                facultyId: faculty_id,
-                facultyName: faculty_name
-            });
+
+            // Add faculty only if they are in the eligible faculty list
+            if (eligibleFacultyIds.has(faculty_id)) {
+                courses[course_name].faculties.push({
+                    facultyId: faculty_id,
+                    facultyName: faculty_name
+                });
+            }
         });
 
         // Convert the courses object to an array
@@ -251,7 +270,7 @@ JOIN
 JOIN 
     master_faculty hf ON h.faculty = hf.id
 WHERE 
-    fa.status = '0' 
+    fa.status = '1' 
 GROUP BY 
     h.id,    -- Group by HOD information
     fa.semcode  -- Group by semcode as well
@@ -427,11 +446,11 @@ WHERE
 
 // GET route to retrieve paper count based on various parameters
 router.get('/paperCount', async (req, res) => {
-    const { faculty, course, semcode, status } = req.query;
+    const { faculty, course, semcode } = req.query;
     console.log(req.query)
     // Constructing the base query
     let query = `
-        SELECT paper_count 
+        SELECT paper_count,status
         FROM faculty_paper_allocation 
         WHERE 1=1
     `;
@@ -451,18 +470,12 @@ router.get('/paperCount', async (req, res) => {
         query += ' AND semcode = ?';
         params.push(semcode);
     }
-    if (status) {
-        query += ' AND status = ?';
-        params.push(status);
-    }
 
     try {
         const [rows] = await db.query(query, params);
 
         // Check if any rows were returned
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'No allocations found for the specified criteria.' });
-        }
+       
 
         // Return the paper counts
         const paperCounts = rows.map(row => row.paper_count);
@@ -472,6 +485,75 @@ router.get('/paperCount', async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
+
+
+router.post('/facultyChangeRequests', async (req, res) => {
+    const { faculty, course, semcode, remark, status } = req.body;
+
+    // Validate the input
+    if (faculty == null || course == null || semcode == null || status == null) {
+        return res.status(400).json({ message: 'All fields are required: faculty, course, semcode, and status' });
+    }
+
+    const insertQuery = `
+        INSERT INTO faculty_change_requests (faculty, course, semcode, remark, status) 
+        VALUES (?, ?, ?, ?, ?)
+    `;
+    
+    try {
+        const values = [faculty, course, semcode, remark, status];
+        const [insertResult] = await db.query(insertQuery, values);
+        
+        res.status(201).json({ message: 'Faculty change request added successfully', requestId: insertResult.insertId });
+    } catch (error) {
+        console.error('Error inserting faculty change request:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+
+
+// PUT route to update the status of a faculty change request based on matching fields
+router.put('/facultyChangeRequests/status', async (req, res) => {
+    const { faculty, course, semcode, status } = req.body; // Get fields from the request body
+
+    // Validate the input
+    if (faculty == null || course == null || semcode == null || status == null) {
+        return res.status(400).json({ message: 'Faculty, course, semcode, and status are required.' });
+    }
+
+    // Query to find the record with matching fields
+    const checkQuery = `
+        SELECT id FROM faculty_change_requests
+        WHERE faculty = ? AND course = ? AND semcode = ?
+    `;
+
+    try {
+        const [rows] = await db.query(checkQuery, [faculty, course, semcode]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'No matching change request found.' });
+        }
+
+        const requestId = rows[0].id; // Get the ID of the matching record
+
+        // Update the status of the matching record
+        const updateQuery = `
+            UPDATE faculty_change_requests
+            SET status = ?
+            WHERE id = ?
+        `;
+
+        await db.query(updateQuery, [status, requestId]);
+
+        res.status(200).json({ message: 'Status updated successfully.' });
+    } catch (error) {
+        console.error('Error updating faculty change request status:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
 
 // Export the router
 module.exports = router;

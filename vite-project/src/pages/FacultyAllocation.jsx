@@ -27,26 +27,38 @@ const FacultyAllocationTable = ({ selectedSemesterCode, courses }) => {
   const [paperCounts, setPaperCounts] = useState([]); // New state for paper counts
 
   useEffect(() => {
-    const fetchPaperCount = async () => {
-      if (courses[currentPage]) {
-        const { courseId } = courses[currentPage];
-        try {
-          const response = await axios.get(`${apiHost}/api/paperCount`, {
-            params: {
-              course: courseId,
-              semcode: selectedSemesterCode.value, // Adjust this if needed
-            },
-          });
-          setPaperCounts(response.data.results); // Set the paper counts from API response
-        } catch (error) {
-          console.error('Error fetching paper count:', error);
-          toast.error('Error fetching paper count.');
+    const fetchPaperCounts = async () => {
+      const newPaperCounts = {};
+  
+      if (courses.length > 0) {
+        for (const course of courses) {
+          const { courseId, faculties } = course;
+  
+          for (const faculty of faculties) {
+            try {
+              const response = await axios.get(`${apiHost}/api/paperCount`, {
+                params: {
+                  course: courseId,
+                  facultyId: faculty.facultyId, // Send facultyId here
+                  semcode: selectedSemesterCode.value,
+                },
+              });
+              // Store the paper count for the specific faculty
+              newPaperCounts[faculty.facultyId] = response.data.results; // Store paper count by facultyId
+            } catch (error) {
+              // console.error('Error fetching paper count:', error);
+              // toast.error('Error fetching paper count.');
+            }
+          }
         }
       }
+  
+      setPaperCounts(newPaperCounts); // Update state with paper counts
     };
-
-    fetchPaperCount();
-  }, [currentPage, selectedSemesterCode, courses]); // Depend on currentPage and selectedSemesterCode
+  
+    fetchPaperCounts();
+  }, [selectedSemesterCode, courses]);
+  
 
   const handleInputChange = (event, courseName, facultyId, facultyName, courseId, index) => {
     const value = parseInt(event.target.value) || 0; // Allow negative values for direct input
@@ -138,8 +150,8 @@ const FacultyAllocationTable = ({ selectedSemesterCode, courses }) => {
     }
   };
 
-  const handlePageChange = (event, value) => {
-    setCurrentPage(value - 1);
+  const handlePageChange = (event, newPage) => {
+    setCurrentPage(newPage - 1); // Update to zero-based index
   };
 
   const currentCourse = courses[currentPage];
@@ -155,48 +167,49 @@ const FacultyAllocationTable = ({ selectedSemesterCode, courses }) => {
             <TableRow>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" rowSpan={2} style={{ border: '1px solid black' }}>Course</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" rowSpan={2} style={{ border: '1px solid black' }}>Paper Count</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" rowSpan={2} style={{ border: '1px solid black' }}>Added Paper Count</TableCell> {/* New Column */}
+             
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Faculty</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Allocation</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {currentCourse && currentCourse.faculties.map((faculty) => (
-              <TableRow key={faculty.facultyId}>
-                {currentCourse.faculties.indexOf(faculty) === 0 && (
-                  <>
-                    <TableCell rowSpan={currentCourse.faculties.length} align="center" style={{ border: '1px solid black' }}>
-                      {currentCourse.courseName}
-                    </TableCell>
-                    <TableCell rowSpan={currentCourse.faculties.length} align="center" style={{ border: '1px solid black' }}>
-                      {currentCourse.paperCount}
-                    </TableCell>
-                    <TableCell rowSpan={currentCourse.faculties.length} align="center" style={{ border: '1px solid black' }}>
-                      {paperCounts[currentCourse.courseId] || 0} {/* Displaying added paper count */}
-                    </TableCell>
-                  </>
-                )}
-                <TableCell align="center" style={{ border: '1px solid black' }}>{faculty.facultyName}</TableCell>
-                <TableCell align="center" style={{ border: '1px solid black' }}>
-                  <TextField
-                    type="number"
-                    size="small"
-                    variant="outlined"
-                    value={allocations[currentCourse.courseId]?.[faculty.facultyId] || ''}
-                    onChange={(e) => handleInputChange(e, currentCourse.courseName, faculty.facultyId, faculty.facultyName, currentCourse.courseId)}
-                  />
-                </TableCell>
-                <TableCell align="center" style={{ border: '1px solid black' }}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleAllocate(currentCourse.courseId, faculty.facultyId, currentCourse.paperCount)}
-                  >
-                    Allocate
-                  </Button>
-                </TableCell>
-              </TableRow>
+            {courses.slice(currentPage * 1, currentPage * 1 + 1).map((course, index) => (
+              course.faculties.map((faculty, i) => (
+                <TableRow key={faculty.facultyId}>
+                  {i === 0 && (
+                    <>
+                      <TableCell rowSpan={course.faculties.length} align="center" style={{ border: '1px solid black' }}>
+                        {course.courseName}
+                      </TableCell>
+                      <TableCell rowSpan={course.faculties.length} align="center" style={{ border: '1px solid black' }}>
+                        {course.paperCount}
+                      </TableCell>
+                      
+                    </>
+                  )}
+                  <TableCell align="center" style={{ border: '1px solid black' }}>{faculty.facultyName}</TableCell>
+                  <TableCell align="center" style={{ border: '1px solid black' }}>
+                    <TextField
+                      type="number"
+                      size="small"
+                      variant="outlined"
+                      value={allocations[course.courseId]?.[faculty.facultyId] || ''}
+                      onChange={(e) => handleInputChange(e, course.courseName, faculty.facultyId, faculty.facultyName, course.courseId)}
+                      placeholder={paperCounts[faculty.facultyId]?.length>0?paperCounts[faculty.facultyId][i]:0}
+                    />
+                  </TableCell>
+                  <TableCell align="center" style={{ border: '1px solid black' }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => handleAllocate(course.courseId, faculty.facultyId, course.paperCount)}
+                    >
+                      Allocate
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
             ))}
             {currentCourse && (
               <TableRow>
@@ -215,10 +228,10 @@ const FacultyAllocationTable = ({ selectedSemesterCode, courses }) => {
         </Table>
       </TableContainer>
       <TablePagination
-        rowsPerPageOptions={[5, 10, 25]} // Options for rows per page
+        rowsPerPageOptions={[5, 10, 25]}
         count={courses.length}
-        rowsPerPage={5} // Default rows per page
-        page={currentPage}
+        rowsPerPage={5}
+        page={currentPage + 1} // Adjusted to one-based index
         onPageChange={handlePageChange}
       />
     </div>
