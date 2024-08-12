@@ -134,7 +134,7 @@ const ReportDownloadPage = () => {
                                 ))}
                             </TableRow>
                         </TableHead>
-                        <TableBody>
+                        <TableBody sx={{backgroundColor:"white"}}>
                             {data.map((row, index) => (
                                 <TableRow key={row.id}>
                                     <TableCell>{index + 1}</TableCell>
