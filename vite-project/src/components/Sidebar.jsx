@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Sidebar.css';
 import { ExpandMore, ExpandLess, Menu } from '@mui/icons-material';
-import { School, Assignment, SwapHoriz, People, Book } from '@mui/icons-material';
+import { School,Download, Assignment, SwapHoriz, People, Book } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 
 const Sidebar = () => {
@@ -40,7 +40,7 @@ const Sidebar = () => {
             {open.COE && (
               <ul>
                 <li><Link to="/createSemesterEvaluation" onClick={closeMobileMenu}><Assignment className="icon" /> Create Evaluation</Link></li>
-                <li><Link to="/semesterEvaluationReport" onClick={closeMobileMenu}><Assignment className="icon" /> Download Evaluation Report</Link></li>
+                <li><Link to="/semesterEvaluationReport" onClick={closeMobileMenu}><Download className="icon" /> Download Report</Link></li>
                 <li><Link to="/facultyAllocationRequests" onClick={closeMobileMenu}><People className="icon" /> Alloc Requests</Link></li>
                 <li><Link to="/facultyChangeRequests" onClick={closeMobileMenu}><SwapHoriz className="icon" /> Change Requests</Link></li>
               </ul>
