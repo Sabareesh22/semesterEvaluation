@@ -102,11 +102,12 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
                 master_faculty mf ON mf.id = fcm.faculty
             WHERE 
                 bcm.department = ?
+               
             ORDER BY 
                 mc.course_name, mf.name;
         `;
 
-        const [rows] = await db.query(query, [departmentId]);
+        const [rows] = await db.query(query, [departmentId,semcode]);
 
         // Query to fetch eligible faculties
         const eligibleFacultiesQuery = `
@@ -117,7 +118,7 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
             WHERE 
                 semcode = ? AND department = ?;
         `;
-
+         console.log
         const [eligibleRows] = await db.query(eligibleFacultiesQuery, [semcode, departmentId]);
 
         // Create a set of eligible faculty IDs for quick lookup
@@ -255,6 +256,7 @@ router.get('/facultyPaperAllocationRequests', async (req, res) => {
     SUM(fa.paper_count) AS paperCount,
     h.id AS hod_id,
     h.faculty AS hod_faculty_id,
+    md.department,
     hf.name AS hod_name,
     fa.semcode  -- Include semcode in the SELECT statement
 FROM 
@@ -269,6 +271,8 @@ JOIN
     master_hod h ON bcm.department = h.department
 JOIN 
     master_faculty hf ON h.faculty = hf.id
+JOIN 
+    master_department md ON md.id = h.department
 WHERE 
     fa.status = '1' 
 GROUP BY 
@@ -286,6 +290,7 @@ ORDER BY
             hodId: row.hod_id,
             hodFacultyId: row.hod_faculty_id,
             hodName: row.hod_name,
+            department:row.department,
             semCode : row.semcode,
             paperCount: row.paperCount,
             courseInfo: row.course_info ? row.course_info.split('|').map(course => {
@@ -435,7 +440,7 @@ router.get('/allocations/new-faculty/:facultyId', async (req, res) => {
         JOIN 
             faculty_change_requests fcr ON fcr.course = fpa.course 
                                         AND fcr.semcode = fpa.semcode
-                                        AND fcr.old_faculty = fpa.faculty
+                                       AND fcr.old_faculty = fpa.faculty
         WHERE 
             fcr.new_faculty = ?;
     `;
@@ -511,7 +516,7 @@ WHERE
 // GET route to retrieve paper count based on various parameters
 router.get('/paperCount', async (req, res) => {
     const { faculty, course, semcode } = req.query;
-    console.log(req.query);
+    console.log("---------------\n",req.query,"----------\n");
 
     let query = `
         SELECT paper_count, status
@@ -533,14 +538,15 @@ router.get('/paperCount', async (req, res) => {
         query += ' AND semcode = ?';
         params.push(semcode);
     }
-
+     console.log(query)
     try {
         const [rows] = await db.query(query, params);
-
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'No records found' });
-        }
         console.log(rows)
+        if (rows.length == 0) {
+            res.status(200).json({ results: {paper_count:0,status: '-100'} });
+            return
+        }
+        
         // Assuming we are only interested in the first record
         const { paper_count, status } = rows[0];
         console.log({ results: {paper_count:paper_count,status: status} })
@@ -579,11 +585,10 @@ router.post('/facultyChangeRequests', async (req, res) => {
 
 
 
-// PUT route to update the status of a faculty change request based on matching fields
 router.put('/facultyChangeRequests/status', async (req, res) => {
     console.log(req.body);
     const { old_faculty, new_faculty, course, semcode, status, remark } = req.body; // Get fields from the request body
-   
+
     // Validate the input
     if (old_faculty == null || new_faculty == null || course == null || semcode == null || status == null) {
         return res.status(400).json({ message: 'Faculty, course, semcode, and status are required.' });
@@ -604,10 +609,29 @@ router.put('/facultyChangeRequests/status', async (req, res) => {
 
         const requestId = rows[0].id; // Get the ID of the matching record
 
+        if (status === -2 || status === -1) {
+            // Delete the faculty_change_request row
+            const deleteRequestQuery = `
+                DELETE FROM faculty_change_requests WHERE id = ?
+            `;
+            await db.query(deleteRequestQuery, [requestId]);
+
+            // Update the status of the old_faculty in faculty_paper_allocation
+            const updatedStatus = status === -2 ? -4 : -3;
+            const updateAllocationStatusQuery = `
+                UPDATE faculty_paper_allocation
+                SET status = ?, remark = ?
+                WHERE faculty = ? AND course = ? AND semcode = ?
+            `;
+            await db.query(updateAllocationStatusQuery, [updatedStatus, remark || null, old_faculty, course, semcode]);
+
+            return res.status(200).json({ message: `Status updated to ${updatedStatus}, faculty change request deleted.` });
+        }
+
         // Update the status of the matching record
         const updateQuery = `
             UPDATE faculty_change_requests
-            SET status = '?', remark = ?
+            SET status = ?, remark = ?
             WHERE id = ?
         `;
 
@@ -615,31 +639,72 @@ router.put('/facultyChangeRequests/status', async (req, res) => {
 
         // Check if the status is 2
         if (status === 2) {
-            // Insert the new faculty into faculty_paper_allocation
-            const insertQuery = `
-                INSERT INTO faculty_paper_allocation (faculty, course, paper_count, semcode, status, remark)
-                VALUES (?, ?, ?, ?, ?, ?)
+            // Query to get the paper count of the old faculty
+            const paperCountQuery = `
+                SELECT paper_count FROM faculty_paper_allocation
+                WHERE faculty = ? AND course = ? AND semcode = ?
             `;
-            const paperCount = 0; // Set the paper count as required, defaulting to 0 or modify as needed
-            const insertValues = [new_faculty, course, paperCount, semcode, '2', remark || null];
 
-            await db.query(insertQuery, insertValues);
+            const [paperCountRows] = await db.query(paperCountQuery, [old_faculty, course, semcode]);
+            const paperCount = paperCountRows.length > 0 ? paperCountRows[0].paper_count : 0; // Default to 0 if not found
+
+            console.log("The paper count to be processed is " + paperCount);
+            console.log(old_faculty, course, semcode);
+
+            // Check if the new faculty already has an allocation for this course and semcode
+            const checkExistingAllocationQuery = `
+                SELECT paper_count FROM faculty_paper_allocation
+                WHERE faculty = ? AND course = ? AND semcode = ?
+            `;
+
+            const [existingAllocationRows] = await db.query(checkExistingAllocationQuery, [new_faculty, course, semcode]);
+
+            if (existingAllocationRows.length > 0) {
+                // If the allocation exists, update the paper_count
+                const newPaperCount = existingAllocationRows[0].paper_count + paperCount;
+                const updateAllocationQuery = `
+                    UPDATE faculty_paper_allocation
+                    SET paper_count = ?, remark = ?
+                    WHERE faculty = ? AND course = ? AND semcode = ?
+                `;
+                await db.query(updateAllocationQuery, [newPaperCount, remark || null, new_faculty, course, semcode]);
+            } else {
+                // If the allocation does not exist, insert a new row
+                const insertQuery = `
+                    INSERT INTO faculty_paper_allocation (faculty, course, paper_count, semcode, status, remark)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                `;
+                const insertValues = [new_faculty, course, paperCount, semcode, '2', remark || null];
+                await db.query(insertQuery, insertValues);
+            }
+
+            // Remove the old faculty from faculty_paper_allocation
+            const deleteAllocationQuery = `
+                DELETE FROM faculty_paper_allocation
+                WHERE faculty = ? AND course = ? AND semcode = ?
+            `;
+            await db.query(deleteAllocationQuery, [old_faculty, course, semcode]);
+
+            // Delete old faculty from eligible_faculty table
+            const deleteEligibleQuery = `
+                DELETE FROM eligible_faculty
+                WHERE faculty = ? AND semcode = ?
+            `;
+            await db.query(deleteEligibleQuery, [old_faculty, semcode]);
+
+            // Delete the respective faculty_change_request row
+            await db.query( `DELETE FROM faculty_change_requests WHERE id = ?`, [requestId]);
+
+            res.status(200).json({ message: 'Status updated to 2, old faculty removed, eligible faculty updated, and faculty change request deleted.' });
         }
 
-        // Remove the old faculty from faculty_paper_allocation
-        const deleteQuery = `
-            DELETE FROM faculty_paper_allocation
-            WHERE faculty = ? AND course = ? AND semcode = ?
-        `;
-        
-        await db.query(deleteQuery, [old_faculty, course, semcode]);
-
-        res.status(200).json({ message: 'Status updated successfully and old faculty removed.' });
     } catch (error) {
         console.error('Error updating faculty change request status:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
+
 
 // GET route to retrieve faculty and semcode information
 router.get('/facultyReplaceSuggest', async (req, res) => {
@@ -678,7 +743,7 @@ router.get('/facultyReplaceSuggest', async (req, res) => {
 
 
 router.get('/check-old-faculty', async (req, res) => {
-    const { old_faculty, semcode } = req.query;
+    const { old_faculty, semcode,course } = req.query;
      console.log(req.query)
     // SQL query to get the status of old_faculty for the given semcode
     const checkFacultyQuery = `
@@ -686,16 +751,17 @@ router.get('/check-old-faculty', async (req, res) => {
         FROM faculty_change_requests 
         WHERE old_faculty = ? 
         AND semcode = ?
+        AND course = ?
         LIMIT 1;
     `;
 
     try {
-        const [result] = await db.query(checkFacultyQuery, [old_faculty, semcode]);
+        const [result] = await db.query(checkFacultyQuery, [old_faculty, semcode,course]);
 
         if (result.length === 0) {
             return res.status(200).json({ code: 0, message: 'No record found for the given old_faculty and semcode.' });
         }
-
+        
         const status = result[0].status;
         let code;
         switch (status) {

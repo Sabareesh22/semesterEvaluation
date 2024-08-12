@@ -89,6 +89,9 @@ const COEpage = () => {
 
     return (
         <div className='coePageContainer'>
+             <div style={{padding:"10px"}}>
+      <h1>Create Semester Evaluation</h1>
+      </div>
             <ToastContainer /> {/* Toast container */}
             <div className='formContainer' style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px' }}>
                 <Box display="flex" flexDirection="row" alignItems="center" flexWrap="wrap">

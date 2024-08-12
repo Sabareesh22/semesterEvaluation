@@ -97,17 +97,17 @@ const fetchPaperCounts = async () => {
               semcode: selectedSemesterCode.value,
             },
           });
-
+       
           // Store the paper count and status for the specific faculty
-          newPaperCounts[faculty.facultyId] = response.data.results.paper_count; // Store paper count by facultyId
-          newStatuses[faculty.facultyId] = response.data.results.status; // Store status by facultyId
+          newPaperCounts[`${`${course.courseId}-${faculty.facultyId}`}`] = response.data.results.paper_count;
+            newStatuses[`${`${course.courseId}-${faculty.facultyId}`}`] = response.data.results.status;
         } catch (error) {
           console.error('Error fetching paper count:', error);
         }
       }
     }
   }
-
+  console.log("PAPER----",newPaperCounts)
   setPaperCounts(newPaperCounts); // Update state with paper counts
   setStatuses(newStatuses); // Update state with statuses
 };
@@ -121,11 +121,12 @@ const fetchFacultyStatuses = async () => {
           const response = await axios.get(`${apiHost}/api/check-old-faculty`, {
             params: {
               old_faculty: faculty.facultyId,
+              course:course.courseId,
               semcode: selectedSemesterCode.value,
             },
           });
           console.log("status",response.data.code)
-          newStatuses[faculty.facultyId] = response.data.code;
+          newStatuses[`${`${course.courseId}-${faculty.facultyId}`}`] = response.data.code;
           console.log(newStatuses)
         } catch (error) {
           console.error('Error fetching faculty status:', error);
@@ -145,52 +146,51 @@ useEffect(() => {
 
 
 
-  const handleInputChange = (event, courseName, facultyId, facultyName, courseId, index) => {
-    const value = parseInt(event.target.value) || 0; // Allow negative values for direct input
-    const courseAllocations = allocations[courseId] || {};
-    const facultyCount = courses[currentPage].faculties.length;
+const handleInputChange = (event, courseName, facultyId, facultyName, courseId, index) => {
+  const value = parseInt(event.target.value) || 0; // Allow negative values for direct input
+  const courseAllocations = allocations[courseId] || {};
+  const facultyCount = courses[currentPage].faculties.length;
 
-    // Ensure the value is in multiples of 25
-    let allocationValue = Math.ceil(value / 25) * 25;
-    if (allocationValue - value === 1) {
-      allocationValue = Math.max(Math.floor(value / 25) * 25, 0);
-    }
-    // Create a copy of the current allocations to modify
-    let newAllocations = { ...courseAllocations };
+  // Ensure the value is in multiples of 25
+  let allocationValue = Math.ceil(value / 25) * 25;
+  if (allocationValue - value === 1) {
+    allocationValue = Math.max(Math.floor(value / 25) * 25, 0);
+  }
+  // Create a copy of the current allocations to modify
+  let newAllocations = { ...courseAllocations };
 
-    // Update allocation for the selected faculty
-    newAllocations[facultyId] = allocationValue;
+  // Update allocation for the selected faculty
+  newAllocations[facultyId] = allocationValue;
 
-    // Recalculate allocations for all except the last faculty
-    let sumAllocations = 0;
-    for (let i = 0; i < facultyCount - 1; i++) {
-      const currentFacultyId = courses[currentPage].faculties[i].facultyId;
-      sumAllocations += newAllocations[currentFacultyId] || 0;
-    }
+  // Recalculate allocations for all except the last faculty
+  let sumAllocations = 0;
+  for (let i = 0; i < facultyCount - 1; i++) {
+    const currentFacultyId = courses[currentPage].faculties[i].facultyId;
+    sumAllocations += newAllocations[currentFacultyId] || 0;
+  }
 
-    // Calculate remaining papers for the last faculty
-    const remainingPapers = courses[currentPage].paperCount - sumAllocations;
-    const lastFacultyId = courses[currentPage].faculties[facultyCount - 1].facultyId;
+  // Calculate remaining papers for the last faculty
+  const remainingPapers = courses[currentPage].paperCount - sumAllocations;
+  const lastFacultyId = courses[currentPage].faculties[facultyCount - 1].facultyId;
 
-    // Check if the total allocation exceeds the paper count
-    if (remainingPapers < 0) {
-      toast.error(`Total allocation exceeds the paper count.`);
-      return;
-    }
+  // Check if the total allocation exceeds the paper count
+  if (remainingPapers < 0) {
+    toast.error("Total allocation exceeds the paper count.");
+    return;
+  }
 
-    // Update last faculty's allocation based on remaining papers
-    newAllocations[lastFacultyId] = Math.max(0, remainingPapers); // Ensure it's non-negative
+  // Update last faculty's allocation based on remaining papers
+  newAllocations[lastFacultyId] = Math.max(0, remainingPapers); // Ensure it's non-negative
 
-    // Update the state with the new allocations
-    setAllocations(prev => ({
-      ...prev,
-      [courseId]: newAllocations,
-    }));
-  };
-
+  // Update the state with the new allocations
+  setAllocations(prev => ({
+    ...prev,
+    [courseId]: newAllocations,
+  }));
+};
   const handleAllocate = async (courseId, facultyId, paperCount, AllocationSum) => {
     const allocationValue = allocations[courseId]?.[facultyId];
-
+    console.log(courseId, facultyId, paperCount, AllocationSum)
     if (allocationValue > 0) {
       try {
         const response = await axios.post(`${apiHost}/api/allocateFaculty`, [{
@@ -214,9 +214,11 @@ useEffect(() => {
   };
 
   const handleAllocateAll = async (courseId, faculties, paperCount) => {
+    console.log(courseId, faculties, paperCount)
     let AllocationSum = 0;
     try {
       Object.values(allocations[courseId]).forEach(v => {
+        console.log(v)
         AllocationSum += v;
       });
     } catch (error) {
@@ -241,9 +243,9 @@ useEffect(() => {
   };
 
   const handlePageChange = (event, newPage) => {
-    setCurrentPage(newPage - 1); // Update to zero-based index
+    setCurrentPage(newPage); // Update to the new page
   };
-
+  
   const currentCourse = courses[currentPage];
 
   return (
@@ -264,9 +266,9 @@ useEffect(() => {
             </TableRow>
           </TableHead>
           <TableBody>
-  {courses.slice(currentPage * 1, currentPage * 1 + 1).map((course, index) => (
+          {courses.slice(currentPage, currentPage + 1).map((course) => (
     course.faculties.map((faculty, i) => (
-      <TableRow key={faculty.facultyId}>
+      <TableRow key={`${course.courseId}-${faculty.facultyId}`}>
         {i === 0 && (
           <>
             <TableCell rowSpan={course.faculties.length} align="center" style={{ border: '1px solid black' }}>
@@ -277,108 +279,179 @@ useEffect(() => {
             </TableCell>
           </>
         )}
+        {console.log("EACH----------->",paperCounts[`${`${course.courseId}-${faculty.facultyId}`}`])}
         <TableCell align="center" style={{ border: '1px solid black' }}>{faculty.facultyName}</TableCell>
         <TableCell align="center" style={{ border: '1px solid black' }}>
-                    <TextField
-                      type="number"
-                      size="small"
-                      disabled={facultyStatuses[faculty.facultyId] !== 0}
-                      variant="outlined"
-                      value={allocations[course.courseId]?.[faculty.facultyId] || ''}
-                      onChange={(e) => handleInputChange(e, course.courseName, faculty.facultyId, faculty.facultyName, course.courseId)}
-                      placeholder={paperCounts[faculty.facultyId] || 0} // Updated to use paperCounts
-                    />
-                  </TableCell>
-                  {console.log(paperCounts,statuses
-
-                  )}
+          <TextField
+            type="number"
+            size="small"
+            disabled={facultyStatuses[`${`${course.courseId}-${faculty.facultyId}`}`] !== 0}
+            variant="outlined"
+            value={allocations[course.courseId]?.[faculty.facultyId] || ''}
+            onChange={(e) => handleInputChange(e, course.courseName, faculty.facultyId, faculty.facultyName, course.courseId)}
+            placeholder={paperCounts[`${`${course.courseId}-${faculty.facultyId}`}`] || 0}
+          />
+        </TableCell>
+                  {console.log(facultyStatuses )}
                  {
-  (facultyStatuses[faculty.facultyId] !== undefined && facultyStatuses[faculty.facultyId] !== null) ? (
-    facultyStatuses[faculty.facultyId] === 0 ? (
-      statuses[faculty.facultyId] == 0 ? (
+  (facultyStatuses[`${course.courseId}-${faculty.facultyId}`] !== undefined && facultyStatuses[`${course.courseId}-${faculty.facultyId}`] !== null) ? (
+    facultyStatuses[`${course.courseId}-${faculty.facultyId}`] === 0 ? (
+      statuses[`${course.courseId}-${faculty.facultyId}`] == 0 ? (
         <TableCell align="center" style={{ border: '1px solid black' }}>
           <Typography variant="body1" color="orangered">
             Waiting for Faculty Approval
           </Typography>
         </TableCell>
-      ) : statuses[faculty.facultyId] == 1 ? (
+      ) : statuses[`${course.courseId}-${faculty.facultyId}`] == 1 ? (
         <TableCell align="center" style={{ border: '1px solid black' }}>
           <Typography variant="body1" color="orangered">
             Waiting for COE Approval
           </Typography>
         </TableCell>
-      ) : statuses[faculty.facultyId] == 2 ? (
+      ) : statuses[`${course.courseId}-${faculty.facultyId}`] == 2 ? (
         <TableCell align="center" style={{ border: '1px solid black' }}>
           <Typography variant="body1" color="green">
             Approved By COE
           </Typography>
         </TableCell>
-      ) : null
-    ) : facultyStatuses[faculty.facultyId] == 3 ? (
+      ): statuses[`${course.courseId}-${faculty.facultyId}`] == -1 ? (
+        <TableCell align="center" style={{ border: '1px solid black' }}>
+          <Typography variant="body1" color="red">
+          Rejected By  Faculty
+          </Typography>
+        </TableCell>
+      ): statuses[`${course.courseId}-${faculty.facultyId}`] == -2 ? (
+        <TableCell align="center" style={{ border: '1px solid black' }}>
+          <Typography variant="body1" color="red">
+          Rejected By COE
+          </Typography>
+        </TableCell>
+      ): statuses[`${course.courseId}-${faculty.facultyId}`] == -3 ? (
+        <TableCell align="center" style={{ border: '1px solid black' }}>
+          <Typography variant="body1" color="red">
+          Rejected By Replaced Faculty
+          </Typography>
+        </TableCell>
+      ): statuses[`${course.courseId}-${faculty.facultyId}`] == -4 ? (
+        <TableCell align="center" style={{ border: '1px solid black' }}>
+          <Typography variant="body1" color="red">
+          Replace - Rejected By COE
+          </Typography>
+        </TableCell>
+      )  : null
+    ) : facultyStatuses[`${course.courseId}-${faculty.facultyId}`] == 3 ? (
       <TableCell align="center" style={{ border: '1px solid black' }}>
         <Typography variant="body1" color="green">
-          Replace - Approved by COE
+          Replace - Approved by COE {`${course.courseId}-${faculty.facultyId}`}
         </Typography>
       </TableCell>
-    ) : facultyStatuses[faculty.facultyId] == 2 ? (
+    ) : facultyStatuses[`${course.courseId}-${faculty.facultyId}`] == 2 ? (
       <TableCell align="center" style={{ border: '1px solid black' }}>
         <Typography variant="body1" color="orangered">
           Replace - Waiting for COE Approval
         </Typography>
       </TableCell>
-    ) : facultyStatuses[faculty.facultyId] == 1 ? (
+    ) : facultyStatuses[`${course.courseId}-${faculty.facultyId}`] == 1 ? (
       <TableCell align="center" style={{ border: '1px solid black' }}>
         <Typography variant="body1" color="orangered">
           Replace - Waiting for Faculty Approval
         </Typography>
       </TableCell>
-    ) : null
+    ): statuses[`${course.courseId}-${faculty.facultyId}`] == -1 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="red">
+        Rejected By  Faculty
+        </Typography>
+      </TableCell>
+    ): statuses[`${course.courseId}-${faculty.facultyId}`] == -2 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="red">
+        Rejected By COE
+        </Typography>
+      </TableCell>
+    ): statuses[`${course.courseId}-${faculty.facultyId}`] == -3 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="red">
+        Rejected By Replaced Faculty
+        </Typography>
+      </TableCell>
+    ): statuses[`${course.courseId}-${faculty.facultyId}`] == -4 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="red">
+        Replace - Rejected By COE
+        </Typography>
+      </TableCell>
+    )  : null
   ) : (
-    (statuses[faculty.facultyId] == 0 ? (
+    (statuses[`${course.courseId}-${faculty.facultyId}`] == 0 ? (
       <TableCell align="center" style={{ border: '1px solid black' }}>
         <Typography variant="body1" color="orangered">
           Waiting for Faculty Approval
         </Typography>
       </TableCell>
-    ) : statuses[faculty.facultyId] == 1 ? (
+    ) : statuses[`${course.courseId}-${faculty.facultyId}`] == 1 ? (
       <TableCell align="center" style={{ border: '1px solid black' }}>
         <Typography variant="body1" color="orangered">
           Waiting for COE Approval
         </Typography>
       </TableCell>
-    ) : statuses[faculty.facultyId] == 2 ? (
+    ) : statuses[`${course.courseId}-${faculty.facultyId}`] == 2 ? (
       <TableCell align="center" style={{ border: '1px solid black' }}>
         <Typography variant="body1" color="green">
           Approved By COE
         </Typography>
       </TableCell>
-    ) : null)
+    ): statuses[`${course.courseId}-${faculty.facultyId}`] == -1 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="red">
+        Rejected By  Faculty
+        </Typography>
+      </TableCell>
+    ): statuses[`${course.courseId}-${faculty.facultyId}`] == -2 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="red">
+        Rejected By COE
+        </Typography>
+      </TableCell>
+    ): statuses[`${course.courseId}-${faculty.facultyId}`] == -3 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="red">
+        Rejected By Replaced Faculty
+        </Typography>
+      </TableCell>
+    ): statuses[`${course.courseId}-${faculty.facultyId}`] == -4 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="red">
+        Replace - Rejected By COE
+        </Typography>
+      </TableCell>
+    )  : null)
   )
 }
 
 
         <TableCell align="center" style={{ border: '1px solid black' }}>
-        {facultyStatuses[faculty.facultyId] === 1 && (
+        {facultyStatuses[`${course.courseId}-${faculty.facultyId}`] === 1 && (
   <Typography variant="body1" color="red">
     Replace request active - Faculty Approval Pending
   </Typography>
 )}
-{facultyStatuses[faculty.facultyId] === 2 && (
+{facultyStatuses[`${course.courseId}-${faculty.facultyId}`] === 2 && (
   <Typography variant="body1" color="red">
     Replace request active - initiated COE approval pending
   </Typography>
 )}
-{facultyStatuses[faculty.facultyId] === 0 ? (
+{facultyStatuses[`${course.courseId}-${faculty.facultyId}`] === 0 ? (
   // If facultyStatuses is 0, check statuses
-  statuses[faculty.facultyId] === 0 ? (
+  statuses[`${course.courseId}-${faculty.facultyId}`] === 0 ? (
     <Typography variant="body1" color="orangered">
       Waiting for Faculty Approval
     </Typography>
-  ) : statuses[faculty.facultyId] === 1 ? (
+  ) : statuses[`${course.courseId}-${faculty.facultyId}`] === 1 ? (
     <Typography variant="body1" color="orangered">
       Waiting for COE Approval
     </Typography>
-  ) : statuses[faculty.facultyId] === 2 ? (
+  ) : statuses[`${course.courseId}-${faculty.facultyId}`] === 2 ? (
     <Typography variant="body1" color="green">
       Approved By COE
     </Typography>
@@ -387,7 +460,7 @@ useEffect(() => {
       <RotateLeftIcon />
     </IconButton>
   )
-) : facultyStatuses[faculty.facultyId] === null || facultyStatuses[faculty.facultyId] === undefined ? (
+) : facultyStatuses[`${course.courseId}-${faculty.facultyId}`] === null || facultyStatuses[`${course.courseId}-${faculty.facultyId}`] === undefined ? (
   // If facultyStatuses is not present, show the icon
   <IconButton onClick={() => handleOpenModal(faculty.facultyId, course.courseId)}>
     <RotateLeftIcon />
@@ -408,7 +481,7 @@ useEffect(() => {
                     color="secondary"
                     onClick={() => handleAllocateAll(currentCourse.courseId, currentCourse.faculties, currentCourse.paperCount)}
                   >
-                    Allocate All
+                    Allocate
                   </Button>
                 </TableCell>
               </TableRow>
@@ -468,13 +541,16 @@ useEffect(() => {
               
         </Table>
       </TableContainer>
+      <center>
       <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        count={courses.length}
-        rowsPerPage={5}
-        page={currentPage + 1} // Adjusted to one-based index
-        onPageChange={handlePageChange}
-      />
+  rowsPerPageOptions={[1]} // Set to 1 to show one course per page
+  count={courses.length} // Total number of courses
+  rowsPerPage={1} // Show one course per page
+  page={currentPage} // Current page index
+  onPageChange={handlePageChange} // Function to handle page changes
+/>
+
+      </center>
     </div>
   );
 };

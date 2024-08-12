@@ -22,17 +22,19 @@ const FacultyChangeRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [reason, setReason] = useState('');
 
+  const fetchRequests = async () => {
+    try {
+      const response = await axios.get(`${apiHost}/api/facultyChangeRequests`); // Replace with your API endpoint
+      setRequests(response.data.results);
+    } catch (error) {
+      console.error('Error fetching faculty change requests:', error);
+    }
+  };
+
+
   // Fetch faculty change requests from the API
   useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const response = await axios.get(`${apiHost}/api/facultyChangeRequests`); // Replace with your API endpoint
-        setRequests(response.data.results);
-      } catch (error) {
-        console.error('Error fetching faculty change requests:', error);
-      }
-    };
-
+    
     fetchRequests();
   }, []);
 
@@ -45,6 +47,7 @@ const FacultyChangeRequests = () => {
         semcode: request.semcode_id,
         status: 2, // Or whatever status you want to set for approval
       });
+      fetchRequests()
       toast.success(`Change request for ${request.new_faculty_name} approved successfully!`); // Detailed success message
       // Optionally refresh requests here
       // fetchRequests(); 
@@ -67,6 +70,7 @@ const FacultyChangeRequests = () => {
           status: -2, // Or whatever status you want to set for rejection
           remark: reason,
         });
+        fetchRequests()
         toast.success(`Change request for ${selectedRequest.new_faculty_name} rejected successfully! Reason: ${reason}`); // Detailed success message
         setOpenModal(false);
         setReason('');
@@ -91,6 +95,9 @@ const FacultyChangeRequests = () => {
 
   return (
     <div style={{ padding: 16 }}>
+       <div style={{padding:"10px"}}>
+      <h1>Faculty Change Requests</h1>
+      </div>
       <ToastContainer /> {/* Add ToastContainer for Toastify notifications */}
       <Grid container spacing={2} direction="column">
         {requests.map((request) => (

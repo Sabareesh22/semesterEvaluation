@@ -26,7 +26,7 @@ const Sidebar = () => {
         <Menu className={isMobileOpen ? 'whiteIcon' : ''} />
       </div>
       <div className={`sidebarContainer ${isMobileOpen ? 'open' : ''}`}>
-        <h2 className="sidebarTitle">Allocation</h2>
+        <h2 className="sidebarTitle">Paper Allocation</h2>
         <ul>
           <li>
             <div

@@ -31,7 +31,7 @@ const FacultyApprovalPage = () => {
   // Fetch allocations from API on component mount
   const fetchAllocations = async () => {
     try {
-      const response = await axios.get(`${apiHost}/api/allocations/faculty/13`); // Replace '13' with the actual faculty ID
+      const response = await axios.get(`${apiHost}/api/allocations/faculty/51`); // Replace '13' with the actual faculty ID
       setAllocations(response.data.results);
     } catch (error) {
       console.error('Error fetching allocations:', error);
@@ -41,7 +41,7 @@ const FacultyApprovalPage = () => {
   // Fetch replacement requests from the new API
   const fetchReplacementRequests = async () => {
     try {
-      const response = await axios.get(`${apiHost}/api/allocations/new-faculty/13`); // Replace '12' with the actual faculty ID
+      const response = await axios.get(`${apiHost}/api/allocations/new-faculty/51`); // Replace '12' with the actual faculty ID
       setReplacementRequests(response.data.results);
       console.log(response.data.results)
     } catch (error) {
@@ -68,7 +68,7 @@ const FacultyApprovalPage = () => {
   const handleApproveAllocation = async (course) => {
     try {
       await axios.put(`${apiHost}/api/facultyPaperAllocation/status`, {
-        facultyId: 13, // Replace with actual faculty ID
+        facultyId: 51, // Replace with actual faculty ID
         semCode: course.semcode,
         courseId: course.courseId,
         status:1,
@@ -88,7 +88,7 @@ const FacultyApprovalPage = () => {
     } else {
       try {
         await axios.put(`${apiHost}/api/facultyPaperAllocation/status`, {
-          facultyId: 13, // Replace with actual faculty ID
+          facultyId: 51, // Replace with actual faculty ID
           semCode: selectedCourse.semcode,
           courseId: selectedCourse.courseId,
           status: -1,
@@ -169,9 +169,9 @@ const FacultyApprovalPage = () => {
     <div style={{ padding: 16 }}>
       <ToastContainer />
 
-      <Typography variant="h4" gutterBottom>
-        Faculty Course Allocations
-      </Typography>
+      <div style={{padding:"10px"}}>
+      <h1>HOD Paper Allocation Requests</h1>
+      </div>
 
       {/* Display grouped allocations */}
       {Object.keys(groupedAllocations).map((semesterCode, index) => (

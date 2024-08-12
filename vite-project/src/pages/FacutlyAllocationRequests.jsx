@@ -127,6 +127,9 @@ const FacultyAllocationRequests = () => {
 
   return (
     <div style={{ padding: 16 }}>
+       <div style={{padding:"10px"}}>
+      <h1>Faculty Allocation Requests</h1>
+      </div>
       <ToastContainer />
       {selectedHOD ? (
         <div>
@@ -274,7 +277,7 @@ const FacultyAllocationRequests = () => {
                       HOD Name: {request.hodName}
                     </Typography>
                     <Typography variant="subtitle1" color="textSecondary">
-                      Department: {request.hodFacultyId} {/* Update based on your data structure */}
+                      Department: {request.department} {/* Update based on your data structure */}
                     </Typography>
                     <Button 
                       variant="contained" 
