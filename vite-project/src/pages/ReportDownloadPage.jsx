@@ -117,20 +117,24 @@ const ReportDownloadPage = () => {
                 <>
                     <div style={{ width: "100%", display: "flex", justifyContent: "flex-end" }} >
                         <Button
+
                             variant="outlined"
                             onClick={handleExport}
-                            sx={{ marginTop: 2 }}
+                            sx={{ marginTop: 2,backgroundColor:"darkblue",color:"white",fontWeight:"bold" ,'&:hover': {
+    backgroundColor: 'blue',
+    boxShadow: 'none',
+  }}}
                         >
                             Export as XLSX
                         </Button>
                     </div>
                     <Container sx={{overflowY:"scroll"}}>
-                    <Table sx={{ marginTop: 4 }}>
+                    <Table sx={{ marginTop: 4 ,width:"100%"}}>
                         <TableHead>
                             <TableRow>
                                 <TableCell sx={{color:"white",fontWeight:"bold"}}>S.No</TableCell>
                                 {tableHeaders.map((header) => (
-                                    <TableCell sx={{color:"white",fontWeight:"bold"}} key={header}>{header}</TableCell>
+                                    <TableCell align='center' sx={{color:"white",fontWeight:"bold"}} key={header}>{header}</TableCell>
                                 ))}
                             </TableRow>
                         </TableHead>
