@@ -40,6 +40,7 @@ const Sidebar = () => {
             {open.COE && (
               <ul>
                 <li><Link to="/createSemesterEvaluation" onClick={closeMobileMenu}><Assignment className="icon" /> Create Evaluation</Link></li>
+                <li><Link to="/semesterEvaluationReport" onClick={closeMobileMenu}><Assignment className="icon" /> Download Evaluation Report</Link></li>
                 <li><Link to="/facultyAllocationRequests" onClick={closeMobileMenu}><People className="icon" /> Alloc Requests</Link></li>
                 <li><Link to="/facultyChangeRequests" onClick={closeMobileMenu}><SwapHoriz className="icon" /> Change Requests</Link></li>
               </ul>
