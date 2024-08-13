@@ -620,7 +620,7 @@ router.put('/facultyChangeRequests/status', async (req, res) => {
             const updatedStatus = status === -2 ? -4 : -3;
             const updateAllocationStatusQuery = `
                 UPDATE faculty_paper_allocation
-                SET status = ?, remark = ?
+                SET status = '?', remark = ?
                 WHERE faculty = ? AND course = ? AND semcode = ?
             `;
             await db.query(updateAllocationStatusQuery, [updatedStatus, remark || null, old_faculty, course, semcode]);
@@ -631,7 +631,7 @@ router.put('/facultyChangeRequests/status', async (req, res) => {
         // Update the status of the matching record
         const updateQuery = `
             UPDATE faculty_change_requests
-            SET status = ?, remark = ?
+            SET status = '?', remark = ?
             WHERE id = ?
         `;
 

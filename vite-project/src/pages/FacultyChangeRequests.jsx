@@ -47,10 +47,10 @@ const FacultyChangeRequests = () => {
         semcode: request.semcode_id,
         status: 2, // Or whatever status you want to set for approval
       });
-      fetchRequests()
+    
       toast.success(`Change request for ${request.new_faculty_name} approved successfully!`); // Detailed success message
       // Optionally refresh requests here
-      // fetchRequests(); 
+      fetchRequests(); 
     } catch (error) {
       console.error('Error approving change request:', error);
       toast.error('Failed to approve change request. Please try again later.'); // Detailed error message

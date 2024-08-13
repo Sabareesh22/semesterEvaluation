@@ -3,7 +3,7 @@ import './Sidebar.css';
 import { ExpandMore, ExpandLess, Menu } from '@mui/icons-material';
 import { School,Download, Assignment, SwapHoriz, People, Book } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
-
+import Logo from '../assets/logo.png'
 const Sidebar = () => {
   const [open, setOpen] = useState({ COE: false, HOD: false, Faculty: false });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -26,7 +26,11 @@ const Sidebar = () => {
         <Menu className={isMobileOpen ? 'whiteIcon' : ''} />
       </div>
       <div className={`sidebarContainer ${isMobileOpen ? 'open' : ''}`}>
+        <div style={{display:"flex",width:"100%",justifyContent:"center",alignItems:"center"}}>
+        <img style={{backgroundColor:"white",borderRadius:"10px"}} height={"80px"} width={"80px"} src={Logo}></img>
         <h2 className="sidebarTitle">Paper Allocation</h2>
+        </div>
+       
         <ul>
           <li>
             <div

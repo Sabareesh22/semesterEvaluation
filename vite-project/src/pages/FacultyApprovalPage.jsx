@@ -104,13 +104,9 @@ const FacultyApprovalPage = () => {
   };
 
   const handleApproveReplacement = async (course) => {
-
-    console.log(course)
-    console.log( {old_faculty: course.old_facutly, // Replace with the actual old faculty ID
-      new_faculty:course.new_facutly , // You may need to adjust this depending on your data
-      course: course.courseId,
-      semcode: course.semcode,
-      status: 1})
+    console.log(`${course.courseName} replacement approved successfully.`)
+    toast.success(`${course.courseName} replacement approved successfully.`);
+    fetchReplacementRequests();
     try {
       await axios.put(`${apiHost}/api/facultyChangeRequests/status`, {
         old_faculty: course.old_faculty
@@ -120,10 +116,9 @@ const FacultyApprovalPage = () => {
         semcode: course.semcode,
         status: 1,
       });
-
-      toast.success(`${course.courseName} replacement approved successfully.`);
+   
       // Refetch the replacement requests after successful approval
-      fetchReplacementRequests();
+      
     } catch (error) {
       toast.error('Failed to approve the replacement request.');
     }
