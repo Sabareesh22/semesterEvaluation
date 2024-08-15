@@ -2,66 +2,115 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db'); // Adjust the path to your database config
 
-// POST route to add a new semester code
 router.post('/semcodes', async (req, res) => {
     const { semcode, semester, batch, year, regulation, status } = req.body;
 
-    // Check if the semester code already exists
+    // Query to check if the semcode already exists
     const checkSemcodeQuery = `
-        SELECT COUNT(*) as count FROM master_semcode WHERE semcode = ?
+        SELECT id FROM master_semcode WHERE semcode = ?
     `;
     
-    // Check if the unique combination of semester, batch, year, and regulation exists
+    // Query to check if the unique combination of semester, batch, year, and regulation exists
     const checkUniqueCombinationQuery = `
-        SELECT COUNT(*) as count FROM master_semcode 
-        WHERE semester = ? AND batch = ? AND year = ? AND regulation = ?
+        SELECT COUNT(*) as count 
+        FROM semcodeMapping 
+        WHERE semcode_id = ? AND semester = ? AND batch = ? AND year = ? AND regulation = ?
     `;
     
     try {
+        // Check if the semcode already exists
         const [checkSemcodeResult] = await db.query(checkSemcodeQuery, [semcode]);
-        
-        // If the semester code exists, return an error message
-        if (checkSemcodeResult[0].count > 0) {
-            return res.status(400).json({ message: 'Semester code already exists in the database.' });
+
+        let semcode_id;
+
+        if (checkSemcodeResult.length > 0) {
+            // Semcode exists, get its id
+            semcode_id = checkSemcodeResult[0].id;
+        } else {
+            // Semcode doesn't exist, insert it into master_semcode table
+            const insertSemcodeQuery = `
+                INSERT INTO master_semcode (semcode, status)
+                VALUES (?, ?)
+            `;
+            const [insertSemcodeResult] = await db.query(insertSemcodeQuery, [semcode, status]);
+
+            // Get the newly inserted semcode_id
+            semcode_id = insertSemcodeResult.insertId;
         }
 
-        // Check the unique combination
-        const [checkCombinationResult] = await db.query(checkUniqueCombinationQuery, [semester, batch, year, regulation]);
+        // Check the unique combination in semcodeMapping
+        const [checkCombinationResult] = await db.query(checkUniqueCombinationQuery, [semcode_id, semester, batch, year, regulation]);
 
-        // If the unique combination exists, return an error message
         if (checkCombinationResult[0].count > 0) {
-            return res.status(400).json({ message: 'The combination of semester, batch, year, and regulation already exists.' });
+            return res.status(400).json({ message: 'The combination of semester, batch, year, and regulation already exists for this semcode.' });
         }
 
-        // Proceed to insert the new semester code if it doesn't exist
-        const insertQuery = `
-            INSERT INTO master_semcode (semcode, semester, batch, year, regulation, status)
+        // Insert the details into semcodeMapping table
+        const insertMappingQuery = `
+            INSERT INTO semcodeMapping (semcode_id, semester, batch, year, regulation, status)
             VALUES (?, ?, ?, ?, ?, ?)
         `;
-        const values = [semcode, semester, batch, year, regulation, status];
-        const [insertResult] = await db.query(insertQuery, values);
+        const mappingValues = [semcode_id, semester, batch, year, regulation, status];
+        await db.query(insertMappingQuery, mappingValues);
         
-        res.status(201).json({ message: 'Semester code added successfully', results: insertResult });
+        res.status(201).json({ message: 'Semester code and mapping added successfully' });
     } catch (error) {
         console.error('Error inserting semcode:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
 
+
+
 // GET route to retrieve all semester codes
 router.get('/semcodes', async (req, res) => {
+    const { batch, year } = req.query;
+
     try {
-        const getAllSemcodesQuery = `
-            SELECT * FROM master_semcode
-        `;
-        const [semcodes] = await db.query(getAllSemcodesQuery);
-        console.log("sending semester codes")
+        let getAllSemcodesQuery;
+        const queryParams = [];
+
+        if (batch == null && year == null) {
+            // Query when both batch and year are not provided
+            getAllSemcodesQuery = `
+                SELECT id, semcode
+                FROM master_semcode
+            `;
+        } else {
+            // Base query to join master_semcode and semcodeMapping tables
+            getAllSemcodesQuery = `
+                SELECT DISTINCT ms.id, ms.semcode, sm.semester, sm.batch, sm.year, sm.regulation, ms.status 
+                FROM master_semcode ms
+                JOIN semcodeMapping sm ON ms.id = sm.semcode_id
+            `;
+
+            // Conditions to filter by batch and year
+            const conditions = [];
+
+            if (batch != null) {
+                conditions.push('sm.batch = ?');
+                queryParams.push(batch);
+            }
+            if (year != null) {
+                conditions.push('sm.year = ?');
+                queryParams.push(year);
+            }
+
+            // Add conditions to the query if any exist
+            if (conditions.length > 0) {
+                getAllSemcodesQuery += ` WHERE ` + conditions.join(' AND ');
+            }
+        }
+
+        // Execute the query with the provided query parameters
+        const [semcodes] = await db.query(getAllSemcodesQuery, queryParams);
         res.status(200).json({ results: semcodes });
     } catch (error) {
         console.error('Error fetching semcodes:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
 
 router.get('/courses/:departmentId/:semcode', async (req, res) => {
     const { departmentId, semcode } = req.params;
@@ -236,50 +285,70 @@ router.post('/allocateFaculty', async (req, res) => {
 
 // GET route to retrieve faculty and course information based on department
 router.get('/facultyPaperAllocationRequests', async (req, res) => {
+    const { semcode } = req.query;
 
-    const query = `
+    let query = `
         SELECT 
-    GROUP_CONCAT(
-        CONCAT(
-            c.id, ':',
-            c.course_name, ':',
-            c.course_code
-        ) 
-        SEPARATOR '|'
-    ) AS course_info,
-    GROUP_CONCAT(
-        CONCAT(
-            f.id, ':', f.faculty_id, ':', f.name, ':', fa.paper_count
-        ) 
-        SEPARATOR '|'
-    ) AS faculty_info,
-    SUM(fa.paper_count) AS paperCount,
-    h.id AS hod_id,
-    h.faculty AS hod_faculty_id,
-    md.department,
-    hf.name AS hod_name,
-    fa.semcode  -- Include semcode in the SELECT statement
-FROM 
-    faculty_paper_allocation fa
-JOIN 
-    master_faculty f ON fa.faculty = f.id
-JOIN 
-    master_courses c ON fa.course = c.id
-JOIN 
-    board_course_mapping bcm ON c.id = bcm.course
-JOIN 
-    master_hod h ON bcm.department = h.department
-JOIN 
-    master_faculty hf ON h.faculty = hf.id
-JOIN 
-    master_department md ON md.id = h.department
-WHERE 
-    fa.status = '1' 
-GROUP BY 
-    h.id,    -- Group by HOD information
-    fa.semcode  -- Group by semcode as well
-ORDER BY 
-    h.id;  -- Order by HOD id or any other relevant field
+            GROUP_CONCAT(
+                CONCAT(
+                    c.id, ':',
+                    c.course_name, ':',
+                    c.course_code, ':' ,
+                    bcm.paper_count  -- Using the total paper count from the subquery
+                ) 
+                SEPARATOR '|'
+            ) AS course_info,
+            GROUP_CONCAT(
+                CONCAT(
+                    f.id, ':', f.faculty_id, ':', f.name, ':', faculty_total_papers.faculty_paper_count  -- Using the total paper count from the subquery
+                ) 
+                SEPARATOR '|'
+            ) AS faculty_info,
+            SUM(fa.paper_count) AS paperCount,
+            h.id AS hod_id,
+            h.faculty AS hod_faculty_id,
+            md.department,
+            hf.name AS hod_name,
+            fa.semcode  -- Include semcode in the SELECT statement
+        FROM 
+            faculty_paper_allocation fa
+        JOIN 
+            master_faculty f ON fa.faculty = f.id
+        JOIN 
+            master_courses c ON fa.course = c.id
+        JOIN 
+            board_course_mapping bcm ON c.id = bcm.course
+        JOIN 
+            master_hod h ON bcm.department = h.department
+        JOIN 
+            master_faculty hf ON h.faculty = hf.id
+        JOIN 
+            master_department md ON md.id = h.department
+        JOIN (
+            SELECT course, semcode, SUM(paper_count) as course_paper_count
+            FROM faculty_paper_allocation
+            GROUP BY course, semcode  -- Group by course and semcode to handle different semcodes separately
+        ) as course_total_papers ON fa.course = course_total_papers.course AND fa.semcode = course_total_papers.semcode
+        JOIN (
+            SELECT faculty, semcode, SUM(paper_count) as faculty_paper_count
+            FROM faculty_paper_allocation
+            GROUP BY faculty, semcode  -- Group by faculty and semcode to handle different semcodes separately
+        ) as faculty_total_papers ON fa.faculty = faculty_total_papers.faculty AND fa.semcode = faculty_total_papers.semcode
+        WHERE 
+            fa.status = '1'
+    `;
+
+    // Add semcode filter if provided
+    if (semcode) {
+        query += ` AND fa.semcode = ${db.escape(semcode)}`;
+    }
+
+    query += `
+        GROUP BY 
+            h.id,    -- Group by HOD information
+            fa.semcode  -- Group by semcode as well
+        ORDER BY 
+            h.id;  -- Order by HOD id or any other relevant field
     `;
 
     try {
@@ -290,12 +359,12 @@ ORDER BY
             hodId: row.hod_id,
             hodFacultyId: row.hod_faculty_id,
             hodName: row.hod_name,
-            department:row.department,
-            semCode : row.semcode,
+            department: row.department,
+            semCode: row.semcode,
             paperCount: row.paperCount,
             courseInfo: row.course_info ? row.course_info.split('|').map(course => {
-                const [id, name, code] = course.split(':');
-                return { id, name, code };
+                const [id, name, code, count] = course.split(':');
+                return { id, name, code, count };
             }) : [],
             facultyInfo: row.faculty_info ? row.faculty_info.split('|').map(faculty => {
                 const [id, facultyId, name, paperCount] = faculty.split(':');
@@ -309,6 +378,7 @@ ORDER BY
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
 
 // Add this route to your existing Express router
 
@@ -561,7 +631,7 @@ router.get('/paperCount', async (req, res) => {
 
 router.post('/facultyChangeRequests', async (req, res) => {
     const { old_faculty,new_faculty, course, semcode,remark } = req.body;
-
+    console.log(req.body)
     // Validate the input
     if (old_faculty == null||new_faculty==null || course == null || semcode == null ) {
         return res.status(400).json({ message: 'All fields are required: faculty, course, semcode' });
@@ -679,18 +749,12 @@ router.put('/facultyChangeRequests/status', async (req, res) => {
             }
 
             // Remove the old faculty from faculty_paper_allocation
-            const deleteAllocationQuery = `
-                DELETE FROM faculty_paper_allocation
+            const updateAllocationQuery = `
+                UPDATE faculty_paper_allocation SET status='-5'
                 WHERE faculty = ? AND course = ? AND semcode = ?
             `;
-            await db.query(deleteAllocationQuery, [old_faculty, course, semcode]);
+            await db.query(updateAllocationQuery, [old_faculty, course, semcode]);
 
-            // Delete old faculty from eligible_faculty table
-            const deleteEligibleQuery = `
-                DELETE FROM eligible_faculty
-                WHERE faculty = ? AND semcode = ?
-            `;
-            await db.query(deleteEligibleQuery, [old_faculty, semcode]);
 
             // Delete the respective faculty_change_request row
             await db.query( `DELETE FROM faculty_change_requests WHERE id = ?`, [requestId]);
@@ -730,7 +794,7 @@ router.get('/facultyReplaceSuggest', async (req, res) => {
 
         // Check if any rows were returned
         if (rows.length === 0) {
-            return res.status(404).json({ message: 'No matching faculty found.' });
+            return res.status(200).json({ message: 'No matching faculty found.' });
         }
 
         // Send the results

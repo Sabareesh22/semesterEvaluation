@@ -21,6 +21,7 @@ import axios from 'axios';
 import apiHost from '../../config/config';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Select from 'react-select';
 
 const FacultyAllocationRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -30,53 +31,90 @@ const FacultyAllocationRequests = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const coursesPerPage = 1; // Display one course per page
-  
+  const [semesterCodes, setSemesterCodes] = useState([]);
+  const [selectedSemesterCode, setSelectedSemesterCode] = useState("");
+
+  // State to track individual approvals for each faculty in each course
+  const [individualApproval, setIndividualApproval] = useState({}); 
+
   const fetchRequests = async () => {
     console.log('Fetching faculty allocation requests...');
     try {
-      const response = await axios.get(`${apiHost}/api/facultyPaperAllocationRequests`);
+      const response = await axios.get(`${apiHost}/api/facultyPaperAllocationRequests?semcode=${selectedSemesterCode.value}`);
       console.log('API Response:', response.data); // Log the entire response
       setRequests(response.data.results); // Update state with fetched results
     } catch (error) {
       console.error('Error fetching faculty allocation requests:', error);
     }
   };
-  
+
   useEffect(() => {
-    fetchRequests();
+    if (selectedSemesterCode) {
+      fetchRequests();
+    }
+  }, [selectedSemesterCode]);
+
+  useEffect(() => {
+    const fetchSemesterCodes = async () => {
+      try {
+        const response = await axios.get(`${apiHost}/api/semcodes`);
+        const parsedCodes = response.data.results.map(item => ({
+          value: item.id,
+          label: item.semcode,
+        }));
+        console.log(parsedCodes);
+        setSemesterCodes(parsedCodes);
+      } catch (error) {
+        console.error('Error fetching semester codes:', error);
+      }
+    };
+    fetchSemesterCodes();
   }, []);
 
   const handleViewClick = (request) => {
-    console.log(`Viewing allocation for HOD: ${request.hodName}`);
+    console.log(`Viewing allocation by HOD: ${request.hodName}`);
     setSelectedHOD(request.hodName);
     setSelectedRequest(request); // Set the selected request for approval/rejection
+    setIndividualApproval({}); // Reset individual approval state
   };
 
-  const handleApprove = async () => {
-    if (!selectedRequest) return;
+  const handleIndividualApprove = async (facultyId, courseId) => {
+    try {
+      console.log(courseId)
+      await axios.put(`${apiHost}/api/facultyPaperAllocation/status`, {
+        facultyId,
+        courseId,
+        semCode: selectedRequest.semCode,
+        status: 2, // Status for approval
+      });
+      toast.success('Faculty approved successfully!');
+    } catch (error) {
+      console.error('Error approving faculty:', error);
+      toast.error('Failed to approve faculty. Please try again.');
+    }
+  };
 
-    const { facultyInfo, courseInfo } = selectedRequest;
+  const handleGroupApprove = async () => {
+    const selectedFaculties = Object.entries(individualApproval).filter(([facultyId, isApproved]) => isApproved);
+
+    if (selectedFaculties.length === 0) {
+      toast.warn('No faculty selected for group approval.');
+      return;
+    }
 
     try {
-      for (let i = 0; i < facultyInfo.length; i++) {
-        const facultyId = facultyInfo[i].id; // Use facultyId directly
-        const courseId = courseInfo[i].id;
-        console.log(selectedRequest);
-        await axios.put(`${apiHost}/api/facultyPaperAllocation/status`, {
-          facultyId,
-          courseId,
-          semCode: selectedRequest.semCode,
-          status: 2, // Status for approval
-        });
-      }
-      fetchRequests();
-      toast.success('Allocations approved successfully!');
-      setSelectedHOD(null);
-      setSelectedRequest(null);
+      await Promise.all(selectedFaculties.map(async ([facultyId]) => {
+        const facultyIndex = selectedRequest.facultyInfo.findIndex(f => f.id === facultyId);
+    
+       
+          await handleIndividualApprove(facultyId, selectedRequest.courseInfo[facultyIndex].id);
+          fetchRequests();
+      }));
     } catch (error) {
-      console.error('Error approving allocations:', error);
-      toast.error('Failed to approve allocations. Please try again.');
+      console.error('Error approving faculties:', error);
     }
+    
+    
   };
 
   const handleReject = async () => {
@@ -93,7 +131,7 @@ const FacultyAllocationRequests = () => {
       for (let i = 0; i < facultyInfo.length; i++) {
         const facultyId = facultyInfo[i].facultyId; // Use facultyId directly
         const courseId = courseInfo[i].id;
-        
+
         await axios.put(`${apiHost}/api/facultyPaperAllocation/status`, {
           facultyId,
           courseId,
@@ -127,8 +165,17 @@ const FacultyAllocationRequests = () => {
 
   return (
     <div style={{ padding: 16 }}>
-       <div style={{padding:"10px"}}>
-      <h1>Faculty Allocation Requests</h1>
+      <div style={{ padding: "10px" }}>
+        <h1>Faculty Allocation Requests</h1>
+      </div>
+      <div style={{ width: '30%', float: 'right' }}>
+        <Select
+          placeholder="Select Semester Code"
+          value={selectedSemesterCode}
+          onChange={(selectedOption) => setSelectedSemesterCode(selectedOption)}
+          options={semesterCodes}
+          isClearable
+        />
       </div>
       <ToastContainer />
       {selectedHOD ? (
@@ -137,12 +184,12 @@ const FacultyAllocationRequests = () => {
             Back to Requests
           </Button>
           <Typography variant="h5" style={{ marginTop: 16 }}>
-            Faculty Allocation for {selectedHOD}
+            Faculty Allocation of {selectedHOD}
           </Typography>
 
           <div style={{ marginTop: '20px', textAlign: 'right' }}>
-            <Button variant="contained" color="success" onClick={handleApprove} style={{ marginRight: '10px' }}>
-              Approve
+            <Button variant="contained" color="success" onClick={handleGroupApprove} style={{ marginRight: '10px' }}>
+              Approve Selected
             </Button>
             <Button variant="contained" color="error" onClick={handleOpenModal}>
               Reject
@@ -150,158 +197,167 @@ const FacultyAllocationRequests = () => {
           </div>
 
           <TableContainer component={Paper} style={{ marginTop: '20px', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-            <Table style={{ borderCollapse: 'collapse' }}>
-              <TableHead sx={{ backgroundColor: "#0d0030", color: "white" }}>
-                <TableRow>
-                  <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Course Name</TableCell>
-                  <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Course Code</TableCell>
-                  <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Faculty Name</TableCell>
-                  <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Paper Count</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {currentCourses.map((request) => {
-                  const courseMapping = {};
+  <Table style={{ borderCollapse: 'collapse' }}>
+    <TableHead sx={{ backgroundColor: "#0d0030", color: "white" }}>
+      <TableRow>
+        <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Course Name</TableCell>
+        <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Total Paper Count</TableCell>
+        <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Course Code</TableCell>
+        <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Faculty Name</TableCell>
+        <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Paper Count</TableCell>
+        <TableCell align="center" style={{ fontWeight: 'bold', border: '1px solid #ccc', color: '#FFFFFF' }}>Select</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {currentCourses.map((request) => {
+        const courseMapping = {};
 
-                  // Map courses to faculties
-                  request.courseInfo.forEach((course, index) => {
-                    const courseId = course.id;
-                    const courseName = course.name;
-                    const courseCode = course.code;
+        // Map courses to faculties
+        request.courseInfo.forEach((course, index) => {
+          const courseId = course.id;
+          const courseName = course.name;
+          const courseCode = course.code;
+          const paperCount = course.count;
+          // Initialize course details if not already done
+          if (!courseMapping[courseName]) {
+            courseMapping[courseName] = {
+              code: courseCode,
+              count: paperCount,
+              faculties: [],
+            };
+          }
 
-                    // Initialize course details if not already done
-                    if (!courseMapping[courseName]) {
-                      courseMapping[courseName] = {
-                        code: courseCode,
-                        faculties: [],
-                      };
-                    }
+          // Add corresponding faculty for this course
+          if (request.facultyInfo[index]) {
+            const faculty = request.facultyInfo[index];
+            courseMapping[courseName].faculties.push({
+              name: faculty.name,
+              paperCount: faculty.paperCount,
+              id: faculty.id,
+            });
+          }
+        });
 
-                    // Add corresponding faculty for this course
-                    if (request.facultyInfo[index]) {
-                      const faculty = request.facultyInfo[index];
-                      courseMapping[courseName].faculties.push({
-                        name: faculty.name,
-                        paperCount: faculty.paperCount,
-                        facultyId: faculty.facultyId, // Include facultyId for approval/rejection
-                      });
-                    }
-                  });
+        return Object.keys(courseMapping).map((courseName) => {
+          const course = courseMapping[courseName];
+          const facultyCount = course.faculties.length;
 
-                  return Object.entries(courseMapping).map(([courseName, courseDetails]) => {
-                    const { code, faculties } = courseDetails;
-                    const rowSpan = faculties.length;
-
-                    return (
-                      <React.Fragment key={courseName}>
-                        <TableRow>
-                          <TableCell rowSpan={rowSpan} align="center">{courseName}</TableCell>
-                          <TableCell rowSpan={rowSpan} align="center">{code}</TableCell>
-                          <TableCell align="center">{faculties[0].name}</TableCell>
-                          <TableCell align="center">{faculties[0].paperCount}</TableCell>
-                        </TableRow>
-                        {faculties.slice(1).map((faculty, facultyIndex) => (
-                          <TableRow key={`${courseName}-${facultyIndex}`}>
-                            <TableCell align="center">{faculty.name}</TableCell>
-                            <TableCell align="center">{faculty.paperCount}</TableCell>
-                          </TableRow>
-                        ))}
-                      </React.Fragment>
-                    );
-                  });
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          return course.faculties.map((faculty, idx) => (
+            <TableRow key={`${courseName}-${faculty.id}`}>
+              {idx === 0 && (
+                <>
+                  <TableCell
+                    align="center"
+                    rowSpan={facultyCount}
+                    style={{ border: '1px solid #ccc' }}
+                  >
+                    {courseName}
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    rowSpan={facultyCount}
+                    style={{ border: '1px solid #ccc' }}
+                  >
+                    {course.count}
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    rowSpan={facultyCount}
+                    style={{ border: '1px solid #ccc' }}
+                  >
+                    {course.code}
+                  </TableCell>
+                </>
+              )}
+              <TableCell align="center" style={{ border: '1px solid #ccc' }}>
+                {faculty.name}
+              </TableCell>
+              <TableCell align="center" style={{ border: '1px solid #ccc' }}>
+                {faculty.paperCount}
+              </TableCell>
+              <TableCell align="center" style={{ border: '1px solid #ccc' }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                  <input
+                    type="checkbox"
+                    onChange={(e) => {
+                      const facultyId = faculty.id;
+                      setIndividualApproval((prev) => ({
+                        ...prev,
+                        [facultyId]: e.target.checked,
+                      }));
+                    }}
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      marginRight: '8px',
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <label style={{ fontSize: '16px', cursor: 'pointer' }}>{faculty.name}</label>
+                </div>
+              </TableCell>
+            </TableRow>
+          ));
+        });
+      })}
+    </TableBody>
+  </Table>
+</TableContainer>
 
           <Pagination
-            count={Math.ceil(requests.length / coursesPerPage)} // Update this count based on actual data length
+            count={Math.ceil(requests.length / coursesPerPage)}
             page={currentPage}
             onChange={handlePageChange}
             color="primary"
-            style={{ marginTop: '10px', display: 'flex', justifyContent: 'center' }}
+            style={{ marginTop: '20px', float: 'right' }}
           />
-
-          <Modal
-            open={openModal}
-            onClose={handleCloseModal}
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
-          >
-            <Box 
-              sx={{ 
-                width: 400, 
-                bgcolor: 'background.paper', 
-                borderRadius: 2, 
-                boxShadow: 24, 
-                p: 4, 
-                margin: 'auto', 
-                marginTop: '20%', 
-                textAlign: 'center'
-              }}
-            >
-              <Typography id="modal-title" variant="h6">
-                Reason for Rejection
-              </Typography>
-              <TextareaAutosize
-                minRows={3}
-                placeholder="Enter reason for rejection"
-                style={{ backgroundColor: "white", width: '100%', color: "black", margin: '10px auto', padding: '10px', fontSize: '16px', display: 'block', border: '1px solid #ccc', borderRadius: '4px' }}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              />
-              <Button variant="contained" color="error" onClick={handleReject}>
-                Submit
-              </Button>
-            </Box>
-          </Modal>
         </div>
       ) : (
-        <Grid container spacing={2} direction="row" justifyContent="flex-start">
-          {requests.length > 0 ? (
-            requests.map((request, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-                <Card 
-                  style={{ 
-                    maxWidth: '300px', 
-                    width: '100%', 
-                    height: '150px', 
-                    borderRadius: '8px', 
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)', 
-                    margin: '0 auto', 
-                    position: 'relative',
-                  }}
-                >
-                  <CardContent style={{ padding: '16px', paddingBottom: '50px' }}>
-                    <Typography variant="h6">
-                      HOD Name: {request.hodName}
-                    </Typography>
-                    <Typography variant="subtitle1" color="textSecondary">
-                      Department: {request.department} {/* Update based on your data structure */}
-                    </Typography>
-                    <Button 
-                      variant="contained" 
-                      color="primary" 
-                      onClick={() => handleViewClick(request)} // Pass the entire request object
-                      style={{ 
-                        position: 'absolute', 
-                        bottom: '10px', 
-                        right: '10px' 
-                      }}
-                    >
-                      View
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))
-          ) : (
-            <Typography variant="h6" style={{ textAlign: 'center', width: '100%', marginTop: '20px' }}>
-              No requests yet...
-            </Typography>
-          )}
-        </Grid>
+        <div>
+          <Typography variant="h5" style={{ marginTop: 16 }}>Select a HOD to view requests</Typography>
+          <TableContainer component={Paper} style={{ marginTop: '20px' }}>
+            <Table>
+              <TableHead sx={{ backgroundColor: "#0d0030", color: "white" }}>
+                <TableRow>
+                  <TableCell align="center" style={{ fontWeight: 'bold', color: '#FFFFFF' }}>HOD Name</TableCell>
+                  <TableCell align="center" style={{ fontWeight: 'bold', color: '#FFFFFF' }}>Department</TableCell>
+                  <TableCell align="center" style={{ fontWeight: 'bold', color: '#FFFFFF' }}>View</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {requests.map((request) => (
+                  <TableRow key={request.id}>
+                    <TableCell align="center">{request.hodName}</TableCell>
+                    <TableCell align="center">{request.department}</TableCell>
+                    <TableCell align="center">
+                      <Button variant="contained" onClick={() => handleViewClick(request)}>
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </div>
       )}
+
+      <Modal open={openModal} onClose={handleCloseModal}>
+        <Box sx={{ width: 400 }}>
+          <Typography variant="h6">Reject Reason</Typography>
+          <TextareaAutosize
+            aria-label="reason"
+            minRows={3}
+            placeholder="Provide a reason for rejection"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            style={{ width: '100%', marginTop: 10, borderRadius: 4, borderColor: '#ccc' }}
+          />
+          <Button variant="contained" color="error" onClick={handleReject} style={{ marginTop: 10 }}>
+            Reject
+          </Button>
+        </Box>
+      </Modal>
     </div>
   );
 };

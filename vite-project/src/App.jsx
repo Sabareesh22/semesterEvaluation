@@ -17,8 +17,6 @@ function App() {
       <div className="appContainer">
         <Sidebar />
         <div className="content">
-        <div style={{display:"flex",width:"100%",justifyContent:"center",color:"red"
-    }}><h6>"Latest Working"</h6></div>
           <div className="header">
             <IconButton>
             <AccountCircle sx={{ fontSize: 40, color: '#333' }} /> {/* Adjust size and color */}

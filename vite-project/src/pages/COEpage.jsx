@@ -5,20 +5,23 @@ import 'react-toastify/dist/ReactToastify.css'; // Import toast styles
 import './COEpage.css';
 import axios from 'axios';
 import apiHost from '../../config/config.js';
+import MultiSelect from '../components/MultiSelect.jsx';
 
 const COEpage = () => {
     const [semesterCode, setSemesterCode] = useState('');
-    const [regulation, setRegulation] = useState('');
-    const [year, setYear] = useState('');
-    const [batch, setBatch] = useState('');
-    const [semester, setSemester] = useState('');
+    const [regulation, setRegulation] = useState([]);
+    const [year, setYear] = useState([]);
+    const [batch, setBatch] = useState([]);
+    const [semester, setSemester] = useState([],[]);
     const [loading, setLoading] = useState(false); // New loading state
 
     const [regulationOptions, setRegulationOptions] = useState([]);
     const [yearOptions, setYearOptions] = useState([]);
     const [batchOptions, setBatchOptions] = useState([]);
     const [semesterOptions, setSemesterOptions] = useState([]);
-
+  useEffect(()=>{
+    console.log(year)
+  },[year])
     useEffect(() => {
         // Prefill semester code
         const currentMonth = new Date().toLocaleString('default', { month: 'short' }).toUpperCase();
@@ -48,17 +51,44 @@ const COEpage = () => {
     }, []);
 
     const isFormValid = regulation && year && batch && semester;
-
+    const handleMultiSelectChange= (set,value)=>{
+       if(value==undefined){
+          set((prev)=>{
+            prev.pop(prev.length-1)
+            return([...prev])
+          })
+       }
+       else{
+        set((prev)=>([...prev,value]))
+       }
+    }
     const handleSubmit = async () => {
-        const newSemcode = {
-            semcode: semesterCode,
-            semester: semester,
-            batch: batch,
-            year: year,
-            regulation: regulation,
-            status: '1', // Assuming status is '1' for active
-        };
+        if(year.length != semester.length || year.length != batch.length || batch.length != semester.length){
+            let errorMessage = "Batch and Semesters options must tally"
+            if(year.length != semester.length){
+                errorMessage = "Year and Semesters options must tally"
+            }
+            else if(year.length != batch.length){
+                errorMessage = "Year and Batch options must tally"
+            }
+            else if(year.length != batch.length && year.length !=semester.length){
+                errorMessage = "Year,Batch and Semester options must tally"
+            }
+            toast.error(errorMessage)
+            return;
+        }
+    year.forEach(async(year,i)=>{
+        
 
+            const newSemcode = {
+                semcode: semesterCode,
+                semester: semester[i].value,
+                batch: batch[i].value,
+                year: year.value,
+                regulation: regulation,
+                status: '1', // Assuming status is '1' for active
+            };
+  
         setLoading(true); // Set loading state to true
 
         try {
@@ -77,14 +107,16 @@ const COEpage = () => {
         } finally {
             setLoading(false); // Reset loading state
         }
+    })
+    
     };
 
     const resetForm = () => {
         setSemesterCode(`SEE${new Date().toLocaleString('default', { month: 'short' }).toUpperCase()}${new Date().getFullYear().toString().slice(-2)}`);
         setRegulation('');
-        setYear('');
-        setBatch('');
-        setSemester('');
+        setYear([]);
+        setBatch([]);
+        setSemester([]);
     };
 
     return (
@@ -97,6 +129,7 @@ const COEpage = () => {
                 <Box display="flex" flexDirection="row" alignItems="center" flexWrap="wrap">
                     <FormControl sx={{ marginRight: 2, flex: 1 }} required>
                         <InputLabel>Regulation</InputLabel>
+                       
                         <Select
                             value={regulation}
                             onChange={(e) => setRegulation(e.target.value)}
@@ -112,52 +145,29 @@ const COEpage = () => {
                         </Select>
                     </FormControl>
                     <FormControl sx={{ marginRight: 2, flex: 1 }} required>
-                        <InputLabel>Year</InputLabel>
-                        <Select
-                            value={year}
-                            onChange={(e) => setYear(e.target.value)}
-                            label="Year"
-                            sx={{ backgroundColor: 'white', width: '100%' }} // White background and full width for Select
-                            disabled={loading} // Disable during loading
-                        >
-                            {yearOptions.map((option) => (
-                                <MenuItem key={option.id} value={option.id}>
-                                    {option.year}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                    <MultiSelect 
+                    label={"Year*"}
+                   value={year}
+  OnChange={(event, value) => setYear(value)} 
+  options={yearOptions.map((data) => ({ value: data.id, label: data.year }))}
+/>
+{console.log(yearOptions.map((data) => ({ value: data.id, label: data.year })))}
+             
                     </FormControl>
                     <FormControl sx={{ marginRight: 2, flex: 1 }} required>
-                        <InputLabel>Batch</InputLabel>
-                        <Select
-                            value={batch}
-                            onChange={(e) => setBatch(e.target.value)}
-                            label="Batch"
-                            sx={{ backgroundColor: 'white', width: '100%' }} // White background and full width for Select
-                            disabled={loading} // Disable during loading
-                        >
-                            {batchOptions.map((option) => (
-                                <MenuItem key={option.id} value={option.id}>
-                                    {`Batch ${option.batch}`}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                    <MultiSelect 
+                    label={"Batch*"}
+                    value={batch}
+                    OnChange={(event, value) => setBatch(value)}  
+                        options={batchOptions.map((data)=>({value:data.id,label:data.batch}))}/>
                     </FormControl>
                     <FormControl sx={{ flex: 1 }} required>
-                        <InputLabel>Semester</InputLabel>
-                        <Select
-                            value={semester}
-                            onChange={(e) => setSemester(e.target.value)}
-                            label="Semester"
-                            sx={{ backgroundColor: 'white', width: '100%' }} // White background and full width for Select
-                            disabled={loading} // Disable during loading
-                        >
-                            {semesterOptions.map((option) => (
-                                <MenuItem key={option.id} value={option.id}>
-                                    {`Semester ${option.semester}`}
-                                </MenuItem>
-                            ))}
-                        </Select>
+                    <MultiSelect 
+                    label={"Semester*"}
+
+                    value={semester}
+                    OnChange={(event, value) => setSemester(value)} 
+                        options={semesterOptions.map((data)=>({value:data.id,label:data.semester}))}/>
                     </FormControl>
                 </Box>
 

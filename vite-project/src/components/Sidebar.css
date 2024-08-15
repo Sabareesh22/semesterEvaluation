@@ -90,30 +90,24 @@ li {
   color: #f1f1f1; /* Color for dropdown icons */
 }
 
-ul > li > ul {
-  display: flex;
-  flex-direction: column;
+/* Submenu container */
+.submenuContainer {
   padding-left: 20px; /* Indentation for dropdown items */
-  border-radius: 5px; /* Rounded corners */
-  transition: background-color 0.3s ease; /* Smooth transition */
+  margin-top: 10px; /* Spacing above the submenu */
 }
 
-ul > li > ul > li {
-  display: flex; 
-  
-/* Use flexbox for dropdown items */
+.submenuItem {
+  display: flex; /* Use flexbox for submenu items */
   align-items: center; /* Center vertically */
-   /* Padding for nested items */
+  padding: 10px; /* Spacing for submenu items */
+  width: 100%; /* Full width for submenu items */
+  cursor: pointer; /* Pointer cursor */
   transition: background-color 0.3s ease; /* Smooth transition */
-}
-ul > li > ul > li >a{
-  display: flex;
+  border-radius: 10px;
 }
 
-ul > li > ul > li:hover {
-  border-radius: 5px; /* Rounded corners on hover */
-  background-color: #35345e; /* Hover color */
-  cursor: pointer; /* Pointer cursor */
+.submenuItem:hover {
+  background-color: #31305c; /* Change to a lighter hover color for submenu */
 }
 
 .sidebarTitle {

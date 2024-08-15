@@ -37,22 +37,51 @@ const [selectedFaculty, setSelectedFaculty] = useState(null);
 const [selectedReason, setSelectedReason] = useState('');
 const [facultyStatuses, setFacultyStatuses] = useState({});
 const [currentRow, setCurrentRow] = useState(null); // To track which row is being edited
-const handleOpenModal = async (facultyId, courseId) => {
+
+useEffect(()=>{
+ console.log(suggestedFaculties)
+},[suggestedFaculties])
+
+const handleOpenModal = async (facultyId, courseId,faculties) => {
+ 
   setOldFaculty(facultyId); // Store the old faculty
   setCurrentRow({ facultyId, courseId });
   try {
+    //  setSuggestedFaculties([]);
     // Fetch suggested faculties from the API
     const response = await axios.get(`${apiHost}/api/facultyReplaceSuggest`, {
       params: {
         courseId: courseId,
         semcode: selectedSemesterCode.value,
         facultyId: facultyId,
-      },
-    });
-
+      }    });
+   
     // Set the fetched faculties as options in the select
-    setSuggestedFaculties(response.data.results.map(fac => ({ value: fac.id, label: fac.name })));
+    setSuggestedFaculties(response?.data?.results?.map(fac => ({ value: fac.id, label: fac.name })));
+
+    const otherFaculties = faculties
+      .filter(fac => fac.facultyId != facultyId)
+      .map(fac => ({ value: fac.facultyId, label: fac.facultyName,notEligible:fac.notEligible }));
+    
+    console.log("Others:", otherFaculties);
+    
+    setSuggestedFaculties((prev) => {
+      // Check if prev is iterable and not null/undefined
+      if (Array.isArray(prev)) {
+        const filteredPrev = prev.filter(item => 
+          !otherFaculties.some(other => 
+            item.value === other.value && other.notEligible
+          )
+        );
+        return [...filteredPrev, ...otherFaculties.filter((fac) => !fac.notEligible)];
+      }
+      // If prev is not iterable, return only otherFaculties
+      return [...otherFaculties.filter((fac) => !fac.notEligible)];
+    });
+    
+  
   } catch (error) {
+    // console.log("Faculties",faculties)
     toast.error('Error fetching suggested faculties: ' + (error.response?.data?.message || 'Unknown error'));
   }
   
@@ -82,7 +111,8 @@ const handleSubmit = async () => {
 };
 const fetchPaperCounts = async () => {
   const newPaperCounts = {};
-  const newStatuses = {}; // Object to store statuses
+  const newStatuses = {};
+  const newAllocations = { ...allocations }; // Create a copy of allocations to update it
 
   if (courses.length > 0) {
     for (const course of courses) {
@@ -93,24 +123,36 @@ const fetchPaperCounts = async () => {
           const response = await axios.get(`${apiHost}/api/paperCount`, {
             params: {
               course: courseId,
-              faculty: faculty.facultyId, // Send facultyId here
+              faculty: faculty.facultyId,
               semcode: selectedSemesterCode.value,
             },
           });
-       
-          // Store the paper count and status for the specific faculty
-          newPaperCounts[`${`${course.courseId}-${faculty.facultyId}`}`] = response.data.results.paper_count;
-            newStatuses[`${`${course.courseId}-${faculty.facultyId}`}`] = response.data.results.status;
+
+          const paperCount = response.data.results.paper_count;
+          const status = response.data.results.status;
+
+          // Update paper counts and statuses
+          newPaperCounts[`${courseId}-${faculty.facultyId}`] = paperCount;
+          newStatuses[`${courseId}-${faculty.facultyId}`] = status;
+
+          // If the allocation already exists, retain it; otherwise, initialize it with the paper count
+          if (!newAllocations[courseId]) {
+            newAllocations[courseId] = {};
+          }
+          newAllocations[courseId][faculty.facultyId] = newAllocations[courseId][faculty.facultyId] || paperCount;
+          
         } catch (error) {
           console.error('Error fetching paper count:', error);
         }
       }
     }
   }
-  console.log("PAPER----",newPaperCounts)
+
   setPaperCounts(newPaperCounts); // Update state with paper counts
   setStatuses(newStatuses); // Update state with statuses
+  setAllocations(newAllocations); // Update state with allocations
 };
+
 const fetchFacultyStatuses = async () => {
   const newStatuses = {};
 
@@ -125,9 +167,9 @@ const fetchFacultyStatuses = async () => {
               semcode: selectedSemesterCode.value,
             },
           });
-          console.log("status",response.data.code)
+
           newStatuses[`${`${course.courseId}-${faculty.facultyId}`}`] = response.data.code;
-          console.log(newStatuses)
+
         } catch (error) {
           console.error('Error fetching faculty status:', error);
           toast.error('Error fetching faculty status.');
@@ -190,7 +232,6 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
 };
   const handleAllocate = async (courseId, facultyId, paperCount, AllocationSum) => {
     const allocationValue = allocations[courseId]?.[facultyId];
-    console.log(courseId, facultyId, paperCount, AllocationSum)
     if (allocationValue > 0) {
       try {
         const response = await axios.post(`${apiHost}/api/allocateFaculty`, [{
@@ -214,11 +255,9 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
   };
 
   const handleAllocateAll = async (courseId, faculties, paperCount) => {
-    console.log(courseId, faculties, paperCount)
     let AllocationSum = 0;
     try {
       Object.values(allocations[courseId]).forEach(v => {
-        console.log(v)
         AllocationSum += v;
       });
     } catch (error) {
@@ -279,20 +318,19 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
             </TableCell>
           </>
         )}
-        {console.log("EACH----------->",paperCounts[`${`${course.courseId}-${faculty.facultyId}`}`])}
         <TableCell align="center" style={{ border: '1px solid black' }}>{faculty.facultyName}</TableCell>
         <TableCell align="center" style={{ border: '1px solid black' }}>
-          <TextField
-            type="number"
-            size="small"
-            disabled={facultyStatuses[`${`${course.courseId}-${faculty.facultyId}`}`] !== 0}
-            variant="outlined"
-            value={allocations[course.courseId]?.[faculty.facultyId] || ''}
-            onChange={(e) => handleInputChange(e, course.courseName, faculty.facultyId, faculty.facultyName, course.courseId)}
-            placeholder={paperCounts[`${`${course.courseId}-${faculty.facultyId}`}`] || 0}
-          />
+        <TextField
+  type="number"
+  size="small"
+  disabled={facultyStatuses[`${course.courseId}-${faculty.facultyId}`] != 0 || statuses[`${course.courseId}-${faculty.facultyId}`] != -100}
+  variant="outlined"
+  value={allocations[course.courseId]?.[faculty.facultyId] || ''}
+  onChange={(e) => handleInputChange(e, course.courseName, faculty.facultyId, faculty.facultyName, course.courseId)}
+  placeholder={paperCounts[`${`${course.courseId}-${faculty.facultyId}`}`] || 0}
+/>
+
         </TableCell>
-                  {console.log(facultyStatuses )}
                  {
   (facultyStatuses[`${course.courseId}-${faculty.facultyId}`] !== undefined && facultyStatuses[`${course.courseId}-${faculty.facultyId}`] !== null) ? (
     facultyStatuses[`${course.courseId}-${faculty.facultyId}`] === 0 ? (
@@ -338,7 +376,13 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
           Replace - Rejected By COE
           </Typography>
         </TableCell>
-      )  : null
+      ): statuses[`${course.courseId}-${faculty.facultyId}`] == -5 ? (
+        <TableCell align="center" style={{ border: '1px solid black' }}>
+          <Typography variant="body1" color="red">
+          Faculty is Replaced - not active for this course
+          </Typography>
+        </TableCell>
+      )    : null
     ) : facultyStatuses[`${course.courseId}-${faculty.facultyId}`] == 3 ? (
       <TableCell align="center" style={{ border: '1px solid black' }}>
         <Typography variant="body1" color="green">
@@ -379,6 +423,12 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
       <TableCell align="center" style={{ border: '1px solid black' }}>
         <Typography variant="body1" color="red">
         Replace - Rejected By COE
+        </Typography>
+      </TableCell>
+    ) : statuses[`${course.courseId}-${faculty.facultyId}`] == -5 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="red">
+        Faculty is Replaced - not active for this course
         </Typography>
       </TableCell>
     )  : null
@@ -425,12 +475,18 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
         Replace - Rejected By COE
         </Typography>
       </TableCell>
+    ) : statuses[`${course.courseId}-${faculty.facultyId}`] == -5 ? (
+      <TableCell align="center" style={{ border: '1px solid black' }}>
+        <Typography variant="body1" color="red">
+        Faculty is Replaced - not active for this course
+        </Typography>
+      </TableCell>
     )  : null)
   )
 }
 
 
-        <TableCell align="center" style={{ border: '1px solid black' }}>
+<TableCell align="center" style={{ border: '1px solid black' }}>
         {facultyStatuses[`${course.courseId}-${faculty.facultyId}`] === 1 && (
   <Typography variant="body1" color="red">
     Replace request active - Faculty Approval Pending
@@ -447,32 +503,53 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
     <Typography variant="body1" color="orangered">
       Waiting for Faculty Approval
     </Typography>
-  ) : statuses[`${course.courseId}-${faculty.facultyId}`] === 1 ? (
+  ) : statuses[`${course.courseId}-${faculty.facultyId}`] == 1 ? (
     <Typography variant="body1" color="orangered">
       Waiting for COE Approval
     </Typography>
-  ) : statuses[`${course.courseId}-${faculty.facultyId}`] === 2 ? (
-    <Typography variant="body1" color="green">
-      Approved By COE
+  )  : statuses[`${course.courseId}-${faculty.facultyId}`] == -5 ? (
+    <Typography variant="body1" color="red">
+      Replaced
     </Typography>
   ) : (
-    <IconButton onClick={() => handleOpenModal(faculty.facultyId, course.courseId)}>
+  <IconButton 
+  onClick={() => handleOpenModal(
+    faculty.facultyId, 
+    course.courseId,
+    course.faculties.map(fac => ({
+      ...fac,
+      notEligible: (facultyStatuses[`${course.courseId}-${fac.facultyId}`] != 0 || statuses[`${course.courseId}-${fac.facultyId}`] != -100)
+    }))
+  )}
+>
+
+
       <RotateLeftIcon />
     </IconButton>
   )
 ) : facultyStatuses[`${course.courseId}-${faculty.facultyId}`] === null || facultyStatuses[`${course.courseId}-${faculty.facultyId}`] === undefined ? (
   // If facultyStatuses is not present, show the icon
-  <IconButton onClick={() => handleOpenModal(faculty.facultyId, course.courseId)}>
+  <IconButton 
+  onClick={() => handleOpenModal(
+    faculty.facultyId, 
+    course.courseId,
+    course.faculties.map(fac => ({
+      ...fac,
+      notEligible: (facultyStatuses[`${course.courseId}-${fac.facultyId}`] != 0 || statuses[`${course.courseId}-${fac.facultyId}`] != -100)
+    }))
+  )}
+>
+
     <RotateLeftIcon />
   </IconButton>
 ) : null}
 
         </TableCell>
+        
       </TableRow>
       
     ))
   ))}
-  {console.log(currentCourse)}
    {currentCourse && (
               <TableRow>
                 <TableCell colSpan={6} align="center" style={{ border: '1px solid black' }}>
@@ -611,8 +688,12 @@ const FacultyUploadTable = ({ headers, data, onCancel, onSubmit }) => {
 
 const FacultyAllocation = () => {
   const [semesterCodes, setSemesterCodes] = useState([]);
-  const [departments, setDepartments] = useState([]);
   const [selectedSemesterCode, setSelectedSemesterCode] = useState(null);
+  const [departments, setDepartments] = useState([]);
+  const [batchOptions, setBatchOptions] = useState([]);
+  const [year,setYear] =  useState([]);
+  const [yearOptions,setYearOptions] = useState([])
+  const [batch, setBatch] = useState([]);
   const [departmentId, setDepartmentId] = useState(null);
   const [courses, setCourses] = useState([]);
   const [uploadData, setUploadData] = useState([]);
@@ -621,8 +702,11 @@ const FacultyAllocation = () => {
 
   useEffect(() => {
     const fetchSemesterCodes = async () => {
+      if(!batch || !year){
+        return;
+      }
       try {
-        const response = await axios.get(`${apiHost}/api/semcodes`);
+        const response = await axios.get(`${apiHost}/api/semcodes?batch=${batch.value}&year=${year.value}`);
         const parsedCodes = response.data.results.map(item => ({
           value: item.id,
           label: item.semcode,
@@ -634,8 +718,39 @@ const FacultyAllocation = () => {
     };
 
     fetchSemesterCodes();
-  }, []);
+  }, [batch,year]);
+  useEffect(() => {
+    const fetchYears = async () => {
+        try {
+            const response = await axios.get(`${apiHost}/years`);
+            const parsedYears = response.data.map(item => ({
+                value: item.id,
+                label: item.year,
+            }));
+            setYearOptions(parsedYears);
+        } catch (error) {
+            console.error('Error fetching years:', error);
+        }
+    };
 
+    fetchYears();
+}, []);
+  useEffect(() => {
+    const fetchBatches = async () => {
+        try {
+            const response = await axios.get(`${apiHost}/batches`);
+            const parsedBatches = response.data.map(item => ({
+                value: item.id,
+                label: item.batch,
+            }));
+            setBatchOptions(parsedBatches);
+        } catch (error) {
+            console.error('Error fetching batches:', error);
+        }
+    };
+
+    fetchBatches();
+}, []);
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
@@ -658,7 +773,6 @@ const FacultyAllocation = () => {
       if (departmentId && selectedSemesterCode) {
         try {
           const response = await axios.get(`${apiHost}/api/courses/${departmentId.value}/${selectedSemesterCode.value}`);
-          console.log(response.data.results)
           setCourses(response.data.results);
           setShowUploadContainer(false); // Hide upload container on successful fetch
         } catch (error) {
@@ -750,13 +864,31 @@ const FacultyAllocation = () => {
       <h1>Faculty Allocation</h1>
       </div>
       
-      <div style={{ marginTop: '20px', marginBottom: '20px', display: 'flex', justifyContent: 'flex-end', width: '80%', marginLeft: 'auto', marginRight: 'auto' }}>
+      <div style={{ marginTop: '20px', marginBottom: '20px', display: 'flex',gap:"10px", justifyContent: 'flex-end', width: '80%', marginLeft: 'auto', marginRight: 'auto' }}>
         <div style={{ width: '30%', float: 'right', marginLeft: '20px' }}>
           <Select
             placeholder="Select Department"
             value={departmentId}
             onChange={(selectedOption) => setDepartmentId(selectedOption)}
             options={departments}
+            isClearable
+          />
+        </div>
+        <div style={{ width: '30%', float: 'right'}}>
+          <Select
+            placeholder="Select Year"
+            value={year}
+            onChange={(selectedOption) => setYear(selectedOption)}
+            options={yearOptions}
+            isClearable
+          />
+        </div>
+        <div style={{ width: '30%', float: 'right'}}>
+          <Select
+            placeholder="Select Batch"
+            value={batch}
+            onChange={(selectedOption) => setBatch(selectedOption)}
+            options={batchOptions}
             isClearable
           />
         </div>
