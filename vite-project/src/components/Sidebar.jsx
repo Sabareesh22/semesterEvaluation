@@ -42,6 +42,9 @@ const Sidebar = () => {
             {open.COE && (
               <div className="submenuContainer">
                 <ul>
+                <Link to="/COEDashBoard" onClick={closeMobileMenu}>
+                    <div className="submenuItem"><Dashboard className="icon" /> Dashboard</div>
+                  </Link>
                   <Link to="/createSemesterEvaluation" onClick={closeMobileMenu}>
                     <div className="submenuItem"><Assignment className="icon" /> Create Evaluation</div>
                   </Link>

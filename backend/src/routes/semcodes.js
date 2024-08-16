@@ -251,9 +251,9 @@ router.post('/uploadEligibleFaculty', async (req, res) => {
 });
 
 router.post('/allocateFaculty', async (req, res) => {
-    const { facultyId, courseId, paperCount, semCode } = req.body[0];
+    const { facultyId, courseId, paperCount, semCode,handledBy } = req.body[0];
 
-    if (facultyId == null || courseId == null || paperCount == null || semCode == null) {
+    if (facultyId == null || courseId == null || paperCount == null || semCode == null,handledBy==null) {
         return res.status(400).json({ message: 'All fields are required: faculty, course, paper_count, and semCode' });
     }
 
@@ -271,10 +271,10 @@ router.post('/allocateFaculty', async (req, res) => {
         }
 
         const insertQuery = `
-            INSERT INTO faculty_paper_allocation (faculty, course, paper_count, semcode) 
-            VALUES (?, ?, ?, ?)
+            INSERT INTO faculty_paper_allocation (faculty, course, paper_count, semcode,handlingFaculty) 
+            VALUES (?, ?, ?, ?,?)
         `;
-        const [insertResult] = await db.query(insertQuery, [facultyId, courseId, paperCount, semCode]);
+        const [insertResult] = await db.query(insertQuery, [facultyId, courseId, paperCount, semCode,handledBy]);
         res.status(201).json({ message: 'Faculty paper allocation added successfully', allocationId: insertResult.insertId });
 
     } catch (error) {
@@ -1189,6 +1189,156 @@ router.get('/pendingAllocationsSummary', async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
+router.get('/boardChairman', async (req, res) => {
+    const { departmentId ,semcode} = req.query;
+
+    try {
+        // SQL Query to get board chairman details
+        const query = `
+            SELECT 
+                bcm.id AS mapping_id,
+                mf.name AS chairman_name,
+                mf.faculty_id AS chairman_faculty_id,
+                md.department AS department_name,
+                bcm.status AS mapping_status
+            FROM 
+                board_chairman_mapping bcm
+            JOIN 
+                master_faculty mf ON bcm.chairman = mf.id
+            JOIN 
+                master_department md ON bcm.board = md.id
+            WHERE 
+                bcm.board = ? AND
+                bcm.semcode = ?
+                AND bcm.status = '1'
+                AND mf.status = '1'
+                AND md.status = '1';
+        `;
+
+        // Execute the query with the department ID
+        const [results] = await db.query(query, [departmentId,semcode]);
+
+        // Check if results are found
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'No board chairman found for the specified department.' });
+        }
+        console.log(results)
+        // Return the results as JSON
+        res.json(results);
+
+    } catch (error) {
+        console.error('Error fetching board chairman details:', error);
+        res.status(500).json({ message: 'An error occurred while fetching board chairman details.' });
+    }
+});
+
+router.get('/boardChiefExaminer', async (req, res) => {
+    const { departmentId, semcode } = req.query;
+    console.log("Board Examiner : ",req.query)
+    try {
+        // SQL Query to get board chief examiner details
+        const query = `
+            SELECT 
+                bcem.id AS mapping_id,
+                mf.name AS examiner_name,
+                mf.faculty_id AS examiner_faculty_id,
+                md.department AS department_name,
+                bcem.status AS mapping_status
+            FROM 
+                board_chief_examiner_mapping bcem
+            JOIN 
+                master_faculty mf ON bcem.faculty = mf.id
+            JOIN 
+                master_department md ON bcem.board = md.id
+            WHERE 
+                bcem.board = ? AND
+                bcem.semcode = ?
+                AND bcem.status = '1'
+                AND mf.status = '1'
+                AND md.status = '1';
+        `;
+
+        // Execute the query with the department ID
+        const [results] = await db.query(query, [departmentId, semcode]);
+
+        // Check if results are found
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'No board chief examiner found for the specified department.' });
+        }
+        console.log("Chief Examiner",results)
+        // Return the results as JSON
+        res.json(results);
+
+    } catch (error) {
+        console.error('Error fetching board chief examiner details:', error);
+        res.status(500).json({ message: 'An error occurred while fetching board chief examiner details.' });
+    }
+});
+
+router.get('/bc_ce', async (req, res) => {
+    const { semcode, department } = req.query;
+
+    if (!semcode || !department) {
+        return res.status(400).json({ error: 'semcode and department are required parameters' });
+    }
+
+    try {
+        const query = `
+            SELECT 
+                bcm.id AS chairman_mapping_id,
+                CONCAT(mf.name, ' - ', 'BC') AS chairman_name,
+                mf.id AS chairman_faculty_id,
+                mf.department AS department_id,
+                md.department AS department_name,
+                ms.semcode AS semcode_name,
+                'HOD' AS role
+            FROM 
+                board_chairman_mapping bcm
+            JOIN 
+                master_faculty mf ON bcm.chairman = mf.id
+            JOIN 
+                master_department md ON mf.department = md.id
+            JOIN 
+                master_semcode ms ON bcm.semcode = ms.id
+            WHERE 
+                bcm.semcode = ? 
+                AND mf.department = ?
+
+            UNION
+
+            SELECT 
+                bcem.id AS chief_examiner_mapping_id,
+                CONCAT(mf2.name, ' - ', 'CE') AS chief_examiner_name,
+                mf2.id AS chief_examiner_faculty_id,
+                mf2.department AS department_id,
+                md.department AS department_name,
+                ms.semcode AS semcode_name,
+                'Chief Examiner' AS role
+            FROM 
+                board_chief_examiner_mapping bcem
+            JOIN 
+                master_faculty mf2 ON bcem.faculty = mf2.id
+            JOIN 
+                master_department md ON mf2.department = md.id
+            JOIN 
+                master_semcode ms ON bcem.semcode = ms.id
+            WHERE 
+                bcem.semcode = ? 
+                AND mf2.department = ?;
+        `;
+
+        // Execute the query
+        const [rows] = await db.query(query, [semcode, department, semcode, department]);
+
+        // Send the results as a response
+        res.json(rows);
+    } catch (error) {
+        console.error('Error executing query:', error);
+        res.status(500).json({ error: 'An error occurred while fetching data' });
+    }
+});
+
 
 // Export the router
 module.exports = router;

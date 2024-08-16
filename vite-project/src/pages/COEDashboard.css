@@ -1,0 +1,23 @@
+.pendingListOptions{
+    display: flex;
+    gap: 5px;
+ }
+ .pendingListOptions:hover{
+     color:orangered ;
+     cursor: pointer;
+ }
+ .piechartContainer{
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     background-color: rgb(255, 255, 255);
+     box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+     padding: 20px;
+     flex:1;
+     border-radius: 5px;
+ }
+ .allocationDashboardContainer{
+     display: flex;
+     gap: 5px;
+     flex-direction: column;
+ }

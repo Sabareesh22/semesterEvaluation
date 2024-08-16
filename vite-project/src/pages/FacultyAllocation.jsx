@@ -25,7 +25,7 @@ import Pagination from '@mui/material/Pagination';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const FacultyAllocationTable = ({ selectedSemesterCode, courses }) => {
+const FacultyAllocationTable = ({ departmentId,selectedSemesterCode, courses }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [allocations, setAllocations] = useState({});
   const [paperCounts, setPaperCounts] = useState({});
@@ -37,10 +37,46 @@ const [selectedFaculty, setSelectedFaculty] = useState(null);
 const [selectedReason, setSelectedReason] = useState('');
 const [facultyStatuses, setFacultyStatuses] = useState({});
 const [currentRow, setCurrentRow] = useState(null); // To track which row is being edited
-
+const [bcCe,setBcCe] =  useState([])
+const [selectedBcCe,setSelectedBcCe] = useState([])
 useEffect(()=>{
  console.log(suggestedFaculties)
 },[suggestedFaculties])
+
+const fetchBeCe = async()=>{
+  try {
+    // Fetch the faculty roles (HOD and Chief Examiners) from the API
+    const response = await axios.get(`${apiHost}/api/bc_ce`, {
+      params: {
+        semcode: selectedSemesterCode.value,
+        department: departmentId.value,
+      }
+    });
+
+    // Handle the response data
+    const facultyRoles = response.data.map((data)=>({value:data.chairman_faculty_id,
+      label:data.chairman_name
+      }));
+    console.log('Faculty Roles:', facultyRoles);
+setBcCe(facultyRoles)
+    // You can set the data to your state or use it as needed
+    // setFacultyRoles(facultyRoles);
+} catch (error) {
+    console.error('Error fetching faculty roles:', error);
+    // Handle any errors appropriately, e.g., show an error message
+}
+}
+useEffect(()=>{
+
+if(!departmentId || !selectedSemesterCode){
+  
+}
+else{
+  fetchBeCe();
+
+}
+
+},[departmentId,selectedSemesterCode])
 
 const handleOpenModal = async (facultyId, courseId,faculties) => {
  
@@ -242,11 +278,13 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
     const allocationValue = allocations[courseId]?.[facultyId];
     if (allocationValue > 0) {
       try {
+        console.log(selectedBcCe[`${`${courseId}-${facultyId}`}`])
         const response = await axios.post(`${apiHost}/api/allocateFaculty`, [{
           facultyId,
           courseId,
           paperCount: allocationValue,
           semCode: selectedSemesterCode.value,
+          handledBy:selectedBcCe[`${`${courseId}-${facultyId}`}`].value
         }]);
         fetchPaperCounts()
         toast.success(response.data.message || 'Faculty allocated successfully.');
@@ -307,7 +345,7 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
     <div>
       <TableContainer
         component={Paper}
-        style={{ marginTop: '20px', width: '80%', marginLeft: 'auto', marginRight: 'auto', padding: '20px' }}
+        style={{ marginTop: '20px', width: '100%', marginLeft: 'auto', marginRight: 'auto', padding: '10px' }}
       >
         <Table style={{ borderCollapse: 'collapse' }}>
           <TableHead sx={{ backgroundColor: "#0d0030", color: "white", fontWeight: "bold" }}>
@@ -318,6 +356,7 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Faculty</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Allocation</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Time</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>BC/CE</TableCell>
               <TableCell colSpan={2} sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}> Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -351,6 +390,7 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
 />
 
         </TableCell>
+      
         <TableCell align="center" style={{ border: '1px solid black' }}>
         {allocations[course.courseId]?.[faculty.facultyId] 
         ? (() => {
@@ -362,6 +402,19 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
         })() 
         : '0 days'
     }
+        </TableCell>
+        <TableCell width={"100%"}  align="center" style={{ border: '1px solid black' }}>
+          <Select
+          options={bcCe}
+          
+          value={selectedBcCe[`${`${course.courseId}-${faculty.facultyId}`}`]}
+          onChange={(value)=>{
+            setSelectedBcCe((prev)=>{
+               prev[`${`${course.courseId}-${faculty.facultyId}`}`] = value;
+               return prev;
+            })
+          }}
+          />
         </TableCell>
                  {
   (facultyStatuses[`${course.courseId}-${faculty.facultyId}`] !== undefined && facultyStatuses[`${course.courseId}-${faculty.facultyId}`] !== null) ? (
@@ -585,7 +638,7 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
   ))}
    {currentCourse && (
               <TableRow>
-                <TableCell colSpan={8} align="center" style={{ border: '1px solid black' }}>
+                <TableCell colSpan={9} align="center" style={{ border: '1px solid black' }}>
                   <Button
                     variant="contained"
                     color="secondary"
@@ -938,6 +991,7 @@ const FacultyAllocation = () => {
       </div>
       {courses.length > 0 ? (
         <FacultyAllocationTable
+        departmentId={departmentId}
           selectedSemesterCode={selectedSemesterCode}
           courses={courses}
         />

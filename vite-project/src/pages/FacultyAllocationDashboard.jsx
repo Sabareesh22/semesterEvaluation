@@ -25,6 +25,8 @@ const FacultyAllocationDashboard = () => {
   const [pendingAllocations, setPendingAllocations] = useState([]);
   const [rejectedFacultyApprovalCount, setRejectedFacultyApprovalCount] = useState(0);
   const [allocatedCoursesCount, setAllocatedCoursesCount] = useState(0);
+  const [boardChairman, setBoardChairman] = useState(null);
+  const [chiefExaminers, setChiefExaminers] = useState([]);
   const data = [
       { name: 'Allocated', students: allocatedCoursesCount },
       { name: 'Pending Allocation', students: pendingCoursesCount },
@@ -42,6 +44,26 @@ const FacultyAllocationDashboard = () => {
   const onPieEnter = (_, index) => {
       setActiveIndex(index);
   };
+  useEffect(() => {
+    if(!departmentId || !selectedSemesterCode){
+      return;
+    }
+    const fetchBoardChiefExaminer = async () => {
+        try {
+            const response = await axios.get(`${apiHost}/api/boardChiefExaminer`, {
+                params: {
+                    departmentId: departmentId.value, 
+                    semcode : selectedSemesterCode.value// Replace with your selected department ID
+                },
+            });
+            setChiefExaminers(response.data);
+        } catch (error) {
+            console.error('Error fetching board chief examiner:', error);
+        }
+    };
+
+    fetchBoardChiefExaminer();
+}, [departmentId,selectedSemesterCode]);
   useEffect(() => {
     const fetchPendingAllocations = async () => {
         if (!selectedSemesterCode || !departmentId) {
@@ -158,6 +180,26 @@ const fetchPendingCourseAllocationCount = async () => {
       fetchPendingCourseAllocationCount();
       
   }, [selectedSemesterCode]);
+  useEffect(() => {
+    const fetchBoardChairman = async () => {
+        if (!selectedSemesterCode || !departmentId) {
+            return;
+        }
+        try {
+            const response = await axios.get(`${apiHost}/api/boardChairman`, {
+                params: {
+                    semcode: selectedSemesterCode.value,
+                    departmentId: departmentId.value,
+                },
+            });
+            setBoardChairman(response.data);
+        } catch (error) {
+            console.error('Error fetching board chairman:', error);
+        }
+    };
+
+    fetchBoardChairman();
+}, [selectedSemesterCode, departmentId]);
 
   useEffect(() => {
       const fetchSemesterCodes = async () => {
@@ -273,6 +315,33 @@ const fetchPendingCourseAllocationCount = async () => {
                   />
               </div>
           </div>
+          <div style={{ padding: "20px", textAlign: "center" ,display:"flex",justifyContent:"space-between"}}>
+            <div>
+           
+    <h2>Board Details</h2>
+    {boardChairman && boardChairman.length > 0 ? (
+        <div style={{display:"flex",justifyContent:"center",gap:"20px"}}>
+            <p><strong>Chairman:</strong> {boardChairman[0].chairman_name}</p>
+            <p><strong>Department:</strong> {boardChairman[0].department_name}</p>
+        </div>
+    ) : (
+        <p>No board chairman found </p>
+    )}   
+            </div>
+    {
+      chiefExaminers && chiefExaminers.length>0 ?(    <div>
+      <h3>Board Chief Examiners</h3>
+      <ul>
+          {chiefExaminers.map((examiner) => (
+              <li key={examiner.id}>{examiner.examiner_name} - {examiner.examiner_faculty_id}</li>
+          ))}
+      </ul>
+      {/* Other dashboard content */}
+  </div>
+      ):null
+    }
+</div>
+
           <div className='allocationDashboardContainer'>
               <div style={{ display: 'flex', flexWrap: "wrap", width: '100%', gap: "10px", alignItems: 'center', justifyContent: "center", height: "50%", padding: "20px", paddingBottom: "0px", boxSizing: "border-box" }}>
                   <div className='piechartContainer'>
@@ -291,7 +360,7 @@ const fetchPendingCourseAllocationCount = async () => {
                                   ))}
                               </Pie>
                               <Tooltip />
-                              <Legend align="center" />
+                              <Legend  wrapperStyle={{fontSize: "12px",width:"100%"}} align="left" />
                           </PieChart>
                           <h4 style={{ textAlign: "center" }}>Allocations Report</h4>
                       </div>
@@ -312,7 +381,7 @@ const fetchPendingCourseAllocationCount = async () => {
                                   ))}
                               </Pie>
                               <Tooltip />
-                              <Legend align="center" />
+                              <Legend wrapperStyle={{fontSize: "12px",width:"100%"}} align="left" />
                           </PieChart>
                           <h4 style={{ textAlign: "center" }}>Faculty Approvals Report</h4>
                       </div>
@@ -324,7 +393,7 @@ const fetchPendingCourseAllocationCount = async () => {
                   <h3>Pending Allocations</h3>
                   <br />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {pendingAllocations.length>0 && pendingAllocations.map((allocation, index) => (
+                      {pendingAllocations?.length>0 && pendingAllocations?.map((allocation, index) => (
                           <div key={index} className='pendingListOptions' style={{ display: 'flex', gap: '5px' }}>
                               <Circle />
                                {allocation.paper_count}
