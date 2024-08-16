@@ -137,6 +137,7 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
             SELECT 
                 bcm.id,
                 bcm.paper_count,
+                bcm.time_in_days,
                 mc.id AS course_id,
                 mc.course_name, 
                 mf.id AS faculty_id,
@@ -177,12 +178,13 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
         const courses = {};
 
         rows.forEach(row => {
-            const { course_id, course_name, faculty_id, faculty_name, paper_count } = row;
+            const { course_id, course_name, faculty_id, faculty_name, paper_count,time_in_days } = row;
             if (!courses[course_name]) {
                 courses[course_name] = {
                     courseId: course_id,
                     courseName: course_name,
                     paperCount: paper_count,
+                    time:time_in_days,
                     department: `Department ${departmentId}`,
                     faculties: []
                 };
@@ -759,13 +761,14 @@ router.put('/facultyChangeRequests/status', async (req, res) => {
             // Delete the respective faculty_change_request row
             await db.query( `DELETE FROM faculty_change_requests WHERE id = ?`, [requestId]);
 
-            res.status(200).json({ message: 'Status updated to 2, old faculty removed, eligible faculty updated, and faculty change request deleted.' });
+            return res.status(200).json({ message: 'Status updated to 2, old faculty removed, eligible faculty updated, and faculty change request deleted.' });
         }
 
     } catch (error) {
         console.error('Error updating faculty change request status:', error);
-        res.status(500).json({ message: 'Internal Server Error' });
+         return res.status(500).json({ message: 'Internal Server Error' });
     }
+    res.status(200).json({message:"Approved Chnage Request Successfully"})
 });
 
 
@@ -942,7 +945,7 @@ router.get('/facultyChangeRequests', async (req, res) => {
 
         // Check if any rows were returned
         if (rows.length === 0) {
-            return res.status(404).json({ message: 'No records found' });
+            return res.status(200).json({ message: 'No records found' });
         }
 
         // Return the faculty change requests
@@ -953,7 +956,239 @@ router.get('/facultyChangeRequests', async (req, res) => {
     }
 });
 
+router.get('/countPendingFacultyApprovals', async (req, res) => {
+    console.log(req.query);
 
+    let query = `
+        SELECT COUNT(*) AS record_count
+        FROM faculty_paper_allocation fpa
+        INNER JOIN board_course_mapping bcm ON fpa.course = bcm.course
+        WHERE fpa.status = '0'
+    `;
+
+    const params = [];
+
+    if (req.query.semcode) {
+        query += ' AND fpa.semcode = ? AND bcm.semcode = ?';
+        params.push(req.query.semcode, req.query.semcode);
+    }
+
+    if (req.query.department) {
+        query += ' AND bcm.department = ?';
+        params.push(req.query.department);
+    }
+
+    try {
+        const [rows] = await db.query(query, params);
+        if (rows.length === 0) {
+            return res.status(200).json({ message: 'No records found' });
+        }
+        res.status(200).json({ record_count: rows[0].record_count });
+    } catch (error) {
+        console.error('Error fetching faculty allocations count:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+router.get('/countCompletedFacultyApprovals', async (req, res) => {
+    console.log(req.query);
+
+    let query = `
+        SELECT COUNT(*) AS record_count
+        FROM faculty_paper_allocation fpa
+        INNER JOIN board_course_mapping bcm ON fpa.course = bcm.course
+        WHERE fpa.status = '1'
+    `;
+
+    const params = [];
+
+    if (req.query.semcode) {
+        query += ' AND fpa.semcode = ? AND bcm.semcode = ?';
+        params.push(req.query.semcode, req.query.semcode);
+    }
+
+    if (req.query.department) {
+        query += ' AND bcm.department = ?';
+        params.push(req.query.department);
+    }
+
+    try {
+        const [rows] = await db.query(query, params);
+        if (rows.length === 0) {
+            return res.status(200).json({ message: 'No records found' });
+        }
+        res.status(200).json({ record_count: rows[0].record_count });
+    } catch (error) {
+        console.error('Error fetching faculty allocations count:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+router.get('/countRejectedFacultyApprovals', async (req, res) => {
+    console.log(req.query);
+
+    let query = `
+        SELECT COUNT(*) AS record_count
+        FROM faculty_paper_allocation fpa
+        INNER JOIN board_course_mapping bcm ON fpa.course = bcm.course
+        WHERE fpa.status = '-1'
+    `;
+
+    const params = [];
+
+    if (req.query.semcode) {
+        query += ' AND fpa.semcode = ? AND bcm.semcode = ?';
+        params.push(req.query.semcode, req.query.semcode);
+    }
+
+    if (req.query.department) {
+        query += ' AND bcm.department = ?';
+        params.push(req.query.department);
+    }
+
+    try {
+        const [rows] = await db.query(query, params);
+        if (rows.length === 0) {
+            return res.status(200).json({ message: 'No records found' });
+        }
+        res.status(200).json({ record_count: rows[0].record_count });
+    } catch (error) {
+        console.error('Error fetching faculty allocations count:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+router.get('/countAllocatedCourses', async (req, res) => {
+    console.log("Allocated Courses Query:", req.query);
+
+    let query = `
+        SELECT COUNT(DISTINCT fpa.course) AS unique_course_count
+        FROM faculty_paper_allocation fpa
+        INNER JOIN board_course_mapping bcm ON fpa.course = bcm.course
+        WHERE 1 = 1
+    `;
+
+    const params = [];
+
+    if (req.query.semcode) {
+        query += ' AND fpa.semcode = ? AND bcm.semcode = ?';
+        params.push(req.query.semcode, req.query.semcode);
+    }
+
+    if (req.query.department) {
+        query += ' AND bcm.department = ?';
+        params.push(req.query.department);
+    }
+
+    try {
+        const [rows] = await db.query(query, params);
+        if (rows.length === 0) {
+            return res.status(200).json({ message: 'No records found' });
+        }
+        res.status(200).json({ unique_course_count: rows[0].unique_course_count });
+    } catch (error) {
+        console.error('Error fetching unique course count:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+
+router.get('/pendingAllocations', async (req, res) => {
+    console.log("pending Allocations : ",req.query);
+  
+    // Constructing the base query
+    let query = `
+        SELECT COUNT(*) count
+        FROM board_course_mapping bcm
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM faculty_paper_allocation fpa
+            WHERE fpa.course = bcm.course
+            AND fpa.semcode = bcm.semcode
+        )
+    `;
+    
+    const params = [];
+
+    // Adding condition based on provided semcode query parameter
+    if (req.query.semcode) {
+        query += ' AND bcm.semcode = ?';
+        params.push(req.query.semcode);
+    }
+
+    // Adding condition based on provided department query parameter
+    if (req.query.department) {
+        query += ' AND bcm.department = ?';
+        params.push(req.query.department);
+    }
+
+    try {
+        const [rows] = await db.query(query, params);
+
+        // Check if any rows were returned
+        if (rows.length === 0) {
+            return res.status(200).json({ message: 'No pending allocations found' });
+        }
+
+        // Return the pending allocations
+        res.status(200).json({ pending_allocations: rows[0].count });
+    } catch (error) {
+        console.error('Error fetching pending allocations:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+router.get('/pendingAllocationsSummary', async (req, res) => {
+    console.log(req.query);
+
+    // Constructing the query to get pending allocations with course codes and paper counts
+    let query = `
+        SELECT mc.course_code, bcm.paper_count
+        FROM board_course_mapping bcm
+        INNER JOIN master_courses mc ON bcm.course = mc.id
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM faculty_paper_allocation fpa
+            WHERE fpa.course = bcm.course
+            AND fpa.semcode = bcm.semcode
+        )
+    `;
+    
+    const params = [];
+
+    // Adding condition based on provided semcode query parameter
+    if (req.query.semcode) {
+        query += ' AND bcm.semcode = ?';
+        params.push(req.query.semcode);
+    }
+
+    // Adding condition based on provided department query parameter
+    if (req.query.department) {
+        query += ' AND bcm.department = ?';
+        params.push(req.query.department);
+    }
+
+    try {
+        const [rows] = await db.query(query, params);
+
+        // Check if any rows were returned
+        if (rows.length === 0) {
+            return res.status(200).json({ message: 'No pending allocations found' });
+        }
+
+        // Format the response data
+        const pendingAllocations = rows.map(row => ({
+            course_code: row.course_code,
+            paper_count: `${row.course_code} - ${row.paper_count} papers`
+        }));
+
+        // Return the pending allocations summary
+        res.status(200).json({ pending_allocations_summary: pendingAllocations });
+    } catch (error) {
+        console.error('Error fetching pending allocations summary:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
 
 // Export the router
 module.exports = router;

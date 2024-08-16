@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './Sidebar.css';
-import { ExpandMore, ExpandLess, Menu } from '@mui/icons-material';
+import { ExpandMore, ExpandLess, Menu, Dashboard } from '@mui/icons-material';
 import { School, Download, Assignment, SwapHoriz, People, Book } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import Logo from '../assets/logo.png';
@@ -67,9 +67,14 @@ const Sidebar = () => {
             {open.HOD && (
               <div className="submenuContainer">
                 <ul>
+                <Link to="/facultyAllocationDashBoard" onClick={closeMobileMenu}>
+                    <div className="submenuItem"><Dashboard className="icon" /> Dashboard</div>
+                  </Link>
                   <Link to="/facultyAllocation" onClick={closeMobileMenu}>
                     <div className="submenuItem"><Assignment className="icon" /> Allocation</div>
                   </Link>
+                
+                
                 </ul>
               </div>
             )}

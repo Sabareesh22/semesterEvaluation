@@ -104,9 +104,7 @@ const FacultyApprovalPage = () => {
   };
 
   const handleApproveReplacement = async (course) => {
-    console.log(`${course.courseName} replacement approved successfully.`)
-    toast.success(`${course.courseName} replacement approved successfully.`);
-    fetchReplacementRequests();
+   
     try {
       await axios.put(`${apiHost}/api/facultyChangeRequests/status`, {
         old_faculty: course.old_faculty
@@ -118,7 +116,8 @@ const FacultyApprovalPage = () => {
       });
    
       // Refetch the replacement requests after successful approval
-      
+      toast.success(`${course.courseName} replacement approved successfully.`);
+      fetchReplacementRequests();
     } catch (error) {
       toast.error('Failed to approve the replacement request.');
     }

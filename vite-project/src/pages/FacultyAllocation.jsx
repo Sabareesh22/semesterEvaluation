@@ -17,7 +17,7 @@ import { Modal, Box } from '@mui/material';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import CloseIcon from '@mui/icons-material/Close';
 import Select from 'react-select';
-import axios from 'axios';
+import axios, { toFormData } from 'axios';
 import apiHost from '../../config/config';
 import * as XLSX from 'xlsx';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -70,7 +70,7 @@ const handleOpenModal = async (facultyId, courseId,faculties) => {
       if (Array.isArray(prev)) {
         const filteredPrev = prev.filter(item => 
           !otherFaculties.some(other => 
-            item.value === other.value && other.notEligible
+            item.value == other.value
           )
         );
         return [...filteredPrev, ...otherFaculties.filter((fac) => !fac.notEligible)];
@@ -188,11 +188,11 @@ useEffect(() => {
 
 
 
-const handleInputChange = (event, courseName, facultyId, facultyName, courseId, index) => {
+const handleInputChange = (event, courseName, facultyId, facultyName, courseId,time) => {
   const value = parseInt(event.target.value) || 0; // Allow negative values for direct input
   const courseAllocations = allocations[courseId] || {};
   const facultyCount = courses[currentPage].faculties.length;
-
+ 
   // Ensure the value is in multiples of 25
   let allocationValue = Math.ceil(value / 25) * 25;
   if (allocationValue - value === 1) {
@@ -202,7 +202,14 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
   let newAllocations = { ...courseAllocations };
 
   // Update allocation for the selected faculty
-  newAllocations[facultyId] = allocationValue;
+  if(roundToHalfOrCeiling(allocationValue/50)<=time){
+    newAllocations[facultyId] = allocationValue;
+  }
+  else{
+    const dayString = (time > 0 && time < 1) ? 'day' : 'days';
+
+    toast.error("The faculty time must be within " + time + " " + dayString);
+  }
 
   // Recalculate allocations for all except the last faculty
   let sumAllocations = 0;
@@ -220,9 +227,10 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
     toast.error("Total allocation exceeds the paper count.");
     return;
   }
-
+  if(roundToHalfOrCeiling(remainingPapers/50)<=time){
+    newAllocations[lastFacultyId] = Math.max(0, remainingPapers); // Ensure it's non-negative
+  }
   // Update last faculty's allocation based on remaining papers
-  newAllocations[lastFacultyId] = Math.max(0, remainingPapers); // Ensure it's non-negative
 
   // Update the state with the new allocations
   setAllocations(prev => ({
@@ -258,6 +266,11 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
     let AllocationSum = 0;
     try {
       Object.values(allocations[courseId]).forEach(v => {
+        if(v==0){
+
+          toast.error("All Faculties must be assigned paper")
+          AllocationSum = -100000;
+        }
         AllocationSum += v;
       });
     } catch (error) {
@@ -265,7 +278,7 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
     }
    
     if (AllocationSum !== paperCount) {
-      toast.error('Error allocating all faculties.');
+      toast.error('Error allocating  faculties. Count doesnt match total count');
       return;
     }
     try {
@@ -284,9 +297,12 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage); // Update to the new page
   };
-  
+  function roundToHalfOrCeiling(value) {
+    const roundedValue = Math.round(value * 2) / 2;
+    return roundedValue < value ? roundedValue + 0.5 : roundedValue;
+}
   const currentCourse = courses[currentPage];
-
+  
   return (
     <div>
       <TableContainer
@@ -298,9 +314,10 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
             <TableRow>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" rowSpan={2} style={{ border: '1px solid black' }}>Course</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" rowSpan={2} style={{ border: '1px solid black' }}>Paper Count</TableCell>
-             
+              <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" rowSpan={2} style={{ border: '1px solid black' }}>Time</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Faculty</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Allocation</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}>Time</TableCell>
               <TableCell colSpan={2} sx={{ color: "white", fontWeight: "bold" }} align="center" style={{ border: '1px solid black' }}> Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -316,6 +333,9 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
             <TableCell rowSpan={course.faculties.length} align="center" style={{ border: '1px solid black' }}>
               {course.paperCount}
             </TableCell>
+            <TableCell rowSpan={course.faculties.length} align="center" style={{ border: '1px solid black' }}>
+              {course.time }  {(course.time > 0 && course.time < 1) ? ' day' : ' days'}
+            </TableCell>
           </>
         )}
         <TableCell align="center" style={{ border: '1px solid black' }}>{faculty.facultyName}</TableCell>
@@ -326,10 +346,22 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
   disabled={facultyStatuses[`${course.courseId}-${faculty.facultyId}`] != 0 || statuses[`${course.courseId}-${faculty.facultyId}`] != -100}
   variant="outlined"
   value={allocations[course.courseId]?.[faculty.facultyId] || ''}
-  onChange={(e) => handleInputChange(e, course.courseName, faculty.facultyId, faculty.facultyName, course.courseId)}
+  onChange={(e) => handleInputChange(e, course.courseName, faculty.facultyId, faculty.facultyName, course.courseId,course.time)}
   placeholder={paperCounts[`${`${course.courseId}-${faculty.facultyId}`}`] || 0}
 />
 
+        </TableCell>
+        <TableCell align="center" style={{ border: '1px solid black' }}>
+        {allocations[course.courseId]?.[faculty.facultyId] 
+        ? (() => {
+            const roundedValue = roundToHalfOrCeiling(allocations[course.courseId][faculty.facultyId] / 50);
+            if(roundedValue>course.time){
+              toast.error("The time and paper given to faculty  is over the time limit")
+            }
+            return `${roundedValue} ${roundedValue === 0.5 || roundedValue === 1 ? 'day' : 'days'}`;
+        })() 
+        : '0 days'
+    }
         </TableCell>
                  {
   (facultyStatuses[`${course.courseId}-${faculty.facultyId}`] !== undefined && facultyStatuses[`${course.courseId}-${faculty.facultyId}`] !== null) ? (
@@ -518,7 +550,8 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
     course.courseId,
     course.faculties.map(fac => ({
       ...fac,
-      notEligible: (facultyStatuses[`${course.courseId}-${fac.facultyId}`] != 0 || statuses[`${course.courseId}-${fac.facultyId}`] != -100)
+      notEligible: ((facultyStatuses[`${course.courseId}-${fac.facultyId}`] != 0
+         || statuses[`${course.courseId}-${fac.facultyId}`] != -100 ) && statuses[`${course.courseId}-${fac.facultyId}`] != 2 )
     }))
   )}
 >
@@ -552,7 +585,7 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId, 
   ))}
    {currentCourse && (
               <TableRow>
-                <TableCell colSpan={6} align="center" style={{ border: '1px solid black' }}>
+                <TableCell colSpan={8} align="center" style={{ border: '1px solid black' }}>
                   <Button
                     variant="contained"
                     color="secondary"
@@ -773,6 +806,7 @@ const FacultyAllocation = () => {
       if (departmentId && selectedSemesterCode) {
         try {
           const response = await axios.get(`${apiHost}/api/courses/${departmentId.value}/${selectedSemesterCode.value}`);
+          console.log("Allocation data : ",response.data.results)
           setCourses(response.data.results);
           setShowUploadContainer(false); // Hide upload container on successful fetch
         } catch (error) {
@@ -894,7 +928,7 @@ const FacultyAllocation = () => {
         </div>
         <div style={{ width: '30%', float: 'right' }}>
           <Select
-            placeholder="Select Semester Code"
+            placeholder="Select SemCode"
             value={selectedSemesterCode}
             onChange={(selectedOption) => setSelectedSemesterCode(selectedOption)}
             options={semesterCodes}

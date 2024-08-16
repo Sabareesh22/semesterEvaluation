@@ -177,6 +177,9 @@ const FacultyAllocationRequests = () => {
           isClearable
         />
       </div>
+
+        {!requests?.length>0 && <div style={{width:"100%",display:"flex",marginTop:"15%",justifyContent:"center"}}><p>**** No requests Available ****</p></div>}
+
       <ToastContainer />
       {selectedHOD ? (
         <div>
@@ -312,8 +315,10 @@ const FacultyAllocationRequests = () => {
             style={{ marginTop: '20px', float: 'right' }}
           />
         </div>
-      ) : (
+      ) : (requests?.length>0 &&
+        
         <div>
+
           <Typography variant="h5" style={{ marginTop: 16 }}>Select a HOD to view requests</Typography>
           <TableContainer component={Paper} style={{ marginTop: '20px' }}>
             <Table>
@@ -325,7 +330,7 @@ const FacultyAllocationRequests = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {requests.map((request) => (
+                {requests?.map((request) => (
                   <TableRow key={request.id}>
                     <TableCell align="center">{request.hodName}</TableCell>
                     <TableCell align="center">{request.department}</TableCell>

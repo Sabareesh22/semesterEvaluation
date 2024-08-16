@@ -9,6 +9,7 @@ import FacultyAllocationRequests from './pages/FacutlyAllocationRequests';
 import FacultyApprovalPage from './pages/FacultyApprovalPage';
 import FacultyChangeRequests from './pages/FacultyChangeRequests';
 import ReportDownloadPage from './pages/ReportDownloadPage';
+import FacultyAllocationDashboard from './pages/FacultyAllocationDashboard';
 
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
             <Route path='/createSemesterEvaluation' element={<COEpage/>}/>
             <Route path='/semesterEvaluationReport' element={<ReportDownloadPage/>}/>
             <Route path="/facultyAllocation" element={<FacultyAllocation />} />
+            <Route path="/facultyAllocationDashboard" element={<FacultyAllocationDashboard />} />
             <Route path="/facultyAllocationRequests" element={<FacultyAllocationRequests />} />
             <Route path="/facultyChangeRequests" element={<FacultyChangeRequests />} />
             <Route path="/facultyApproval" element={<FacultyApprovalPage/>} />

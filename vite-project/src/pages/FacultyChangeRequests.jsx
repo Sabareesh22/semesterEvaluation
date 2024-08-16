@@ -100,7 +100,8 @@ const FacultyChangeRequests = () => {
       </div>
       <ToastContainer /> {/* Add ToastContainer for Toastify notifications */}
       <Grid container spacing={2} direction="column">
-        {requests.map((request) => (
+        {!requests?.length>0 && <div style={{width:"100%",display:"flex",marginTop:"15%",justifyContent:"center"}}><p>**** No requests Available ****</p></div>}
+        {requests?.map((request) => (
           <Grid item xs={12} key={request.request_id}>
             <Card style={{ width: '100%' }}>
               <CardContent style={{ padding: '16px', position: 'relative' }}>
