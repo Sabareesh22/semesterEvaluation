@@ -55,7 +55,7 @@ const fetchBeCe = async()=>{
 
     // Handle the response data
     const facultyRoles = response.data.map((data)=>({value:data.chairman_faculty_id,
-      label:data.chairman_name
+      label:data.chairman_name,role:data.role
       }));
     console.log('Faculty Roles:', facultyRoles);
 setBcCe(facultyRoles)
@@ -155,6 +155,7 @@ const fetchPaperCounts = async () => {
       const { courseId, faculties } = course;
 
       for (const faculty of faculties) {
+       
         try {
           const response = await axios.get(`${apiHost}/api/paperCount`, {
             params: {
@@ -170,7 +171,9 @@ const fetchPaperCounts = async () => {
           // Update paper counts and statuses
           newPaperCounts[`${courseId}-${faculty.facultyId}`] = paperCount;
           newStatuses[`${courseId}-${faculty.facultyId}`] = status;
-
+          if(faculty.facultyName=="External"){
+            newAllocations[courseId][faculty.facultyId] = course.externalCount;
+          }
           // If the allocation already exists, retain it; otherwise, initialize it with the paper count
           if (!newAllocations[courseId]) {
             newAllocations[courseId] = {};
@@ -274,17 +277,24 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
     [courseId]: newAllocations,
   }));
 };
-  const handleAllocate = async (courseId, facultyId, paperCount, AllocationSum) => {
+  const handleAllocate = async (courseId, facultyId, paperCount, AllocationSum,time) => {
     const allocationValue = allocations[courseId]?.[facultyId];
+    if(!selectedBcCe[`${`${courseId}-${facultyId}`}`]){
+      toast.error("Please select the BC/CE for all faculty");
+      return;
+    }
     if (allocationValue > 0) {
       try {
         console.log(selectedBcCe[`${`${courseId}-${facultyId}`}`])
         const response = await axios.post(`${apiHost}/api/allocateFaculty`, [{
           facultyId,
           courseId,
+          departmentId:departmentId.value,
           paperCount: allocationValue,
           semCode: selectedSemesterCode.value,
-          handledBy:selectedBcCe[`${`${courseId}-${facultyId}`}`].value
+          handledBy:selectedBcCe[`${`${courseId}-${facultyId}`}`].value,
+          handlingFacultyRole:selectedBcCe[`${`${courseId}-${facultyId}`}`].role,
+          time:time
         }]);
         fetchPaperCounts()
         toast.success(response.data.message || 'Faculty allocated successfully.');
@@ -300,7 +310,8 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
     }
   };
 
-  const handleAllocateAll = async (courseId, faculties, paperCount) => {
+  const handleAllocateAll = async (courseId, faculties, paperCount,time) => {
+
     let AllocationSum = 0;
     try {
       Object.values(allocations[courseId]).forEach(v => {
@@ -321,7 +332,7 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
     }
     try {
       for (const faculty of faculties) {
-        await handleAllocate(courseId, faculty.facultyId, paperCount, AllocationSum);
+        await handleAllocate(courseId, faculty.facultyId, paperCount, AllocationSum,time);
       }
     } catch (error) {
       if (AllocationSum === paperCount) {
@@ -382,7 +393,7 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
         <TextField
   type="number"
   size="small"
-  disabled={facultyStatuses[`${course.courseId}-${faculty.facultyId}`] != 0 || statuses[`${course.courseId}-${faculty.facultyId}`] != -100}
+  disabled={facultyStatuses[`${course.courseId}-${faculty.facultyId}`] != 0 || statuses[`${course.courseId}-${faculty.facultyId}`] != -100 || faculty.facultyName=="External"}
   variant="outlined"
   value={allocations[course.courseId]?.[faculty.facultyId] || ''}
   onChange={(e) => handleInputChange(e, course.courseName, faculty.facultyId, faculty.facultyName, course.courseId,course.time)}
@@ -410,10 +421,12 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
           value={selectedBcCe[`${`${course.courseId}-${faculty.facultyId}`}`]}
           onChange={(value)=>{
             setSelectedBcCe((prev)=>{
-               prev[`${`${course.courseId}-${faculty.facultyId}`}`] = value;
-               return prev;
+              let newPrev = {...prev}
+               newPrev[`${`${course.courseId}-${faculty.facultyId}`}`] = value;
+               return newPrev;
             })
           }}
+          isDisabled={facultyStatuses[`${course.courseId}-${faculty.facultyId}`] != 0 || statuses[`${course.courseId}-${faculty.facultyId}`] != -100}
           />
         </TableCell>
                  {
@@ -642,7 +655,7 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
                   <Button
                     variant="contained"
                     color="secondary"
-                    onClick={() => handleAllocateAll(currentCourse.courseId, currentCourse.faculties, currentCourse.paperCount)}
+                    onClick={() => handleAllocateAll(currentCourse.courseId, currentCourse.faculties, currentCourse.paperCount,currentCourse.time)}
                   >
                     Allocate
                   </Button>

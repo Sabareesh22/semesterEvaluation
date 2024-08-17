@@ -151,13 +151,12 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
             INNER JOIN 
                 master_faculty mf ON mf.id = fcm.faculty
             WHERE 
-                bcm.department = ?
-               
+                bcm.department = ? AND bcm.semcode = ?
             ORDER BY 
                 mc.course_name, mf.name;
         `;
 
-        const [rows] = await db.query(query, [departmentId,semcode]);
+        const [rows] = await db.query(query, [departmentId, semcode]);
 
         // Query to fetch eligible faculties
         const eligibleFacultiesQuery = `
@@ -168,23 +167,49 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
             WHERE 
                 semcode = ? AND department = ?;
         `;
-         console.log
         const [eligibleRows] = await db.query(eligibleFacultiesQuery, [semcode, departmentId]);
 
         // Create a set of eligible faculty IDs for quick lookup
         const eligibleFacultyIds = new Set(eligibleRows.map(row => row.faculty_id));
 
+        // Query to check existing allocations in external_faculty_paper_allocation
+        const externalAllocationsQuery = `
+            SELECT 
+                faculty, 
+                course, 
+                paper_count 
+            FROM 
+                external_faculty_paper_allocation 
+            WHERE 
+                semcode = ? AND course IN (SELECT course FROM board_course_mapping WHERE department = ?)
+        `;
+        const [externalAllocations] = await db.query(externalAllocationsQuery, [semcode, departmentId]);
+
+        // Create a map to track external allocations by course
+        const externalAllocationMap = {};
+        externalAllocations.forEach(allocation => {
+            const key = `${allocation.course}`;
+            if (!externalAllocationMap[key]) {
+                externalAllocationMap[key] = allocation.paper_count;
+            }
+        });
+        console.log(externalAllocationMap)
+       let addedExternals =  false;
         // Parse the data to fit the structure needed by the React component
         const courses = {};
-
+        console.log(rows)
         rows.forEach(row => {
-            const { course_id, course_name, faculty_id, faculty_name, paper_count,time_in_days } = row;
+            const { course_id, course_name, faculty_id, faculty_name, paper_count, time_in_days } = row;
+            const key = `${course_id}`;
+            const remainingPaperCount = paper_count - (externalAllocationMap[key] || 0);
+
             if (!courses[course_name]) {
                 courses[course_name] = {
                     courseId: course_id,
                     courseName: course_name,
-                    paperCount: paper_count,
-                    time:time_in_days,
+                    paperCount: remainingPaperCount > 0 ? remainingPaperCount : 0,
+                    externalCount : externalAllocationMap[key] || 0,
+                    time: time_in_days,
                     department: `Department ${departmentId}`,
                     faculties: []
                 };
@@ -197,12 +222,20 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
                     facultyName: faculty_name
                 });
             }
+
+            // Add an entry for the external faculty if they exist
+            if (externalAllocationMap[key] && !addedExternals) {
+                courses[course_name].faculties.push({
+                    facultyId: course_name,
+                    facultyName: `External`
+                });
+                addedExternals = true;
+            }
         });
 
         // Convert the courses object to an array
         const parsedCourses = Object.values(courses);
 
-        console.log(parsedCourses);
         res.status(200).json({ results: parsedCourses });
     } catch (error) {
         console.error('Error fetching courses:', error);
@@ -211,10 +244,10 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
 });
 
 
+
 // POST route to upload eligible faculty data
 router.post('/uploadEligibleFaculty', async (req, res) => {
     const facultyData = req.body;
-     console.log(facultyData)
     if (!Array.isArray(facultyData) || facultyData.length === 0) {
         return res.status(400).json({ message: 'Invalid data format. Expected an array of faculty records.' });
     }
@@ -251,12 +284,43 @@ router.post('/uploadEligibleFaculty', async (req, res) => {
 });
 
 router.post('/allocateFaculty', async (req, res) => {
-    const { facultyId, courseId, paperCount, semCode,handledBy } = req.body[0];
-
-    if (facultyId == null || courseId == null || paperCount == null || semCode == null,handledBy==null) {
+    const { facultyId, courseId, paperCount, semCode,handledBy,time,handlingFacultyRole,departmentId} = req.body[0];
+    console.log(req.body[0])
+    if (facultyId == null || courseId == null || paperCount == null || semCode == null||handledBy==null||handlingFacultyRole==null) {
         return res.status(400).json({ message: 'All fields are required: faculty, course, paper_count, and semCode' });
     }
-
+    function roundToHalfOrCeiling(value) {
+        const roundedValue = Math.round(value * 2) / 2;
+        return roundedValue < value ? roundedValue + 0.5 : roundedValue;
+    }
+    const existingPaperCountQuery = `
+    SELECT SUM(paper_count) existingPaperCount FROM faculty_paper_allocation WHERE faculty =  ? AND semcode = ?
+    `
+    try {
+        const [result] = await db.query(existingPaperCountQuery,[facultyId,semCode])
+        console.log(result[0].existingPaperCount)
+        console.log("roundoff : "+roundToHalfOrCeiling((parseInt(result[0].existingPaperCount)+paperCount)/50))
+        console.log({time:time,roundOff:roundToHalfOrCeiling((parseInt(result[0].existingPaperCount)+paperCount)/50)})
+        console.log(roundToHalfOrCeiling((parseInt(result[0].existingPaperCount)+paperCount)/50)>time)
+        if(roundToHalfOrCeiling((parseInt(result[0].existingPaperCount)+paperCount)/50)>time){
+            return res.status(400).json({message:`Faculty Allocation is more than ${time} days Overall the semester try reducing the paper count or adding faculty`})
+        }
+    } catch (error) {
+        console.error('Error processing faculty paper allocation:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+    const overallPaperInSemesterQuery = `SELECT SUM(paper_count) totalPaperInSem FROM board_course_mapping WHERE department =? AND semcode = ?`
+    try {
+        const [result] = await db.query(overallPaperInSemesterQuery,[departmentId,semCode]);
+        if(roundToHalfOrCeiling(parseInt(result[0].totalPaperInSem)/time)<251){
+               if(handlingFacultyRole=='CE'){
+                return res.status(400).json({message:"You Cannot Appoint CE until BC have more than 251 paper per day"})
+               }
+        }
+    } catch (error) {
+        console.error('Error processing faculty paper allocation:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
     const checkQuery = `
         SELECT * FROM faculty_paper_allocation 
         WHERE faculty = ? AND course = ? AND semcode = ?
@@ -449,7 +513,7 @@ router.get('/allocations/hod/:hodId', async (req, res) => {
 // PUT route to change the status of faculty paper allocation based on facultyId and courseId
 router.put('/facultyPaperAllocation/status', async (req, res) => {
     const { facultyId, courseId, status, semCode, remark } = req.body; // Get facultyId, courseId, status, semCode, and remark from the request body
-   console.log(req.body)
+  
     // Validate the input
     if (facultyId == null || courseId == null || status == null ) {
         return res.status(400).json({ message: 'Invalid input. Faculty ID, Course ID, and Status are required.' });
@@ -588,7 +652,6 @@ WHERE
 // GET route to retrieve paper count based on various parameters
 router.get('/paperCount', async (req, res) => {
     const { faculty, course, semcode } = req.query;
-    console.log("---------------\n",req.query,"----------\n");
 
     let query = `
         SELECT paper_count, status
@@ -610,10 +673,8 @@ router.get('/paperCount', async (req, res) => {
         query += ' AND semcode = ?';
         params.push(semcode);
     }
-     console.log(query)
     try {
         const [rows] = await db.query(query, params);
-        console.log(rows)
         if (rows.length == 0) {
             res.status(200).json({ results: {paper_count:0,status: '-100'} });
             return
@@ -621,7 +682,6 @@ router.get('/paperCount', async (req, res) => {
         
         // Assuming we are only interested in the first record
         const { paper_count, status } = rows[0];
-        console.log({ results: {paper_count:paper_count,status: status} })
         res.status(200).json({ results: {paper_count:paper_count,status: status} });
     } catch (error) {
         console.error('Error fetching paper count:', error);
@@ -633,7 +693,6 @@ router.get('/paperCount', async (req, res) => {
 
 router.post('/facultyChangeRequests', async (req, res) => {
     const { old_faculty,new_faculty, course, semcode,remark } = req.body;
-    console.log(req.body)
     // Validate the input
     if (old_faculty == null||new_faculty==null || course == null || semcode == null ) {
         return res.status(400).json({ message: 'All fields are required: faculty, course, semcode' });
@@ -658,7 +717,6 @@ router.post('/facultyChangeRequests', async (req, res) => {
 
 
 router.put('/facultyChangeRequests/status', async (req, res) => {
-    console.log(req.body);
     const { old_faculty, new_faculty, course, semcode, status, remark } = req.body; // Get fields from the request body
 
     // Validate the input
@@ -720,8 +778,6 @@ router.put('/facultyChangeRequests/status', async (req, res) => {
             const [paperCountRows] = await db.query(paperCountQuery, [old_faculty, course, semcode]);
             const paperCount = paperCountRows.length > 0 ? paperCountRows[0].paper_count : 0; // Default to 0 if not found
 
-            console.log("The paper count to be processed is " + paperCount);
-            console.log(old_faculty, course, semcode);
 
             // Check if the new faculty already has an allocation for this course and semcode
             const checkExistingAllocationQuery = `
@@ -776,7 +832,6 @@ router.put('/facultyChangeRequests/status', async (req, res) => {
 // GET route to retrieve faculty and semcode information
 router.get('/facultyReplaceSuggest', async (req, res) => {
     const { courseId, semcode, facultyId } = req.query;
-     console.log(req.query)
     // Validate the input
     if (courseId == null || semcode == null || facultyId == null) {
         return res.status(400).json({ message: 'courseId, semcode, and facultyId are required.' });
@@ -858,7 +913,6 @@ router.get('/facultyAllocationReport', async (req, res) => {
 
 router.get('/check-old-faculty', async (req, res) => {
     const { old_faculty, semcode,course } = req.query;
-     console.log(req.query)
     // SQL query to get the status of old_faculty for the given semcode
     const checkFacultyQuery = `
         SELECT status 
@@ -892,7 +946,6 @@ router.get('/check-old-faculty', async (req, res) => {
                 code = 0;
                 break;
         }
-        console.log("code : "+code)
         res.status(200).json({ code, message: `Status code: ${code}` });
     } catch (error) {
         console.error('Error checking old faculty status:', error);
@@ -901,7 +954,6 @@ router.get('/check-old-faculty', async (req, res) => {
 });
 
 router.get('/facultyChangeRequests', async (req, res) => {
-    console.log(req.query);
     
     // Constructing the base query
     let query = `
@@ -957,7 +1009,6 @@ router.get('/facultyChangeRequests', async (req, res) => {
 });
 
 router.get('/countPendingFacultyApprovals', async (req, res) => {
-    console.log(req.query);
 
     let query = `
         SELECT COUNT(*) AS record_count
@@ -991,7 +1042,6 @@ router.get('/countPendingFacultyApprovals', async (req, res) => {
 });
 
 router.get('/countCompletedFacultyApprovals', async (req, res) => {
-    console.log(req.query);
 
     let query = `
         SELECT COUNT(*) AS record_count
@@ -1025,7 +1075,6 @@ router.get('/countCompletedFacultyApprovals', async (req, res) => {
 });
 
 router.get('/countRejectedFacultyApprovals', async (req, res) => {
-    console.log(req.query);
 
     let query = `
         SELECT COUNT(*) AS record_count
@@ -1059,7 +1108,6 @@ router.get('/countRejectedFacultyApprovals', async (req, res) => {
 });
 
 router.get('/countAllocatedCourses', async (req, res) => {
-    console.log("Allocated Courses Query:", req.query);
 
     let query = `
         SELECT COUNT(DISTINCT fpa.course) AS unique_course_count
@@ -1094,7 +1142,6 @@ router.get('/countAllocatedCourses', async (req, res) => {
 
 
 router.get('/pendingAllocations', async (req, res) => {
-    console.log("pending Allocations : ",req.query);
   
     // Constructing the base query
     let query = `
@@ -1139,7 +1186,6 @@ router.get('/pendingAllocations', async (req, res) => {
 });
 
 router.get('/pendingAllocationsSummary', async (req, res) => {
-    console.log(req.query);
 
     // Constructing the query to get pending allocations with course codes and paper counts
     let query = `
@@ -1223,7 +1269,6 @@ router.get('/boardChairman', async (req, res) => {
         if (results.length === 0) {
             return res.status(404).json({ message: 'No board chairman found for the specified department.' });
         }
-        console.log(results)
         // Return the results as JSON
         res.json(results);
 
@@ -1235,7 +1280,6 @@ router.get('/boardChairman', async (req, res) => {
 
 router.get('/boardChiefExaminer', async (req, res) => {
     const { departmentId, semcode } = req.query;
-    console.log("Board Examiner : ",req.query)
     try {
         // SQL Query to get board chief examiner details
         const query = `
@@ -1266,7 +1310,6 @@ router.get('/boardChiefExaminer', async (req, res) => {
         if (results.length === 0) {
             return res.status(404).json({ message: 'No board chief examiner found for the specified department.' });
         }
-        console.log("Chief Examiner",results)
         // Return the results as JSON
         res.json(results);
 
@@ -1292,7 +1335,7 @@ router.get('/bc_ce', async (req, res) => {
                 mf.department AS department_id,
                 md.department AS department_name,
                 ms.semcode AS semcode_name,
-                'HOD' AS role
+                'BC' AS role
             FROM 
                 board_chairman_mapping bcm
             JOIN 
@@ -1314,7 +1357,7 @@ router.get('/bc_ce', async (req, res) => {
                 mf2.department AS department_id,
                 md.department AS department_name,
                 ms.semcode AS semcode_name,
-                'Chief Examiner' AS role
+                'CE' AS role
             FROM 
                 board_chief_examiner_mapping bcem
             JOIN 
