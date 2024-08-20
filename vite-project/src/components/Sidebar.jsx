@@ -42,19 +42,19 @@ const Sidebar = () => {
             {open.COE && (
               <div className="submenuContainer">
                 <ul>
-                <Link to="/COEDashBoard" onClick={closeMobileMenu}>
+                <Link to="COEDashBoard" onClick={closeMobileMenu}>
                     <div className="submenuItem"><Dashboard className="icon" /> Dashboard</div>
                   </Link>
-                  <Link to="/createSemesterEvaluation" onClick={closeMobileMenu}>
+                  <Link to="createSemesterEvaluation" onClick={closeMobileMenu}>
                     <div className="submenuItem"><Assignment className="icon" /> Create Evaluation</div>
                   </Link>
-                  <Link to="/semesterEvaluationReport" onClick={closeMobileMenu}>
+                  <Link to="semesterEvaluationReport" onClick={closeMobileMenu}>
                     <div className="submenuItem"><Download className="icon" /> Download Report</div>
                   </Link>
-                  <Link to="/facultyAllocationRequests" onClick={closeMobileMenu}>
+                  <Link to="facultyAllocationRequests" onClick={closeMobileMenu}>
                     <div className="submenuItem"><People className="icon" /> Alloc Requests</div>
                   </Link>
-                  <Link to="/facultyChangeRequests" onClick={closeMobileMenu}>
+                  <Link to="facultyChangeRequests" onClick={closeMobileMenu}>
                     <div className="submenuItem"><SwapHoriz className="icon" /> Change Requests</div>
                   </Link>
                 </ul>
@@ -70,10 +70,10 @@ const Sidebar = () => {
             {open.HOD && (
               <div className="submenuContainer">
                 <ul>
-                <Link to="/facultyAllocationDashBoard" onClick={closeMobileMenu}>
+                <Link to="facultyAllocationDashBoard" onClick={closeMobileMenu}>
                     <div className="submenuItem"><Dashboard className="icon" /> Dashboard</div>
                   </Link>
-                  <Link to="/facultyAllocation" onClick={closeMobileMenu}>
+                  <Link to="facultyAllocation" onClick={closeMobileMenu}>
                     <div className="submenuItem"><Assignment className="icon" /> Allocation</div>
                   </Link>
                 
@@ -91,7 +91,7 @@ const Sidebar = () => {
             {open.Faculty && (
               <div className="submenuContainer">
                 <ul>
-                  <Link to="/facultyApproval" onClick={closeMobileMenu}>
+                  <Link to="facultyApproval" onClick={closeMobileMenu}>
                     <div className="submenuItem"><Assignment className="icon" /> Paper Allocation</div>
                   </Link>
                 </ul>

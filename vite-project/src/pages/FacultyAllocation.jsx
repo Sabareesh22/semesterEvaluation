@@ -149,7 +149,7 @@ const fetchPaperCounts = async () => {
   const newPaperCounts = {};
   const newStatuses = {};
   const newAllocations = { ...allocations }; // Create a copy of allocations to update it
-
+  const newSelectedBcCe = {...selectedBcCe};
   if (courses.length > 0) {
     for (const course of courses) {
       const { courseId, faculties } = course;
@@ -167,12 +167,14 @@ const fetchPaperCounts = async () => {
 
           const paperCount = response.data.results.paper_count;
           const status = response.data.results.status;
-
+          const bc_ce  = parseInt(response.data.results.handlingFaculty);
+          newSelectedBcCe[`${`${courseId}-${faculty.facultyId}`}`] = bcCe.find((data)=>(data.value==bc_ce));
           // Update paper counts and statuses
+          console.log(bcCe.find((data)=>(data.value==bc_ce)))
           newPaperCounts[`${courseId}-${faculty.facultyId}`] = paperCount;
           newStatuses[`${courseId}-${faculty.facultyId}`] = status;
           if(faculty.facultyName=="External"){
-            newAllocations[courseId][faculty.facultyId] = course.externalCount;
+            newAllocations[courseId][faculty.facultyId] = parseInt(course.externalCount);
           }
           // If the allocation already exists, retain it; otherwise, initialize it with the paper count
           if (!newAllocations[courseId]) {
@@ -186,7 +188,7 @@ const fetchPaperCounts = async () => {
       }
     }
   }
-
+  setSelectedBcCe(newSelectedBcCe);
   setPaperCounts(newPaperCounts); // Update state with paper counts
   setStatuses(newStatuses); // Update state with statuses
   setAllocations(newAllocations); // Update state with allocations
@@ -223,14 +225,15 @@ useEffect(() => {
   
   fetchFacultyStatuses();
   fetchPaperCounts();
-}, [selectedSemesterCode, courses]);
+}, [selectedSemesterCode, courses,bcCe]);
 
 
 
 const handleInputChange = (event, courseName, facultyId, facultyName, courseId,time) => {
+  
   const value = parseInt(event.target.value) || 0; // Allow negative values for direct input
   const courseAllocations = allocations[courseId] || {};
-  const facultyCount = courses[currentPage].faculties.length;
+  let facultyCount = courses[currentPage].faculties.length;
  
   // Ensure the value is in multiples of 25
   let allocationValue = Math.ceil(value / 25) * 25;
@@ -241,34 +244,38 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
   let newAllocations = { ...courseAllocations };
 
   // Update allocation for the selected faculty
-  if(roundToHalfOrCeiling(allocationValue/50)<=time){
+ 
     newAllocations[facultyId] = allocationValue;
-  }
-  else{
-    const dayString = (time > 0 && time < 1) ? 'day' : 'days';
+  
 
-    toast.error("The faculty time must be within " + time + " " + dayString);
-  }
 
   // Recalculate allocations for all except the last faculty
   let sumAllocations = 0;
+  if(courses[currentPage].faculties[facultyCount - 1].facultyName=="External"){
+    facultyCount--;
+  }
   for (let i = 0; i < facultyCount - 1; i++) {
     const currentFacultyId = courses[currentPage].faculties[i].facultyId;
+    console.log(newAllocations[currentFacultyId])
     sumAllocations += newAllocations[currentFacultyId] || 0;
   }
+  console.log(sumAllocations)
 
   // Calculate remaining papers for the last faculty
-  const remainingPapers = courses[currentPage].paperCount - sumAllocations;
-  const lastFacultyId = courses[currentPage].faculties[facultyCount - 1].facultyId;
+  let remainingPapers = courses[currentPage].paperCount - sumAllocations-courses[currentPage].externalCount;
+  let lastFacultyId = courses[currentPage].faculties[facultyCount - 1].facultyId;
 
   // Check if the total allocation exceeds the paper count
-  if (remainingPapers < 0) {
+  if (remainingPapers < 0 ) {
     toast.error("Total allocation exceeds the paper count.");
     return;
   }
-  if(roundToHalfOrCeiling(remainingPapers/50)<=time){
-    newAllocations[lastFacultyId] = Math.max(0, remainingPapers); // Ensure it's non-negative
+  console.log(courses[currentPage].faculties[facultyCount - 1].facultyName=="External")
+  if((courses[currentPage].faculties[facultyCount - 1].facultyName=="External")){
+    lastFacultyId = courses[currentPage].faculties[facultyCount - 2].facultyId;
   }
+  newAllocations[lastFacultyId] = Math.max(0, remainingPapers); // Ensure it's non-negative
+
   // Update last faculty's allocation based on remaining papers
 
   // Update the state with the new allocations
@@ -279,8 +286,13 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
 };
   const handleAllocate = async (courseId, facultyId, paperCount, AllocationSum,time) => {
     const allocationValue = allocations[courseId]?.[facultyId];
+    console.log(allocationValue)
+    if(roundToHalfOrCeiling(allocationValue/50)>time){
+      toast.error(`The Allocation of days per faculty does not exceed ${time} days`);
+      return;
+    }
     if(!selectedBcCe[`${`${courseId}-${facultyId}`}`]){
-      toast.error("Please select the BC/CE for all faculty");
+      toast.error(`Please Select BC/CE for All`);
       return;
     }
     if (allocationValue > 0) {
@@ -311,8 +323,8 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
   };
 
   const handleAllocateAll = async (courseId, faculties, paperCount,time) => {
-
     let AllocationSum = 0;
+    let exceedsLimit = false;
     try {
       Object.values(allocations[courseId]).forEach(v => {
         if(v==0){
@@ -320,19 +332,30 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
           toast.error("All Faculties must be assigned paper")
           AllocationSum = -100000;
         }
+        if(roundToHalfOrCeiling(v/50)>time){
+          exceedsLimit = true;
+          toast.error(`The Allocation of days per faculty must not exceed ${time} days`);
+          return;
+        }
         AllocationSum += v;
       });
-    } catch (error) {
+      console.log(AllocationSum)
+    }
+     catch (error) {
       toast.error('Please Allocate Something');
     }
-   
+    if(exceedsLimit){
+      return;
+    }
     if (AllocationSum !== paperCount) {
       toast.error('Error allocating  faculties. Count doesnt match total count');
       return;
     }
     try {
       for (const faculty of faculties) {
-        await handleAllocate(courseId, faculty.facultyId, paperCount, AllocationSum,time);
+        if(faculty.facultyName!="External"){
+          await handleAllocate(courseId, faculty.facultyId, paperCount, AllocationSum,time);
+        }
       }
     } catch (error) {
       if (AllocationSum === paperCount) {
@@ -406,18 +429,16 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
         {allocations[course.courseId]?.[faculty.facultyId] 
         ? (() => {
             const roundedValue = roundToHalfOrCeiling(allocations[course.courseId][faculty.facultyId] / 50);
-            if(roundedValue>course.time){
-              toast.error("The time and paper given to faculty  is over the time limit")
-            }
+           
             return `${roundedValue} ${roundedValue === 0.5 || roundedValue === 1 ? 'day' : 'days'}`;
         })() 
         : '0 days'
     }
         </TableCell>
         <TableCell width={"100%"}  align="center" style={{ border: '1px solid black' }}>
+        { faculty.facultyName!="External"?(
           <Select
           options={bcCe}
-          
           value={selectedBcCe[`${`${course.courseId}-${faculty.facultyId}`}`]}
           onChange={(value)=>{
             setSelectedBcCe((prev)=>{
@@ -428,6 +449,12 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
           }}
           isDisabled={facultyStatuses[`${course.courseId}-${faculty.facultyId}`] != 0 || statuses[`${course.courseId}-${faculty.facultyId}`] != -100}
           />
+        ):(
+          <Typography variant="body1" color="red">
+          External Allocation is Done by COE only
+          </Typography>
+        )
+        }
         </TableCell>
                  {
   (facultyStatuses[`${course.courseId}-${faculty.facultyId}`] !== undefined && facultyStatuses[`${course.courseId}-${faculty.facultyId}`] !== null) ? (

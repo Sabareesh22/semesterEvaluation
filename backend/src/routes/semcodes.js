@@ -175,13 +175,13 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
         // Query to check existing allocations in external_faculty_paper_allocation
         const externalAllocationsQuery = `
             SELECT 
-                faculty, 
-                course, 
-                paper_count 
+                course,
+                SUM(paper_count) paper_count
             FROM 
                 external_faculty_paper_allocation 
             WHERE 
                 semcode = ? AND course IN (SELECT course FROM board_course_mapping WHERE department = ?)
+                GROUP BY course
         `;
         const [externalAllocations] = await db.query(externalAllocationsQuery, [semcode, departmentId]);
 
@@ -201,13 +201,13 @@ router.get('/courses/:departmentId/:semcode', async (req, res) => {
         rows.forEach(row => {
             const { course_id, course_name, faculty_id, faculty_name, paper_count, time_in_days } = row;
             const key = `${course_id}`;
-            const remainingPaperCount = paper_count - (externalAllocationMap[key] || 0);
+
 
             if (!courses[course_name]) {
                 courses[course_name] = {
                     courseId: course_id,
                     courseName: course_name,
-                    paperCount: remainingPaperCount > 0 ? remainingPaperCount : 0,
+                    paperCount: paper_count,
                     externalCount : externalAllocationMap[key] || 0,
                     time: time_in_days,
                     department: `Department ${departmentId}`,
@@ -654,7 +654,7 @@ router.get('/paperCount', async (req, res) => {
     const { faculty, course, semcode } = req.query;
 
     let query = `
-        SELECT paper_count, status
+        SELECT paper_count,handlingFaculty,status
         FROM faculty_paper_allocation 
         WHERE 1=1
     `;
@@ -681,8 +681,8 @@ router.get('/paperCount', async (req, res) => {
         }
         
         // Assuming we are only interested in the first record
-        const { paper_count, status } = rows[0];
-        res.status(200).json({ results: {paper_count:paper_count,status: status} });
+        const { paper_count, status,handlingFaculty } = rows[0];
+        res.status(200).json({ results: {paper_count:paper_count,status: status,handlingFaculty:handlingFaculty} });
     } catch (error) {
         console.error('Error fetching paper count:', error);
         res.status(500).json({ message: 'Internal Server Error' });
