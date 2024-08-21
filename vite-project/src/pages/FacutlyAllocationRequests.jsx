@@ -22,6 +22,7 @@ import apiHost from '../../config/config';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Select from 'react-select';
+import { useCookies } from 'react-cookie';
 
 const FacultyAllocationRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -33,14 +34,20 @@ const FacultyAllocationRequests = () => {
   const coursesPerPage = 1; // Display one course per page
   const [semesterCodes, setSemesterCodes] = useState([]);
   const [selectedSemesterCode, setSelectedSemesterCode] = useState("");
-
+  const [cookies,setCookie] = useCookies(['auth'])
   // State to track individual approvals for each faculty in each course
   const [individualApproval, setIndividualApproval] = useState({}); 
 
   const fetchRequests = async () => {
     console.log('Fetching faculty allocation requests...');
     try {
-      const response = await axios.get(`${apiHost}/api/facultyPaperAllocationRequests?semcode=${selectedSemesterCode.value}`);
+      const response = await axios.get(`${apiHost}/api/facultyPaperAllocationRequests?semcode=${selectedSemesterCode.value}`,
+        {
+          headers:{
+            Auth: cookies.auth
+         }
+        }
+      );
       console.log('API Response:', response.data); // Log the entire response
       setRequests(response.data.results); // Update state with fetched results
     } catch (error) {
@@ -57,7 +64,9 @@ const FacultyAllocationRequests = () => {
   useEffect(() => {
     const fetchSemesterCodes = async () => {
       try {
-        const response = await axios.get(`${apiHost}/api/semcodes`);
+        const response = await axios.get(`${apiHost}/api/semcodes`,{ headers:{
+          Auth: cookies.auth
+       }});
         const parsedCodes = response.data.results.map(item => ({
           value: item.id,
           label: item.semcode,
@@ -86,7 +95,9 @@ const FacultyAllocationRequests = () => {
         courseId,
         semCode: selectedRequest.semCode,
         status: 2, // Status for approval
-      });
+      },{ headers:{
+        Auth: cookies.auth
+     }});
       toast.success('Faculty approved successfully!');
     } catch (error) {
       console.error('Error approving faculty:', error);
@@ -137,7 +148,9 @@ const FacultyAllocationRequests = () => {
           courseId,
           status: '-2', // Status for rejection
           reason, // Include the reason for rejection
-        });
+        },{ headers:{
+          Auth: cookies.auth
+       }});
       }
       toast.success('Allocations rejected successfully!');
       setSelectedHOD(null);

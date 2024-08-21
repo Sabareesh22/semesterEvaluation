@@ -10,8 +10,8 @@ import FacultyApprovalPage from './pages/FacultyApprovalPage';
 import FacultyChangeRequests from './pages/FacultyChangeRequests';
 import ReportDownloadPage from './pages/ReportDownloadPage';
 import FacultyAllocationDashboard from './pages/FacultyAllocationDashboard';
-import COEDashboard from './pages/COEDashboard';
-
+import Dashboard from './pages/Dashboard';
+import ProtectedRoutes from './ProtectedRoutes';
 function Content(props) {
   console.log(props.userDetails)
   const userDetails = props.userDetails;
@@ -26,14 +26,20 @@ function Content(props) {
           </IconButton>
         </div>
         <Routes>
-          <Route path="/COEDashboard" element={<COEDashboard />} />
-          <Route path='/createSemesterEvaluation' element={<COEpage/>}/>
-          <Route path='/semesterEvaluationReport' element={<ReportDownloadPage/>}/>
-          <Route path="/facultyAllocation" element={<FacultyAllocation />} />
-          <Route path="/facultyAllocationDashboard" element={<FacultyAllocationDashboard />} />
-          <Route path="/facultyAllocationRequests" element={<FacultyAllocationRequests />} />
-          <Route path="/facultyChangeRequests" element={<FacultyChangeRequests />} />
-          <Route path="/facultyApproval" element={<FacultyApprovalPage/>} />
+        <Route path="" element={<Dashboard />} />
+        <Route path="/Dashboard" element={<Dashboard />} />
+        <Route element={<ProtectedRoutes authorizedRole={'coe'}/>}>
+          <Route path='createSemesterEvaluation' element={<COEpage/>}/>
+          <Route path='semesterEvaluationReport' element={<ReportDownloadPage/>}/>
+          <Route path="facultyAllocationRequests" element={<FacultyAllocationRequests />} />
+          <Route path="facultyChangeRequests" element={<FacultyChangeRequests />} />
+          </Route>
+          <Route element={<ProtectedRoutes authorizedRole={'hod'}/>}>
+          <Route path="facultyAllocation" element={<FacultyAllocation />} />
+          </Route>
+          <Route element={<ProtectedRoutes authorizedRole={'faculty'}/>}>
+          <Route path="facultyApproval" element={<FacultyApprovalPage/>} />
+          </Route>
         </Routes>
       </div>
     </div>

@@ -9,8 +9,8 @@ import axios from 'axios';
 import apiHost from '../../config/config';
 import Select from 'react-select';
 import { useCookies } from 'react-cookie';
-const FacultyAllocationDashboard = () => {
-  const [activeIndex, setActiveIndex] = useState(-1);
+const Dashboard = () => {
+    const [activeIndex, setActiveIndex] = useState(-1);
   const [selectData, setSelectData] = useState([]);
   const [semesterCodes, setSemesterCodes] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -459,4 +459,4 @@ const fetchPendingCourseAllocationCount = async () => {
   );
 };
 
-export default FacultyAllocationDashboard;
+export default Dashboard;

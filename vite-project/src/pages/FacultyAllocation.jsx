@@ -24,11 +24,12 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Pagination from '@mui/material/Pagination';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
+import { useCookies } from 'react-cookie';
 const FacultyAllocationTable = ({ departmentId,selectedSemesterCode, courses }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [allocations, setAllocations] = useState({});
   const [paperCounts, setPaperCounts] = useState({});
+  const [cookies,setCookie] = useCookies(['auth'])
   const [statuses, setStatuses] = useState({});
   const [openModal, setOpenModal] = useState(false);
   const [suggestedFaculties, setSuggestedFaculties] = useState([]); // New state for storing suggested faculties
@@ -50,7 +51,10 @@ const fetchBeCe = async()=>{
       params: {
         semcode: selectedSemesterCode.value,
         department: departmentId.value,
-      }
+      },
+      headers:{
+        Auth: cookies.auth
+     }
     });
 
     // Handle the response data
@@ -90,7 +94,9 @@ const handleOpenModal = async (facultyId, courseId,faculties) => {
         courseId: courseId,
         semcode: selectedSemesterCode.value,
         facultyId: facultyId,
-      }    });
+      } , headers:{
+                    Auth: cookies.auth
+                 }   });
    
     // Set the fetched faculties as options in the select
     setSuggestedFaculties(response?.data?.results?.map(fac => ({ value: fac.id, label: fac.name })));
@@ -137,7 +143,9 @@ const handleSubmit = async () => {
       course: currentRow.courseId,
       semcode: selectedSemesterCode.value,
       remark: selectedReason, // Include the reason as the remark
-    });
+    },{headers:{
+      Auth: cookies.auth
+   } });
     fetchFacultyStatuses();
     toast.success('Faculty change request submitted successfully.');
     handleCloseModal();
@@ -162,7 +170,9 @@ const fetchPaperCounts = async () => {
               course: courseId,
               faculty: faculty.facultyId,
               semcode: selectedSemesterCode.value,
-            },
+            },headers:{
+              Auth: cookies.auth
+           } 
           });
 
           const paperCount = response.data.results.paper_count;
@@ -206,7 +216,9 @@ const fetchFacultyStatuses = async () => {
               old_faculty: faculty.facultyId,
               course:course.courseId,
               semcode: selectedSemesterCode.value,
-            },
+            },headers:{
+              Auth: cookies.auth
+           } 
           });
 
           newStatuses[`${`${course.courseId}-${faculty.facultyId}`}`] = response.data.code;
@@ -307,7 +319,9 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
           handledBy:selectedBcCe[`${`${courseId}-${facultyId}`}`].value,
           handlingFacultyRole:selectedBcCe[`${`${courseId}-${facultyId}`}`].role,
           time:time
-        }]);
+        },{headers:{
+          Auth: cookies.auth
+       } }]);
         fetchPaperCounts()
         toast.success(response.data.message || 'Faculty allocated successfully.');
       } catch (error) {
@@ -825,14 +839,16 @@ const FacultyAllocation = () => {
   const [uploadData, setUploadData] = useState([]);
   const [showUploadContainer, setShowUploadContainer] = useState(false);
   const [headers, setHeaders] = useState([]);
-
+  const [cookies,setCookie] = useCookies(['auth'])
   useEffect(() => {
     const fetchSemesterCodes = async () => {
       if(!batch || !year){
         return;
       }
       try {
-        const response = await axios.get(`${apiHost}/api/semcodes?batch=${batch.value}&year=${year.value}`);
+        const response = await axios.get(`${apiHost}/api/semcodes?batch=${batch.value}&year=${year.value}`,{headers:{
+          Auth: cookies.auth
+       } });
         const parsedCodes = response.data.results.map(item => ({
           value: item.id,
           label: item.semcode,
@@ -848,7 +864,9 @@ const FacultyAllocation = () => {
   useEffect(() => {
     const fetchYears = async () => {
         try {
-            const response = await axios.get(`${apiHost}/years`);
+            const response = await axios.get(`${apiHost}/years`,{headers:{
+              Auth: cookies.auth
+           } });
             const parsedYears = response.data.map(item => ({
                 value: item.id,
                 label: item.year,
@@ -864,7 +882,9 @@ const FacultyAllocation = () => {
   useEffect(() => {
     const fetchBatches = async () => {
         try {
-            const response = await axios.get(`${apiHost}/batches`);
+            const response = await axios.get(`${apiHost}/batches`,{headers:{
+              Auth: cookies.auth
+           } });
             const parsedBatches = response.data.map(item => ({
                 value: item.id,
                 label: item.batch,
@@ -880,7 +900,9 @@ const FacultyAllocation = () => {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const response = await axios.get(`${apiHost}/departments`);
+        const response = await axios.get(`${apiHost}/departments`,{headers:{
+          Auth: cookies.auth
+       } });
         const parsedDepartments = response.data.map(item => ({
           value: item.id,
           label: item.department,
@@ -898,7 +920,11 @@ const FacultyAllocation = () => {
     const fetchCourses = async () => {
       if (departmentId && selectedSemesterCode) {
         try {
-          const response = await axios.get(`${apiHost}/api/courses/${departmentId.value}/${selectedSemesterCode.value}`);
+          const response = await axios.get(`${apiHost}/api/courses/${departmentId.value}/${selectedSemesterCode.value}`,
+            {headers:{
+              Auth: cookies.auth
+           }}
+          );
           console.log("Allocation data : ",response.data.results)
           setCourses(response.data.results);
           setShowUploadContainer(false); // Hide upload container on successful fetch
@@ -936,7 +962,9 @@ const FacultyAllocation = () => {
     }
 
     try {
-      const response = await axios.post(`${apiHost}/api/uploadEligibleFaculty`, formattedData);
+      const response = await axios.post(`${apiHost}/api/uploadEligibleFaculty`, formattedData,{headers:{
+        Auth: cookies.auth
+     }});
       toast.success(response.data.message || 'File uploaded successfully.');
 
       setUploadData([]);
@@ -945,7 +973,9 @@ const FacultyAllocation = () => {
       const fetchCourses = async () => {
         if (departmentId && selectedSemesterCode) {
           try {
-            const courseResponse = await axios.get(`${apiHost}/api/courses/${departmentId.value}/${selectedSemesterCode.value}`);
+            const courseResponse = await axios.get(`${apiHost}/api/courses/${departmentId.value}/${selectedSemesterCode.value}`,{headers:{
+              Auth: cookies.auth
+           }});
             setCourses(courseResponse.data.results);
             setShowUploadContainer(false); // Hide upload container on successful fetch
           } catch (error) {

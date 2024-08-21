@@ -6,8 +6,9 @@ import './COEpage.css';
 import axios from 'axios';
 import apiHost from '../../config/config.js';
 import MultiSelect from '../components/MultiSelect.jsx';
-
+import { useCookies } from 'react-cookie';
 const COEpage = () => {
+    const [cookies,setCookies] = useCookies(['auth']);
     const [semesterCode, setSemesterCode] = useState('');
     const [regulation, setRegulation] = useState([]);
     const [year, setYear] = useState([]);
@@ -32,10 +33,18 @@ const COEpage = () => {
         const fetchOptions = async () => {
             try {
                 const [regulationsRes, yearsRes, batchesRes, semestersRes] = await Promise.all([
-                    axios.get(`${apiHost}/regulations`),
-                    axios.get(`${apiHost}/years`),
-                    axios.get(`${apiHost}/batches`),
-                    axios.get(`${apiHost}/semesters`),
+                    axios.get(`${apiHost}/regulations`,{headers:{
+                       Auth: cookies.auth
+                    }}),
+                    axios.get(`${apiHost}/years`,{headers:{
+                        Auth: cookies.auth
+                     }}),
+                    axios.get(`${apiHost}/batches`,{headers:{
+                        Auth: cookies.auth
+                     }}),
+                    axios.get(`${apiHost}/semesters`,{headers:{
+                        Auth: cookies.auth
+                     }}),
                 ]);
                 
                 setRegulationOptions(regulationsRes.data);

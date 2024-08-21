@@ -4,7 +4,7 @@ import axios from 'axios';
 import * as XLSX from 'xlsx';
 import { ToastContainer, toast } from 'react-toastify';
 import apiHost from '../../config/config';
-
+import { useCookies } from 'react-cookie';
 const ReportDownloadPage = () => {
     const [departmentId, setDepartmentId] = useState('');
     const [semcode, setSemcode] = useState('');
@@ -12,11 +12,14 @@ const ReportDownloadPage = () => {
     const [semcodes, setSemcodes] = useState([]);
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState([]);
+    const [cookies,setCoookie] = useCookies(['auth'])
 
     useEffect(() => {
         const fetchDepartments = async () => {
             try {
-                const response = await axios.get(`${apiHost}/departments`);
+                const response = await axios.get(`${apiHost}/departments`,{ headers:{
+                    Auth: cookies.auth
+                 }});
                 setDepartments(response.data);
             } catch (error) {
                 console.error('Error fetching departments:', error);
@@ -26,7 +29,9 @@ const ReportDownloadPage = () => {
 
         const fetchSemcodes = async () => {
             try {
-                const response = await axios.get(`${apiHost}/api/semcodes`);
+                const response = await axios.get(`${apiHost}/api/semcodes`,{ headers:{
+                    Auth: cookies.auth
+                 }});
                 setSemcodes(response.data.results);
             } catch (error) {
                 console.error('Error fetching semcodes:', error);
@@ -47,6 +52,9 @@ const ReportDownloadPage = () => {
             try {
                 const response = await axios.get(`${apiHost}/api/facultyAllocationReport`, {
                     params: { departmentId, semcode },
+                    headers:{
+                        Auth: cookies.auth
+                     }
                 });
                 setData(response.data.results);
             } catch (error) {

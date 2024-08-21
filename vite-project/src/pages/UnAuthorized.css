@@ -1,0 +1,25 @@
+
+.unAuthPageContainer{
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+}
+
+.unAuthContainer{
+   width: 500px;
+   height: 400px;
+   background-color: white;
+   padding: 10px;
+   gap: 12px;
+   display: flex;
+   flex-direction: column;
+   border-radius: 5px;
+   align-items: center;
+   box-shadow: 0px 0px 14px 0.5px  rgba(120, 120, 120, 0.332);
+}
+.unAuthContainer img{
+    width: 65%;
+    height: 65%;
+    object-fit:fill;
+}

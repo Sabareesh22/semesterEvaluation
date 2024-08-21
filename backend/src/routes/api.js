@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/db'); // Use the pool instead of a single connection
-
+const jwt = require('jsonwebtoken') 
 // Get Departments
 router.get('/departments', async (req, res) => {
     const query = `SELECT id, department FROM master_department WHERE status = '1'`;
@@ -61,5 +61,8 @@ router.get('/regulations', async (req, res) => {
         return res.status(500).json({ error: err.message });
     }
 });
+
+
+
 
 module.exports = router;

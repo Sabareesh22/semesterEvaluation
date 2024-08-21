@@ -5,16 +5,22 @@ import LoginImage from '../assets/login.svg'
 import {decodeToken} from 'react-jwt'
 import { CookiesProvider, useCookies } from 'react-cookie'
 import { useNavigate } from 'react-router-dom';
-
+import apiHost from '../../config/config';
+import axios from 'axios';
 const Login = ({setLoggedIn})=>{
     const navigate = useNavigate();
-    const [cookies, setCookie] = useCookies(['user'])
+    const [cookies, setCookie] = useCookies([])
 
     const handleLogin = (response)=>{
         setCookie('user',response.credential)
         console.log(decodeToken(response.credential))
-        setLoggedIn(true);
+         axios.post(`${apiHost}/auth/login`,{email:decodeToken(response.credential).email}).then((res)=>{
+            console.log(res.data)
+            setCookie('auth',res.data);
+            setLoggedIn(true);
         navigate('/semesterEvaluation');
+        })
+        
     }
     return(
         <div className='loginPageContainer'>
