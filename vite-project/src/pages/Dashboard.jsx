@@ -4,12 +4,12 @@ import { Container, Grid, Button, MenuItem } from '@mui/material';
 import { PieArcLabel } from '@mui/x-charts';
 import { Circle } from '@mui/icons-material';
 import { Label } from 'recharts';
-import './FacultyAllocationDashboard.css';
+import './Dashboard.css';
 import axios from 'axios';
 import apiHost from '../../config/config';
 import Select from 'react-select';
 import { useCookies } from 'react-cookie';
-const Dashboard = () => {
+const Dashboard = (props) => {
     const [activeIndex, setActiveIndex] = useState(-1);
   const [selectData, setSelectData] = useState([]);
   const [semesterCodes, setSemesterCodes] = useState([]);
@@ -29,6 +29,49 @@ const Dashboard = () => {
   const [boardChairman, setBoardChairman] = useState(null);
   const [chiefExaminers, setChiefExaminers] = useState([]);
   const [cookies,setCookie] = useCookies(['auth'])
+  const [roles,setRoles] =  useState([])
+  const [hodDetails,setHodDetails] = useState({})
+  props.setTitle("Dashboard")
+
+useEffect(()=>{
+  
+    try {
+        if(roles.includes('hod')){
+            axios.get(`${apiHost}/auth/hodDetails`,{headers:{
+                Auth: cookies.auth,
+            }}).then((res)=>{
+                console.log(res.data[0])
+                setHodDetails(res.data[0])
+                setDepartmentId((res.data[0]?.department))
+            })
+        }
+        
+    } catch (error) {
+        console.error('Error fetching role:', error);
+    }
+},cookies.auth)
+
+  useEffect(() => {
+    const fetchRole = async () => {
+        try {
+            if(cookies.auth){
+                const response = await axios.get(`${apiHost}/auth/role`, {
+                    headers: {
+                        auth: cookies.auth,
+                    },
+                });
+                setRoles(response.data.roles)
+                
+            }
+            
+        } catch (error) {
+            console.error('Error fetching role:', error);
+        }
+    };
+
+    fetchRole();
+}, [cookies.auth]);
+
   const data = [
       { name: 'Allocated', students: allocatedCoursesCount },
       { name: 'Pending Allocation', students: pendingCoursesCount },
@@ -69,7 +112,7 @@ const Dashboard = () => {
     };
 
     fetchBoardChiefExaminer();
-}, [departmentId,selectedSemesterCode]);
+}, [departmentId,selectedSemesterCode,cookies]);
   useEffect(() => {
     const fetchPendingAllocations = async () => {
         if (!selectedSemesterCode || !departmentId) {
@@ -93,7 +136,7 @@ const Dashboard = () => {
     };
 
     fetchPendingAllocations();
-}, [selectedSemesterCode, departmentId]);
+}, [selectedSemesterCode, departmentId,cookies]);
 
   useEffect(() => {
       const fetchPendingAllocationCount = async () => {
@@ -203,7 +246,7 @@ const fetchPendingCourseAllocationCount = async () => {
       fetchCourseAllocationCount();
       fetchPendingCourseAllocationCount();
       
-  }, [selectedSemesterCode]);
+  }, [selectedSemesterCode,cookies]);
   useEffect(() => {
     const fetchBoardChairman = async () => {
         if (!selectedSemesterCode || !departmentId) {
@@ -226,7 +269,7 @@ const fetchPendingCourseAllocationCount = async () => {
     };
 
     fetchBoardChairman();
-}, [selectedSemesterCode, departmentId]);
+}, [selectedSemesterCode, departmentId,cookies]);
 
   useEffect(() => {
       const fetchSemesterCodes = async () => {
@@ -250,7 +293,7 @@ const fetchPendingCourseAllocationCount = async () => {
       };
 
       fetchSemesterCodes();
-  }, [batch, year]);
+  }, [batch, year,cookies]);
 
   useEffect(() => {
       const fetchYears = async () => {
@@ -269,7 +312,7 @@ const fetchPendingCourseAllocationCount = async () => {
       };
 
       fetchYears();
-  }, []);
+  }, [cookies]);
 
   useEffect(() => {
       const fetchBatches = async () => {
@@ -288,7 +331,7 @@ const fetchPendingCourseAllocationCount = async () => {
       };
 
       fetchBatches();
-  }, []);
+  }, [cookies]);
 
   useEffect(() => {
       const fetchDepartments = async () => {
@@ -307,15 +350,14 @@ const fetchPendingCourseAllocationCount = async () => {
       };
 
       fetchDepartments();
-  }, []);
+  }, [cookies]);
 
   return (
-      <div style={{ width: '100%', height: "100%" }}>
-          <div style={{ padding: "10px" }}>
-              <h1>Faculty Allocation Dashboard</h1>
-          </div>
-          <div style={{ marginTop: '20px', marginBottom: '20px', display: 'flex', gap: "10px", justifyContent: 'flex-end', width: '80%', marginLeft: 'auto', marginRight: 'auto' }}>
-              <div style={{ width: '30%', float: 'right', marginLeft: '20px' }}>
+      <div style={{ width: '100%', height: "100%",padding:"10px 15px" }}>
+      
+          <div style={{backgroundColor:"white",padding:" 15px 10px",borderRadius:'5px', display: 'flex', gap: "10px", justifyContent:'space-between',margin:'10px 0px'}}>
+           { roles.includes('coe') &&
+            <div style={{ width: '30%', float: 'right' }}>
                   <Select
                       placeholder="Select Department"
                       value={departmentId}
@@ -324,6 +366,9 @@ const fetchPendingCourseAllocationCount = async () => {
                       isClearable
                   />
               </div>
+           }
+                
+           
               <div style={{ width: '30%', float: 'right' }}>
                   <Select
                       placeholder="Select Year"
@@ -352,22 +397,25 @@ const fetchPendingCourseAllocationCount = async () => {
                   />
               </div>
           </div>
-          <div style={{ padding: "20px", textAlign: "center" ,display:"flex",justifyContent:"space-between"}}>
-            <div>
+          <div className='boardDetailsContainer'>
+            <div className='boardDetailsElement' >
            
     <h2>Board Details</h2>
     {boardChairman && boardChairman.length > 0 ? (
-        <div style={{display:"flex",justifyContent:"center",gap:"20px"}}>
-            <p><strong>Chairman:</strong> {boardChairman[0].chairman_name}</p>
-            <p><strong>Department:</strong> {boardChairman[0].department_name}</p>
-        </div>
+      <ul>
+
+<li >Chairman - {boardChairman[0].chairman_name}</li>
+             <li >Department - {boardChairman[0].department_name}</li>
+      
+      </ul>
     ) : (
         <p>No board chairman found </p>
     )}   
             </div>
     {
-      chiefExaminers && chiefExaminers.length>0 ?(    <div>
-      <h3>Board Chief Examiners</h3>
+      chiefExaminers && chiefExaminers.length>0 ?(   
+         <div className='boardDetailsElement'> 
+      <h2>Board Chief Examiners</h2>
       <ul>
           {chiefExaminers.map((examiner) => (
               <li key={examiner.id}>{examiner.examiner_name} - {examiner.examiner_faculty_id}</li>
@@ -380,7 +428,7 @@ const fetchPendingCourseAllocationCount = async () => {
 </div>
 
           <div className='allocationDashboardContainer'>
-              <div style={{ display: 'flex', flexWrap: "wrap", width: '100%', gap: "10px", alignItems: 'center', justifyContent: "center", height: "50%", padding: "20px", paddingBottom: "0px", boxSizing: "border-box" }}>
+              <div style={{ display: 'flex', flexWrap: "wrap", width: '100%', gap: "10px", alignItems: 'center', justifyContent: "center", height: "50%", paddingTop: "20px", boxSizing: "border-box" }}>
                   <div className='piechartContainer'>
                       <div>
                           <PieChart width={250} height={250}>
@@ -424,7 +472,7 @@ const fetchPendingCourseAllocationCount = async () => {
                       </div>
                   </div>
               </div>
-              <div style={{display:"flex",gap:"10px",padding:"20px",paddingTop:"0px",flexWrap:"wrap"}}>
+              <div style={{display:"flex",gap:"10px",paddingBottom:"15px",flexWrap:"wrap"}}>
               <div style={{ flex:"1", backgroundColor: 'white',maxHeight:"400px",minWidth:"400px",overflowY:"scroll", padding: '10px', borderRadius: '5px', marginTop: "10px", boxShadow: "rgba(0, 0, 0, 0.1) 0px 4px 12px" }}>
                 <div>
                   <h3>Pending Allocations</h3>

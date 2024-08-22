@@ -16,7 +16,8 @@ import axios from 'axios';
 import apiHost from '../../config/config';
 import { ToastContainer, toast } from 'react-toastify'; // Import Toastify
 
-const FacultyChangeRequests = () => {
+const FacultyChangeRequests = (props) => {
+  props.setTitle("Faculty Change Requests")
   const [requests, setRequests] = useState([]);
   const [openModal, setOpenModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -96,7 +97,6 @@ const FacultyChangeRequests = () => {
   return (
     <div style={{ padding: 16 }}>
        <div style={{padding:"10px"}}>
-      <h1>Faculty Change Requests</h1>
       </div>
       <ToastContainer /> {/* Add ToastContainer for Toastify notifications */}
       <Grid container spacing={2} direction="column">

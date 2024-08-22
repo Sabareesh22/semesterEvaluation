@@ -52,4 +52,17 @@ router.get('/role', checkAuth, async (req, res) => {
     }
 });
 
+router.get('/hodDetails',checkAuth,async(req,res)=>{
+    try {
+        const { userId } = req;
+        const hodDetailsQuery = `SELECT * FROM master_hod WHERE faculty=?`
+        const [results] = await pool.query(hodDetailsQuery,[userId]);
+        console.log(results);
+        res.json(results)
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+   
+})
+
 module.exports = router;

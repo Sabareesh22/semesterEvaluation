@@ -20,10 +20,12 @@ import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import apiHost from '../../config/config';
-
-const FacultyApprovalPage = () => {
+import { useCookies } from 'react-cookie';
+const FacultyApprovalPage = (props) => {
+  props.setTitle("Paper Allocation Requests")
   const [openModal, setOpenModal] = useState(false);
   const [reason, setReason] = useState('');
+  const[cookies,setCookie] = useCookies(['auth'])
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [allocations, setAllocations] = useState([]);
   const [replacementRequests, setReplacementRequests] = useState([]);
@@ -31,7 +33,9 @@ const FacultyApprovalPage = () => {
   // Fetch allocations from API on component mount
   const fetchAllocations = async () => {
     try {
-      const response = await axios.get(`${apiHost}/api/allocations/faculty/51`); // Replace '13' with the actual faculty ID
+      const response = await axios.get(`${apiHost}/api/allocations/faculty`,{headers:{
+        Auth:cookies.auth
+      }}); // Replace '13' with the actual faculty ID
       setAllocations(response.data.results);
     } catch (error) {
       console.error('Error fetching allocations:', error);
@@ -41,7 +45,9 @@ const FacultyApprovalPage = () => {
   // Fetch replacement requests from the new API
   const fetchReplacementRequests = async () => {
     try {
-      const response = await axios.get(`${apiHost}/api/allocations/new-faculty/51`); // Replace '12' with the actual faculty ID
+      const response = await axios.get(`${apiHost}/api/allocations/new-faculty`,{headers:{
+        Auth:cookies.auth
+      }}); // Replace '12' with the actual faculty ID
       setReplacementRequests(response.data.results);
       console.log(response.data.results)
     } catch (error) {
@@ -68,11 +74,13 @@ const FacultyApprovalPage = () => {
   const handleApproveAllocation = async (course) => {
     try {
       await axios.put(`${apiHost}/api/facultyPaperAllocation/status`, {
-        facultyId: 51, // Replace with actual faculty ID
+        
         semCode: course.semcode,
         courseId: course.courseId,
         status:1,
-      });
+      },{headers:{
+        Auth:cookies.auth
+      }});
 
       toast.success(`${course.courseName} approved successfully.`);
       // Refetch the allocations after successful approval
@@ -88,12 +96,14 @@ const FacultyApprovalPage = () => {
     } else {
       try {
         await axios.put(`${apiHost}/api/facultyPaperAllocation/status`, {
-          facultyId: 51, // Replace with actual faculty ID
+          
           semCode: selectedCourse.semcode,
           courseId: selectedCourse.courseId,
           status: -1,
           remark: reason, // Optional: send reason to backend
-        });
+        },{headers:{
+        Auth:cookies.auth
+      }});
         fetchAllocations();
         toast.success(`${selectedCourse.courseName} rejected successfully.`);
         handleCloseModal();
@@ -109,11 +119,13 @@ const FacultyApprovalPage = () => {
       await axios.put(`${apiHost}/api/facultyChangeRequests/status`, {
         old_faculty: course.old_faculty
         , // Replace with the actual old faculty ID
-        new_faculty:course.new_faculty , // You may need to adjust this depending on your data
+       
         course: course.courseId,
         semcode: course.semcode,
         status: 1,
-      });
+      },{headers:{
+        Auth:cookies.auth
+      }});
    
       // Refetch the replacement requests after successful approval
       toast.success(`${course.courseName} replacement approved successfully.`);
@@ -130,12 +142,13 @@ const FacultyApprovalPage = () => {
       try {
         await axios.put(`${apiHost}/api/facultyChangeRequests/status`, {
           old_faculty: selectedCourse.old_faculty, // Replace with the actual old faculty ID
-          new_faculty: selectedCourse.new_faculty, // You may need to adjust this depending on your data
           course: selectedCourse.courseId,
           semcode: selectedCourse.semcode,
           status: -1,
           remark: reason, // Optional: send reason to backend
-        });
+        },{headers:{
+          auth:cookies.auth
+        }});
         fetchReplacementRequests();
         toast.success(`${selectedCourse.courseName} replacement rejected successfully.`);
         handleCloseModal();
@@ -164,7 +177,6 @@ const FacultyApprovalPage = () => {
       <ToastContainer />
 
       <div style={{padding:"10px"}}>
-      <h1>HOD Paper Allocation Requests</h1>
       </div>
 
       {/* Display grouped allocations */}

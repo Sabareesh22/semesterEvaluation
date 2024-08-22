@@ -7,7 +7,8 @@ import axios from 'axios';
 import apiHost from '../../config/config.js';
 import MultiSelect from '../components/MultiSelect.jsx';
 import { useCookies } from 'react-cookie';
-const COEpage = () => {
+const COEpage = (props) => {
+    props.setTitle("Create Semester Evaluation")
     const [cookies,setCookies] = useCookies(['auth']);
     const [semesterCode, setSemesterCode] = useState('');
     const [regulation, setRegulation] = useState([]);
@@ -131,7 +132,7 @@ const COEpage = () => {
     return (
         <div className='coePageContainer'>
              <div style={{padding:"10px"}}>
-      <h1>Create Semester Evaluation</h1>
+
       </div>
             <ToastContainer /> {/* Toast container */}
             <div className='formContainer' style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px' }}>

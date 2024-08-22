@@ -319,9 +319,9 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
           handledBy:selectedBcCe[`${`${courseId}-${facultyId}`}`].value,
           handlingFacultyRole:selectedBcCe[`${`${courseId}-${facultyId}`}`].role,
           time:time
-        },{headers:{
+        }],{headers:{
           Auth: cookies.auth
-       } }]);
+       } });
         fetchPaperCounts()
         toast.success(response.data.message || 'Faculty allocated successfully.');
       } catch (error) {
@@ -826,7 +826,8 @@ const FacultyUploadTable = ({ headers, data, onCancel, onSubmit }) => {
   );
 };
 
-const FacultyAllocation = () => {
+const FacultyAllocation = (props) => {
+  props.setTitle("Faculty Allocation")
   const [semesterCodes, setSemesterCodes] = useState([]);
   const [selectedSemesterCode, setSelectedSemesterCode] = useState(null);
   const [departments, setDepartments] = useState([]);
@@ -834,7 +835,7 @@ const FacultyAllocation = () => {
   const [year,setYear] =  useState([]);
   const [yearOptions,setYearOptions] = useState([])
   const [batch, setBatch] = useState([]);
-  const [departmentId, setDepartmentId] = useState(null);
+  const [departmentId, setDepartmentId] = useState(props.userDetails.department);
   const [courses, setCourses] = useState([]);
   const [uploadData, setUploadData] = useState([]);
   const [showUploadContainer, setShowUploadContainer] = useState(false);
@@ -1018,7 +1019,6 @@ const FacultyAllocation = () => {
   return (
     <div>
       <div style={{padding:"10px"}}>
-      <h1>Faculty Allocation</h1>
       </div>
       
       <div style={{ marginTop: '20px', marginBottom: '20px', display: 'flex',gap:"10px", justifyContent: 'flex-end', width: '80%', marginLeft: 'auto', marginRight: 'auto' }}>

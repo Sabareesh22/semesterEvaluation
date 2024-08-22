@@ -4,7 +4,7 @@ import { useCookies } from 'react-cookie';
 import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
-const ProtectedRoutes = ({ authorizedRole }) => {
+const ProtectedRoutes = ({ authorizedRole ,setRoles}) => {
     const [cookies] = useCookies(['auth']);
     const [role, setRole] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -19,6 +19,29 @@ const ProtectedRoutes = ({ authorizedRole }) => {
                         },
                     });
                     setRole(response.data.roles);
+                    setRoles(response.data.roles)
+                }
+                
+            } catch (error) {
+                console.error('Error fetching role:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchRole();
+    }, [cookies.auth]);
+    useEffect(() => {
+        const fetchRole = async () => {
+            try {
+                if(cookies.auth){
+                    const response = await axios.get(`${apiHost}/auth/role`, {
+                        headers: {
+                            auth: cookies.auth,
+                        },
+                    });
+                    setRole(response.data.roles);
+                    setRoles(response.data.roles)
                 }
                 
             } catch (error) {

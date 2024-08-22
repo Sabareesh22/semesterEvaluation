@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import { useCookies } from 'react-cookie';
 import { decodeToken } from 'react-jwt';
 import ProtectedRoutes from './ProtectedRoutes';
+import axios from 'axios';
+import apiHost from '../config/config';
 import UnAuthorized from './pages/UnAuthorized';
 function App() {
   const [cookies] = useCookies(['user']);
@@ -20,27 +22,7 @@ function App() {
       setLoggedIn(true);
     }
   }, [cookies]);
-  useEffect(() => {
-    const fetchRole = async () => {
-        try {
-            if(cookies.auth){
-                const response = await axios.get(`${apiHost}/auth/role`, {
-                    headers: {
-                        auth: cookies.auth,
-                    },
-                });
-                setRole(response.data[0].role);
-            }
-            
-        } catch (error) {
-            console.error('Error fetching role:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
-    fetchRole();
-}, [cookies.auth]);
 
   return (
     <Router>
@@ -52,7 +34,7 @@ function App() {
    
         <Route
         path='/semesterEvaluation/*'
-        element={loggedIn ? <Content userDetails={userDetails} /> : <Navigate to='/login' />}
+        element={loggedIn ? <Content setLoggedIn = {setLoggedIn} userDetails={userDetails} /> : <Navigate to='/login' />}
       />
 
         <Route path='/unAuthorized' element={loggedIn?<UnAuthorized/>:<Navigate to='/login' />}/>

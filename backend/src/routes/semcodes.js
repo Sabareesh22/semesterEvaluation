@@ -512,8 +512,9 @@ router.get('/allocations/hod/:hodId', async (req, res) => {
 
 // PUT route to change the status of faculty paper allocation based on facultyId and courseId
 router.put('/facultyPaperAllocation/status', async (req, res) => {
-    const { facultyId, courseId, status, semCode, remark } = req.body; // Get facultyId, courseId, status, semCode, and remark from the request body
-  
+    
+    const {  courseId, status, semCode, remark } = req.body; // Get facultyId, courseId, status, semCode, and remark from the request body
+    const facultyId = req.body.facultyId || req.userId
     // Validate the input
     if (facultyId == null || courseId == null || status == null ) {
         return res.status(400).json({ message: 'Invalid input. Faculty ID, Course ID, and Status are required.' });
@@ -606,9 +607,8 @@ router.get('/allocations/new-faculty/:facultyId', async (req, res) => {
 
 
 
-router.get('/allocations/faculty/:facultyId', async (req, res) => {
-    const { facultyId } = req.params;
-
+router.get('/allocations/faculty', async (req, res) => {
+    const facultyId = req.userId;
     const query = `
        SELECT 
     fpa.semcode,
@@ -1009,7 +1009,7 @@ router.get('/facultyChangeRequests', async (req, res) => {
 });
 
 router.get('/countPendingFacultyApprovals', async (req, res) => {
-
+    console.log(req.query)
     let query = `
         SELECT COUNT(*) AS record_count
         FROM faculty_paper_allocation fpa

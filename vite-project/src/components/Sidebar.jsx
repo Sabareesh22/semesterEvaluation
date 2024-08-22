@@ -1,16 +1,16 @@
 import React, { useState,useEffect } from 'react';
 import './Sidebar.css';
-import { ExpandMore, ExpandLess, Menu, Dashboard } from '@mui/icons-material';
+import { ExpandMore, ExpandLess, Menu, Dashboard, Logout } from '@mui/icons-material';
 import { School, Download, Assignment, SwapHoriz, People, Book } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import Logo from '../assets/logo.png';
 import { useCookies } from 'react-cookie';
 import axios from 'axios';
 import apiHost from '../../config/config';
-const Sidebar = () => {
+const Sidebar = ({setLoggedIn}) => {
   const [open, setOpen] = useState({ COE: false, HOD: false, Faculty: false });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [cookies] = useCookies(['auth']);
+  const [cookies,setCookie,removeCookie] = useCookies(['auth']);
     const [role, setRole] = useState([]);
   const toggleDropdown = (key) => {
     setOpen(prevState => ({ ...prevState, [key]: !prevState[key] }));
@@ -44,6 +44,24 @@ const Sidebar = () => {
 
     fetchRole();
 }, [cookies.auth]);
+
+const deleteCookie = () => {
+  return new Promise((resolve, reject) => {
+    try {
+      removeCookie('auth', { path: '/' });
+      removeCookie('user', { path: '/' });
+      resolve(); // Resolve the promise after removing the cookies
+    } catch (error) {
+      reject(error); // Reject the promise in case of an error
+    }
+  });
+};
+const handleLogout = async()=>{
+ await deleteCookie();
+ window.location.reload();
+}
+
+
 
   return (
     <>
@@ -127,6 +145,15 @@ const Sidebar = () => {
               </div>
             )}
           </li>}
+          <li>
+            <div onClick={handleLogout} className={`listItem`}>
+              <div  style={{display:"flex",alignItems:"center",gap:"10px"}}>
+              <Logout/>
+              Logout
+              </div>
+            
+            </div>
+          </li>
         </ul>
       </div>
     </>

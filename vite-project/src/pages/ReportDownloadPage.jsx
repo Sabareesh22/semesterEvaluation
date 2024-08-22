@@ -5,7 +5,8 @@ import * as XLSX from 'xlsx';
 import { ToastContainer, toast } from 'react-toastify';
 import apiHost from '../../config/config';
 import { useCookies } from 'react-cookie';
-const ReportDownloadPage = () => {
+const ReportDownloadPage = (props) => {
+    props.setTitle("Download Faculty Allocation Report")
     const [departmentId, setDepartmentId] = useState('');
     const [semcode, setSemcode] = useState('');
     const [departments, setDepartments] = useState([]);
@@ -81,7 +82,6 @@ const ReportDownloadPage = () => {
     return (
         <Container  >
             <ToastContainer />
-            <h2>Download Faculty Allocation Report</h2>
             <br />
             <div style={{
                 display: 'flex',

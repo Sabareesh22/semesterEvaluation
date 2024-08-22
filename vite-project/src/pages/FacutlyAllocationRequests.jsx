@@ -24,7 +24,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import Select from 'react-select';
 import { useCookies } from 'react-cookie';
 
-const FacultyAllocationRequests = () => {
+const FacultyAllocationRequests = (props) => {
+  props.setTitle("Faculty Allocation Requests")
   const [requests, setRequests] = useState([]);
   const [selectedHOD, setSelectedHOD] = useState(null);
   const [reason, setReason] = useState('');
@@ -179,7 +180,6 @@ const FacultyAllocationRequests = () => {
   return (
     <div style={{ padding: 16 }}>
       <div style={{ padding: "10px" }}>
-        <h1>Faculty Allocation Requests</h1>
       </div>
       <div style={{ width: '30%', float: 'right' }}>
         <Select
