@@ -1,0 +1,66 @@
+.layoutContainer{
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  
+}
+
+.layoutContent{
+    flex:1;
+    overflow-y:scroll;
+    scrollbar-width:none;
+
+}
+
+
+.layoutHeader{
+    background: linear-gradient(to right, #363786,#13122b); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    position: sticky;
+    top:0;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    align-items: center;
+    color:whitesmoke;
+    background-color: black;
+    height: 100px;
+}
+
+.burgerMenu:hover{
+  cursor: pointer;
+}
+.layoutSidebar{
+    display: none;
+}
+
+.layoutSidebarOpen{
+    position: fixed;
+    z-index: 999;
+    display: block;
+}
+
+@media (min-width:999px) {
+    .burgerMenu{
+        display: none;
+    }
+    .layoutSidebar{
+        display: block;
+    }
+}
+.layoutProfile{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 100%;
+    justify-content: space-around;
+}
+.layoutProfile p {
+    font-size: 20px;
+    color: whitesmoke;
+}
+
+.layoutProfile .icon{
+    color: white;
+ 
+}

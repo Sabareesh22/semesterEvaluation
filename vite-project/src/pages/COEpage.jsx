@@ -7,8 +7,10 @@ import axios from 'axios';
 import apiHost from '../../config/config.js';
 import MultiSelect from '../components/MultiSelect.jsx';
 import { useCookies } from 'react-cookie';
+
+
 const COEpage = (props) => {
-    props.setTitle("Create Semester Evaluation")
+   
     const [cookies,setCookies] = useCookies(['auth']);
     const [semesterCode, setSemesterCode] = useState('');
     const [regulation, setRegulation] = useState([]);
@@ -21,6 +23,9 @@ const COEpage = (props) => {
     const [yearOptions, setYearOptions] = useState([]);
     const [batchOptions, setBatchOptions] = useState([]);
     const [semesterOptions, setSemesterOptions] = useState([]);
+    useEffect(()=>{
+        props.setTitle("Create SemCode")
+    },[])
   useEffect(()=>{
     console.log(year)
   },[year])
@@ -222,7 +227,7 @@ const COEpage = (props) => {
                         }}
                         disabled={!isFormValid || loading} // Disable button if loading
                     >
-                        Submit Semester Data
+                        Create
                     </Button>
                 </div>
             </div>

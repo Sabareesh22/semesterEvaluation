@@ -18,7 +18,7 @@ const Dashboard = (props) => {
   const [year, setYear] = useState("");
   const [yearOptions, setYearOptions] = useState([]);
   const [batch, setBatch] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
+  const [departmentId, setDepartmentId] = useState(null);
   const [selectedSemesterCode, setSelectedSemesterCode] = useState("");
   const [pendingFacultyApprovalCount, setPendingFacultyApprovalCount] = useState(0);
   const [pendingCoursesCount, setPendingCoursesCount] = useState(0);
@@ -31,25 +31,27 @@ const Dashboard = (props) => {
   const [cookies,setCookie] = useCookies(['auth'])
   const [roles,setRoles] =  useState([])
   const [hodDetails,setHodDetails] = useState({})
-  props.setTitle("Dashboard")
+  useEffect(()=>{
+    props.setTitle("Dashboard")
 
+  },[])
 useEffect(()=>{
-  
+   
     try {
-        if(roles.includes('hod')){
+        if(roles.includes('hod') && !roles.includes('coe')){
             axios.get(`${apiHost}/auth/hodDetails`,{headers:{
                 Auth: cookies.auth,
             }}).then((res)=>{
                 console.log(res.data[0])
                 setHodDetails(res.data[0])
-                setDepartmentId((res.data[0]?.department))
+                setDepartmentId({value:res.data[0]?.department})
             })
         }
         
     } catch (error) {
         console.error('Error fetching role:', error);
     }
-},cookies.auth)
+},[cookies.auth,roles])
 
   useEffect(() => {
     const fetchRole = async () => {
@@ -112,10 +114,10 @@ useEffect(()=>{
     };
 
     fetchBoardChiefExaminer();
-}, [departmentId,selectedSemesterCode,cookies]);
+}, [departmentId,selectedSemesterCode,cookies.auth]);
   useEffect(() => {
     const fetchPendingAllocations = async () => {
-        if (!selectedSemesterCode || !departmentId) {
+        if (!selectedSemesterCode ||  !departmentId) {
             return;
         }
         try {
@@ -136,7 +138,7 @@ useEffect(()=>{
     };
 
     fetchPendingAllocations();
-}, [selectedSemesterCode, departmentId,cookies]);
+}, [selectedSemesterCode, departmentId,cookies.auth]);
 
   useEffect(() => {
       const fetchPendingAllocationCount = async () => {
@@ -246,7 +248,7 @@ const fetchPendingCourseAllocationCount = async () => {
       fetchCourseAllocationCount();
       fetchPendingCourseAllocationCount();
       
-  }, [selectedSemesterCode,cookies]);
+  }, [selectedSemesterCode,cookies.auth]);
   useEffect(() => {
     const fetchBoardChairman = async () => {
         if (!selectedSemesterCode || !departmentId) {
@@ -269,7 +271,7 @@ const fetchPendingCourseAllocationCount = async () => {
     };
 
     fetchBoardChairman();
-}, [selectedSemesterCode, departmentId,cookies]);
+}, [selectedSemesterCode, departmentId,cookies.auth]);
 
   useEffect(() => {
       const fetchSemesterCodes = async () => {
@@ -293,7 +295,7 @@ const fetchPendingCourseAllocationCount = async () => {
       };
 
       fetchSemesterCodes();
-  }, [batch, year,cookies]);
+  }, [batch, year,cookies.auth]);
 
   useEffect(() => {
       const fetchYears = async () => {
@@ -312,7 +314,7 @@ const fetchPendingCourseAllocationCount = async () => {
       };
 
       fetchYears();
-  }, [cookies]);
+  }, [cookies.auth]);
 
   useEffect(() => {
       const fetchBatches = async () => {
@@ -331,7 +333,7 @@ const fetchPendingCourseAllocationCount = async () => {
       };
 
       fetchBatches();
-  }, [cookies]);
+  }, [cookies.auth]);
 
   useEffect(() => {
       const fetchDepartments = async () => {
@@ -350,7 +352,7 @@ const fetchPendingCourseAllocationCount = async () => {
       };
 
       fetchDepartments();
-  }, [cookies]);
+  }, [cookies.auth]);
 
   return (
       <div style={{ width: '100%', height: "100%",padding:"10px 15px" }}>
@@ -367,7 +369,7 @@ const fetchPendingCourseAllocationCount = async () => {
                   />
               </div>
            }
-                
+             
            
               <div style={{ width: '30%', float: 'right' }}>
                   <Select

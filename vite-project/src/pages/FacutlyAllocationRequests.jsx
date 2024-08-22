@@ -25,7 +25,6 @@ import Select from 'react-select';
 import { useCookies } from 'react-cookie';
 
 const FacultyAllocationRequests = (props) => {
-  props.setTitle("Faculty Allocation Requests")
   const [requests, setRequests] = useState([]);
   const [selectedHOD, setSelectedHOD] = useState(null);
   const [reason, setReason] = useState('');
@@ -38,7 +37,9 @@ const FacultyAllocationRequests = (props) => {
   const [cookies,setCookie] = useCookies(['auth'])
   // State to track individual approvals for each faculty in each course
   const [individualApproval, setIndividualApproval] = useState({}); 
-
+  useEffect(()=>{
+    props.setTitle("Alloc Requests")
+},[])
   const fetchRequests = async () => {
     console.log('Fetching faculty allocation requests...');
     try {

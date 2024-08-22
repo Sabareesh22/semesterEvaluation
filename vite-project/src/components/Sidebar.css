@@ -1,55 +1,19 @@
 .sidebarContainer {
-  width: 300px; /* Width of the sidebar */
-  background-color: #0d0030; /* Sidebar background color */
+  width: 300px;
+  height: 100vh;
+  background: #bdc3c7;  /* fallback for old browsers */
+background: linear-gradient(to right, #13122b, #000000); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
   padding: 20px; /* Padding around content */
-  color: white; /* Text color */
-  height: 100vh; /* Full height */
-  transform: translateX(0); /* Initial position */
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition */
-  position: fixed; /* Keep the sidebar fixed */
-  left: 0; /* Align to the left */
-  top: 0; /* Align to the top */
-  z-index: 999; /* Ensure it's above other elements */
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5); /* Subtle shadow */
+  color: rgb(255, 255, 255); /* Text color */
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.245); /* Subtle shadow */
   overflow-y:scroll;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
 
-/* Mobile Styles */
-@media (max-width: 768px) {
-  .sidebarContainer {
-    width: 100%; /* Full width on mobile */
-    transform: translateX(-100%); /* Hide initially */
-  }
 
-  .sidebarContainer.open {
-    transform: translateX(0); /* Show when open */
-  }
 
-  .burgerIcon {
-    display: block; /* Show burger icon */
-    padding: 10px; /* Padding for icon */
-    position: fixed; /* Fixed position */
-    top: 10px; /* Position at the top */
-    left: 10px; /* Position on the left */
-    z-index: 1000; /* Ensure it's on top */
-  }
-}
-
-/* Desktop Styles */
-@media (min-width: 769px) {
-   
-  .sidebarContainer {
-    position: fixed; /* Keep fixed */
-    left: 0; /* Align to left */
-    transform: none; /* Reset transform */
-  }
-
-  .burgerIcon {
-    display: none; /* Hide burger icon */
-  }
-}
 
 ul {
   list-style-type: none; /* Remove default styles */
@@ -57,9 +21,13 @@ ul {
 }
 
 li {
+  list-style: none;
   padding: 10px 0; /* Spacing between items */
 }
-
+a{
+  text-decoration: none;
+  color: white;
+ }
 .listItem {
   display: flex; /* Use flexbox */
   justify-content: space-between; /* Space between icon and text */
@@ -69,20 +37,18 @@ li {
   position: relative; /* Position for hover effect */
   transition: background-color 0.3s ease; /* Subtle transition */
   border-radius: 5px; /* Rounded corners */
+  gap: 10px;
 }
 
 .listItem:hover {
-  background-color: #35345e; /* Darker hover color */
+  background-image: radial-gradient( circle 382px at 50% 50.2%,  rgba(73,76,212,1) 0.1%, rgba(3,1,50,1) 100.2% );
 }
 
 .listItem.active {
-  background-color: #190353; /* Active item color */
+  background-image: radial-gradient( circle 382px at 50% 50.2%,  rgba(73,76,212,1) 0.1%, rgba(3,1,50,1) 100.2% );
+  
 }
 
-.icon {
-  margin-right: 10px; /* Space between icon and text */
-  color: #f1f1f1; /* Icon color */
-}
 
 .dropdownIcon {
   margin-left: auto; /* Push dropdown icon to the right */
@@ -103,6 +69,7 @@ li {
   cursor: pointer; /* Pointer cursor */
   transition: background-color 0.3s ease; /* Smooth transition */
   border-radius: 10px;
+  gap: 10px;
 }
 
 .submenuItem:hover {
@@ -115,27 +82,4 @@ li {
   text-align: center; /* Center the title */
   font-weight: bold; /* Bold title */
   color: #f1f1f1; /* Title color */
-}
-
-.burgerIcon {
-  display: none; /* Hidden by default */
-  cursor: pointer; /* Pointer cursor */
-  color: black; /* Default color */
-  transition: color 0.3s ease; /* Smooth color transition */
-}
-
-.burgerIcon.open .MuiSvgIcon-root {
-  color: white; /* Change color when open */
-}
-
-/* Mobile Styles */
-@media (max-width: 768px) {
-  .burgerIcon {
-    display: block; /* Show burger icon on mobile */
-    padding: 10px; /* Padding for burger icon */
-    position: fixed; /* Fixed position */
-    top: 10px; /* Position at the top */
-    left: 10px; /* Position on the left */
-    z-index: 1000; /* Ensure it's on top */
-  }
 }

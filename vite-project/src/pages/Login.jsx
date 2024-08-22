@@ -1,24 +1,26 @@
 import { Button, Input } from '@mui/material'
 import './Login.css'
 import { GoogleLogin } from '@react-oauth/google';
-import LoginImage from '../assets/login.svg'
+import LoginImage from '../assets/Login.png'
 import {decodeToken} from 'react-jwt'
 import { CookiesProvider, useCookies } from 'react-cookie'
 import { useNavigate } from 'react-router-dom';
 import apiHost from '../../config/config';
 import axios from 'axios';
-const Login = ({setLoggedIn})=>{
+import { useEffect } from 'react';
+const Login = ()=>{
     const navigate = useNavigate();
-    const [cookies, setCookie] = useCookies([])
+    const [cookies, setCookie] = useCookies(['user','auth'])
 
+ 
     const handleLogin = (response)=>{
-        setCookie('user',response.credential)
+        setCookie('user',response.credential,{path:'/'})
         console.log(decodeToken(response.credential))
-         axios.post(`${apiHost}/auth/login`,{email:decodeToken(response.credential).email}).then((res)=>{
+        const email =decodeToken(response.credential).email;
+         axios.post(`${apiHost}/auth/login`,{email:email}).then((res)=>{
             console.log(res.data)
-            setCookie('auth',res.data);
-            setLoggedIn(true);
-        navigate('/semesterEvaluation');
+            setCookie('auth',res.data,{path:'/'});
+            navigate('/paperallocation/dashboard');
         })
         
     }
@@ -26,8 +28,14 @@ const Login = ({setLoggedIn})=>{
         <div className='loginPageContainer'>
             <div className='loginContainer'>
                     <h1>Login</h1>
-                    <img height={"100%"} width={"100%"}src={LoginImage} />
-                    <GoogleLogin onSuccess={handleLogin}/>
+                    <img className='loginImage' src={LoginImage} />
+                    <GoogleLogin  
+                    type='standard'
+                    theme='filled_blue'
+             size='large'
+             width={"250"}
+             
+     onSuccess={handleLogin}/>
                     
             </div>
         </div>

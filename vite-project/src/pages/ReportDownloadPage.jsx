@@ -6,7 +6,6 @@ import { ToastContainer, toast } from 'react-toastify';
 import apiHost from '../../config/config';
 import { useCookies } from 'react-cookie';
 const ReportDownloadPage = (props) => {
-    props.setTitle("Download Faculty Allocation Report")
     const [departmentId, setDepartmentId] = useState('');
     const [semcode, setSemcode] = useState('');
     const [departments, setDepartments] = useState([]);
@@ -14,7 +13,9 @@ const ReportDownloadPage = (props) => {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState([]);
     const [cookies,setCoookie] = useCookies(['auth'])
-
+    useEffect(()=>{
+        props.setTitle("Report")
+    },[])
     useEffect(() => {
         const fetchDepartments = async () => {
             try {

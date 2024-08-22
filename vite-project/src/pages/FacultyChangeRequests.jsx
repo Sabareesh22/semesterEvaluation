@@ -17,11 +17,15 @@ import apiHost from '../../config/config';
 import { ToastContainer, toast } from 'react-toastify'; // Import Toastify
 
 const FacultyChangeRequests = (props) => {
-  props.setTitle("Faculty Change Requests")
   const [requests, setRequests] = useState([]);
   const [openModal, setOpenModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [reason, setReason] = useState('');
+
+
+  useEffect(()=>{
+    props.setTitle("Change Requests")
+},[])
 
   const fetchRequests = async () => {
     try {

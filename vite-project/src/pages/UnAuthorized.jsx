@@ -1,9 +1,10 @@
 import './UnAuthorized.css'
-import unAuthorizedImage from '../assets/unAuthorized.svg'
+import unAuthorizedImage from '../assets/Unauthorized.gif'
 import { Button } from '@mui/material'
 import { useCookies } from 'react-cookie'
 import { useNavigate } from 'react-router-dom'
-const UnAuthorized = ()=>{
+
+const UnAuthorized = (props)=>{
     const[cookies,setCookie,removeCookie] = useCookies(['auth']);
     const navigate = useNavigate();
     const deleteCookie = () => {
@@ -19,15 +20,27 @@ const UnAuthorized = ()=>{
       };
     const handleRedirectLogin = async()=>{
        await deleteCookie();
-       window.location.reload();
+       navigate('/login')
+    }
+    const handleGoBack = ()=>{
+      navigate(-1)
     }
   return(
     <div className="unAuthPageContainer">
         <div className='unAuthContainer'>
         <img src={unAuthorizedImage}></img>
-        <p> UnAuthorized Access </p>
+        <div className='unAuthText'>
+        <h2> UnAuthorized Access </h2>
         <p>Do you have an Authorized Account Try Login In Using that</p>
+        </div>
+        <div style={{display:"flex",justifyContent:"center",gap:"20px"}}>
+        <Button variant="contained" sx={{backgroundColor:"white",color:"black", ':hover': {
+      bgcolor: 'darkblue', // theme.palette.primary.main
+      color: 'white',
+    }}} onClick={handleGoBack}>Go Back</Button>
         <Button variant="contained" sx={{backgroundColor:"blue"}} onClick={handleRedirectLogin}>Login</Button>
+        </div>
+        
         </div>
        
     </div>

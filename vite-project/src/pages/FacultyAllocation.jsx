@@ -835,12 +835,14 @@ const FacultyAllocation = (props) => {
   const [year,setYear] =  useState([]);
   const [yearOptions,setYearOptions] = useState([])
   const [batch, setBatch] = useState([]);
-  const [departmentId, setDepartmentId] = useState(props.userDetails.department);
+  const [departmentId, setDepartmentId] = useState('');
   const [courses, setCourses] = useState([]);
   const [uploadData, setUploadData] = useState([]);
   const [showUploadContainer, setShowUploadContainer] = useState(false);
   const [headers, setHeaders] = useState([]);
   const [cookies,setCookie] = useCookies(['auth'])
+  const [roles,setRoles] =  useState([])
+  const [hodDetails,setHodDetails] = useState({})
   useEffect(() => {
     const fetchSemesterCodes = async () => {
       if(!batch || !year){
@@ -862,6 +864,47 @@ const FacultyAllocation = (props) => {
 
     fetchSemesterCodes();
   }, [batch,year]);
+
+
+  useEffect(()=>{
+   
+    try {
+        if(roles.includes('hod')){
+            axios.get(`${apiHost}/auth/hodDetails`,{headers:{
+                Auth: cookies.auth,
+            }}).then((res)=>{
+                console.log(res.data[0])
+                setHodDetails(res.data[0])
+                setDepartmentId({value:res.data[0]?.department})
+            })
+        }
+        
+    } catch (error) {
+        console.error('Error fetching role:', error);
+    }
+},[cookies.auth,roles])
+
+useEffect(() => {
+  const fetchRole = async () => {
+      try {
+          if(cookies.auth){
+              const response = await axios.get(`${apiHost}/auth/role`, {
+                  headers: {
+                      auth: cookies.auth,
+                  },
+              });
+              setRoles(response.data.roles)
+              
+          }
+          
+      } catch (error) {
+          console.error('Error fetching role:', error);
+      }
+  };
+
+  fetchRole();
+}, [cookies.auth]);
+
   useEffect(() => {
     const fetchYears = async () => {
         try {
@@ -1021,16 +1064,10 @@ const FacultyAllocation = (props) => {
       <div style={{padding:"10px"}}>
       </div>
       
-      <div style={{ marginTop: '20px', marginBottom: '20px', display: 'flex',gap:"10px", justifyContent: 'flex-end', width: '80%', marginLeft: 'auto', marginRight: 'auto' }}>
-        <div style={{ width: '30%', float: 'right', marginLeft: '20px' }}>
-          <Select
-            placeholder="Select Department"
-            value={departmentId}
-            onChange={(selectedOption) => setDepartmentId(selectedOption)}
-            options={departments}
-            isClearable
-          />
-        </div>
+      <div style={{boxShadow:"rgba(0, 0, 0, 0.1) 0px 4px 12px", margin: '20px 20px',backgroundColor:'white',padding:"20px",borderRadius:"10px", display: 'flex',gap:"10px", justifyContent: 'space-between' }}>
+       
+         
+     
         <div style={{ width: '30%', float: 'right'}}>
           <Select
             placeholder="Select Year"
