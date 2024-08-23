@@ -33,7 +33,6 @@ const Dashboard = (props) => {
   const [hodDetails,setHodDetails] = useState({})
   useEffect(()=>{
     props.setTitle("Dashboard")
-
   },[])
 useEffect(()=>{
    
@@ -84,7 +83,6 @@ useEffect(()=>{
       { name: 'Pending Approvals', students: pendingFacultyApprovalCount },
       { name: 'Rejected', students: rejectedFacultyApprovalCount },
   ];
-
   const COLORS = ['#0d0030', 'orangered'];
   const COLORS2 = ['#0d0030','blue','orangered'];
 
@@ -357,10 +355,11 @@ const fetchPendingCourseAllocationCount = async () => {
   return (
       <div style={{ width: '100%', height: "100%",padding:"10px 15px" }}>
       
-          <div style={{backgroundColor:"white",padding:" 15px 10px",borderRadius:'5px', display: 'flex', gap: "10px", justifyContent:'space-between',margin:'10px 0px'}}>
+          <div className='selectContainer' style={{padding:" 15px 10px",borderRadius:'5px', display: 'flex', gap: "10px", justifyContent:'space-between',margin:'10px 0px'}}>
            { roles.includes('coe') &&
             <div style={{ width: '30%', float: 'right' }}>
                   <Select
+                   
                       placeholder="Select Department"
                       value={departmentId}
                       onChange={(selectedOption) => setDepartmentId(selectedOption)}
@@ -475,7 +474,7 @@ const fetchPendingCourseAllocationCount = async () => {
                   </div>
               </div>
               <div style={{display:"flex",gap:"10px",paddingBottom:"15px",flexWrap:"wrap"}}>
-              <div style={{ flex:"1", backgroundColor: 'white',maxHeight:"400px",minWidth:"400px",overflowY:"scroll", padding: '10px', borderRadius: '5px', marginTop: "10px", boxShadow: "rgba(0, 0, 0, 0.1) 0px 4px 12px" }}>
+              <div className='pendingAllocationsContainer' style={{ flex:"1", maxHeight:"400px",minWidth:"400px",overflowY:"scroll", padding: '10px', borderRadius: '5px', marginTop: "10px", boxShadow: "rgba(0, 0, 0, 0.1) 0px 4px 12px" }}>
                 <div>
                   <h3>Pending Allocations</h3>
                   <br />

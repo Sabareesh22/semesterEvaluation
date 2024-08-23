@@ -21,21 +21,32 @@
 }
 
 table {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);    
     border-collapse: collapse; /* Remove space between cells */
     width: 100%; /* Ensure the table uses full width */
 }
 
+
+tbody{
+    
+    background-color: transparent;
+}
+
 th, td {
-    padding: 8px; /* Add some padding for table cells */
-    text-align: left; /* Align text to the left */
-    border-bottom: 1px solid #ddd; /* Optional: Add a border under table cells */
+   background-color: transparent;
 }
 
-th {
-    background-color: #0d0030;
-   /* Optional: Light gray background for header */
+th{
+    background: rgba(2, 0, 48, 0.868);
+    backdrop-filter: blur(0.5px);
+    -webkit-backdrop-filter: blur(0.5px);
+   
 }
-
 .submitButtonContainer {
     width: 100%; /* Ensure the button container takes full width */
     display: flex;
@@ -71,8 +82,13 @@ th {
 }
 .formContainer {
     width: 100%;
-    background-color: white;
     border-radius: 8px;
     padding: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3); 
 }
 

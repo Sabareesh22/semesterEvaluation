@@ -84,10 +84,9 @@ const ReportDownloadPage = (props) => {
         <Container  >
             <ToastContainer />
             <br />
-            <div style={{
+            <div className='selectContainer' style={{
                 display: 'flex',
                 gap: '16px',
-                backgroundColor: 'white',
                 padding: '16px',
                 borderRadius: '8px',
                 boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',

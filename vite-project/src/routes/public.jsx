@@ -3,10 +3,10 @@ import Login from "../pages/Login";
 import PageNotFound from "../pages/PageNotFound";
 import UnAuthorized from "../pages/UnAuthorized";
 
-export const publicRoutes = [
+export const publicRoutes =(setLoading)=> [
     {
         path:'/login',
-        element:<Login />
+        element:<Login setLoading={setLoading} />
     },
 
 ]

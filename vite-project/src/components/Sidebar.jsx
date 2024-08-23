@@ -2,16 +2,17 @@ import React, { useState,useEffect } from 'react';
 import './Sidebar.css';
 import { ExpandMore, ExpandLess, Menu, Dashboard, Logout, SchoolRounded } from '@mui/icons-material';
 import { School, Download, Assignment, SwapHoriz, People, Book } from '@mui/icons-material';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '../assets/logo.png';
 import { useCookies } from 'react-cookie';
 import axios from 'axios';
 import apiHost from '../../config/config';
-const Sidebar = ({setLoggedIn}) => {
+const Sidebar = ({setLoading}) => {
   const [open, setOpen] = useState({ COE: false, HOD: false, Faculty: false });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
   const [cookies,setCookie,removeCookie] = useCookies(['auth']);
+  const navigate = useNavigate();
     const [role, setRole] = useState([]);
   const toggleDropdown = (key) => {
     setOpen(prevState => ({ ...prevState, [key]: !prevState[key] }));
@@ -57,9 +58,15 @@ const deleteCookie = () => {
     }
   });
 };
-const handleLogout = async()=>{
- await deleteCookie();
- window.location.reload();
+const handleLogout = ()=>{
+
+  setLoading(true)
+
+ const navigateLogin = ()=>{
+  deleteCookie();
+  navigate('/login')
+ }
+ const timeout = setTimeout(navigateLogin,1000);
 }
 
 
@@ -71,10 +78,12 @@ const handleLogout = async()=>{
         <Menu className={isMobileOpen ? 'whiteIcon' : ''} />
       </div> */}
       <div className={`sidebarContainer ${isMobileOpen ? 'open' : ''}`}>
+      <Link to="dashboard" onClick={closeMobileMenu}>
         <div style={{ display: "flex", width: "100%",fontSize:"100px", justifyContent: "center", alignItems: "center" ,gap:'10px'}}>
          <SchoolRounded sx={{fontSize:"40px"}}/>
           <h6 className="sidebarTitle">Paper Allocation</h6>
         </div>
+        </Link>
        
         <ul>
           { role.includes('coe') &&

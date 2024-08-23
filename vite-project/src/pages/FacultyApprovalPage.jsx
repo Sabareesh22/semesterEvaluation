@@ -22,14 +22,16 @@ import 'react-toastify/dist/ReactToastify.css';
 import apiHost from '../../config/config';
 import { useCookies } from 'react-cookie';
 const FacultyApprovalPage = (props) => {
-  props.setTitle("Paper Allocation Requests")
+  
   const [openModal, setOpenModal] = useState(false);
   const [reason, setReason] = useState('');
   const[cookies,setCookie] = useCookies(['auth'])
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [allocations, setAllocations] = useState([]);
   const [replacementRequests, setReplacementRequests] = useState([]);
-
+  useEffect(()=>{
+    props.setTitle("Requests")
+  },[])
   // Fetch allocations from API on component mount
   const fetchAllocations = async () => {
     try {
@@ -241,7 +243,7 @@ const FacultyApprovalPage = (props) => {
           <Typography variant="h5" gutterBottom>
             {semesterCode}
           </Typography>
-          <TableContainer component={Paper} style={{ marginTop: '20px', width: '100%' }}>
+          <TableContainer  style={{ marginTop: '20px', width: '100%' }}>
             <Table style={{ borderCollapse: 'collapse' }}>
               <TableHead sx={{ color: "white" }}>
                 <TableRow>

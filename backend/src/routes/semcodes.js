@@ -516,6 +516,8 @@ router.put('/facultyPaperAllocation/status', async (req, res) => {
     const {  courseId, status, semCode, remark } = req.body; // Get facultyId, courseId, status, semCode, and remark from the request body
     const facultyId = req.body.facultyId || req.userId
     // Validate the input
+
+    console.log("facultyId : " + facultyId)
     if (facultyId == null || courseId == null || status == null ) {
         return res.status(400).json({ message: 'Invalid input. Faculty ID, Course ID, and Status are required.' });
     }
@@ -525,10 +527,10 @@ router.put('/facultyPaperAllocation/status', async (req, res) => {
         UPDATE faculty_paper_allocation
         SET status = '?'
     `;
-
+   console.log("remark : "+ remark)
     // Add the remark update if provided
     const queryParams = [status];
-    if (remark !== undefined) {
+    if (remark != null) {
         updateQuery += `, remark = ?`;
         queryParams.push(remark);
     }

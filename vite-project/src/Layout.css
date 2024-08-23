@@ -15,9 +15,10 @@
 
 .layoutHeader{
     background: linear-gradient(to right, #363786,#13122b); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+   
     position: sticky;
     top:0;
-    z-index: 1;
+    z-index: 100;
     display: flex;
     justify-content: space-between;
     padding: 20px;
@@ -40,7 +41,94 @@
     display: block;
 }
 
+.profileMenu {
+    position: relative;
+    top:30px;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 20px;
+    border-radius: 10px;
+    background-color: transparent;
+    color: white;
+    box-shadow: none;
+    transition: all 0.3s ease;
+}
+
+.profileMenu.active {
+    /* From https://css.glass */
+background: rgba(255, 255, 255, 0.2);
+border-radius: 16px;
+box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+backdrop-filter: blur(5px);
+-webkit-backdrop-filter: blur(5px);
+border: 1px solid rgba(255, 255, 255, 0.3);
+    color: black;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.245);
+}
+
+.profileDetails{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.profileDetails.active p{
+    font-size: 20px;
+   font-weight: bold;
+}
+
+.profileDetails.inactive p {
+    color: inherit;
+    margin: 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.profileOptions {
+    list-style-type: none;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap:20px;
+    opacity: 0;
+
+}
+.profileOptions li{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profileOptions.visible {
+    opacity: 1;
+    width: 100%;
+    border-radius: 10px;
+    font-weight: bold;
+    color: white;
+    background-color:#13122b;
+}
+
+.profileOptions.hidden {
+    opacity: 0;
+    pointer-events: none;
+cursor: default;
+}
+
+
+@media (max-width:999px) {
+     
+    .layoutProfile p {
+        display:none;
+    }
+    
+}
+
 @media (min-width:999px) {
+   
     .burgerMenu{
         display: none;
     }
@@ -52,11 +140,12 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    position: relative;
     height: 100%;
     justify-content: space-around;
 }
 .layoutProfile p {
-    font-size: 20px;
+    font-size: 16px;
     color: whitesmoke;
 }
 

@@ -1,64 +1,103 @@
 import React, { useEffect, useRef, useState } from "react";
-import './Layout.css'
-import Sidebar from './components/Sidebar.jsx'
-import { Outlet } from "react-router-dom";
+import './Layout.css';
+import Sidebar from './components/Sidebar.jsx';
+import { Outlet, useNavigate } from "react-router-dom";
 import { IconButton } from "@mui/material";
-import { AccountCircle, MenuOutlined } from "@mui/icons-material";
+import { AccountCircle, Logout, MenuOutlined } from "@mui/icons-material";
+import Loading from "./components/Loading.jsx";
+import { useCookies } from "react-cookie";
 
-function Layout({title,userDetails}){
-    const[isOpen,setIsOpen] = useState(false)
-   
-    const handleBurgerClick = ()=>{
-        
-     setIsOpen(true)
-     console.log(isOpen)
-    }
+function Layout({ title, userDetails, loading, setLoading }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+    const [cookies, setCookie, removeCookie] = useCookies(['auth']);
     const sidebarRef = useRef();
-    useEffect(()=>{
-        const handler = (e)=>{
-            if(!sidebarRef?.current?.contains(e.target)){
-                setIsOpen(false)
+    const navigate = useNavigate();
+    const profileIconRef = useRef();
+
+    const handleBurgerClick = () => {
+        setIsOpen(true);
+    };
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (!sidebarRef?.current?.contains(e.target)) {
+                setIsOpen(false);
             }
-        }
-        document.addEventListener("mousedown",handler)
-    })
-    return(
+            if (!profileIconRef?.current?.contains(e.target)) {
+                setIsProfileMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handler);
+        return () => {
+            document.removeEventListener("mousedown", handler);
+        };
+    }, []);
+
+    const deleteCookie = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                removeCookie('auth', { path: '/' });
+                removeCookie('user', { path: '/' });
+                resolve(); // Resolve the promise after removing the cookies
+            } catch (error) {
+                reject(error); // Reject the promise in case of an error
+            }
+        });
+    };
+
+    const handleLogout = () => {
+        setLoading(true);
+
+        const navigateLogin = () => {
+            deleteCookie();
+            navigate('/login');
+        };
+        setTimeout(navigateLogin, 1000);
+    };
+
+    return (
         <div className="layoutContainer">
-            <div ref={sidebarRef} className={isOpen?"layoutSidebarOpen":"layoutSidebar"}>
-            <Sidebar/>
+            <div ref={sidebarRef} className={isOpen ? "layoutSidebarOpen" : "layoutSidebar"}>
+                <Sidebar setLoading={setLoading} />
             </div>
-        <div className="layoutContent">
-            <div className="layoutHeader">
-                <div onClick={handleBurgerClick}  className="burgerMenu">
-                <MenuOutlined />
+            <div className="layoutContent">
+                <div className="layoutHeader">
+                    <div onClick={handleBurgerClick} className="burgerMenu">
+                        <MenuOutlined />
+                    </div>
+                    <h2>{title}</h2>
+                    <div className="layoutProfile">
+                        <div>
+                            <IconButton disableRipple={true}  className="icon">
+                                <div className={`profileMenu ${isProfileMenuOpen ? 'active' : 'inactive'}`}>
+                                    <div className={`profileDetails ${isProfileMenuOpen ? 'active' : 'inactive'}`}>
+                                        <p>{userDetails?.name}</p>
+                                        {userDetails?.picture ? (
+                                            <img onClick={() => { setIsProfileMenuOpen((prev) => (!prev)) }}
+                                                style={{ borderRadius: "100px", height: "50px" }}
+                                                src={userDetails?.picture}
+                                                alt="Profile"
+                                            />
+                                        ) : (
+                                            <AccountCircle sx={{ fontSize: "50px" }} />
+                                        )}
+                                    </div>
+                                    <ul className={`profileOptions ${isProfileMenuOpen ? 'visible' : 'hidden'}`} ref={profileIconRef}>
+                                        <li onClick={handleLogout}>Log Out <Logout /></li>
+                                    </ul>
+                                </div>
+                            </IconButton>
+                        </div>
+                    </div>
                 </div>
-              
-              <h2>{title}</h2>
-              <div className="layoutProfile">
-
-                <p>{userDetails?.name}</p>
-                {}
-                <div >
-<IconButton className="icon">
-    {
-        userDetails?.picture?
-        <img style={{borderRadius:"100px",height:"50px"}} src={userDetails?.picture}></img>:<AccountCircle sx={{fontSize:"50px"}} />
-    }
-
-</IconButton>
-              
-
+                <div>
+                    {loading && <Loading />}
+                    <Outlet />
                 </div>
-          
-              </div>
-              
-            </div>
-            <div>
-            <Outlet/>
             </div>
         </div>
-        </div>
-       
-    )
+    );
 }
-export default  Layout;
+
+export default Layout;

@@ -7,6 +7,9 @@ export default function MultiSelect(props) {
   return (
     <Autocomplete
       multiple
+      sx={{
+        backgroundColor:"white"
+      }}
       options={props.options?props.options:[]}
       value={props.value}
       getOptionLabel={(option) => (option.label)}

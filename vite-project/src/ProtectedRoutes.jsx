@@ -1,15 +1,14 @@
 import apiHost from '../config/config';
 import axios from 'axios';
 import { useCookies } from 'react-cookie';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
-const ProtectedRoutes = ({ authorizedRole ,children}) => {
+const ProtectedRoutes = ({ authorizedRole, children,setLoading }) => {
     const [cookies] = useCookies(['auth']);
-    const [role, setRole] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [role, setRole] = useState(null);
     const location = useLocation();
-
+    const navigate = useNavigate();
     useEffect(() => {
         const fetchRole = async () => {
             try {
@@ -20,29 +19,53 @@ const ProtectedRoutes = ({ authorizedRole ,children}) => {
                         },
                     });
                     setRole(response.data.roles);
+                } else {
+                    setRole([]);
                 }
             } catch (error) {
                 console.error('Error fetching role:', error);
+                setRole([]);
             } finally {
-                setIsLoading(false);
+                const handleStopLoading = () => {
+                    if(setLoading){
+                        setLoading(false);
+                    }
+                   
+                };
+                
+                const timeout = setTimeout(handleStopLoading, 2000);
+                
             }
         };
 
         fetchRole();
     }, [cookies.auth]);
 
-    if (isLoading) {
-        return <div>Loading...</div>; // Display a loading message while fetching the role
+
+    if (role!=null && !role?.includes(authorizedRole)) {
+        if(setLoading){
+            setLoading(true)
+        }
+     
+        const navigateOut = ()=>{
+            return (
+                
+                navigate(role?.length > 0 ? "/unauthorized" : "/login", {
+                    replace: true,
+                    state: { from: location },
+                })
+            )
+        
+            
+        }
+        const timeout = setTimeout(navigateOut, 1000);
+      
+    }
+    else{
+        return role!=null?children : null;
     }
 
-    if (role.includes(authorizedRole)) {
-        return children;
-    }
-
-    // Redirect to unauthorized or login based on whether the user has a role or not
-    return role.length > 0
-        ? <Navigate replace to="/unauthorized" />
-        : <Navigate replace to="/login" state={{ from: location }} />;
+    // Render the protected content only when the role is authorized
 };
 
 export default ProtectedRoutes;

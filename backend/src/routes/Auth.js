@@ -8,7 +8,6 @@ router.post('/login',async(req,res)=>{
     const getUserDetailsQuery = `SELECT * FROM master_faculty WHERE email  = ?`;
     try {
         const[results] = await pool.query(getUserDetailsQuery,[email]);
-        console.log(results);
         const token  = jwt.sign({userData:results},'sembit001',{expiresIn:'1h'});
         res.json(token)
     } catch (error) {
@@ -17,7 +16,6 @@ router.post('/login',async(req,res)=>{
 })
 router.get('/role', checkAuth, async (req, res) => {
     const { userId } = req;
-    console.log(userId);
 
     const query = `
     SELECT DISTINCT role
@@ -43,7 +41,6 @@ router.get('/role', checkAuth, async (req, res) => {
 
     try {
         const [results] = await pool.query(query, [userId, userId, userId, userId]);
-        console.log(results);
         // Convert results to list format
         const roles = results.map(row => row.role);
         res.json({ roles });
@@ -57,7 +54,6 @@ router.get('/hodDetails',checkAuth,async(req,res)=>{
         const { userId } = req;
         const hodDetailsQuery = `SELECT * FROM master_hod WHERE faculty=?`
         const [results] = await pool.query(hodDetailsQuery,[userId]);
-        console.log(results);
         res.json(results)
     } catch (error) {
         return res.status(500).json({ error: error.message });

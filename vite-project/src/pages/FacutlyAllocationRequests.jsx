@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+
 import {
   Card,
   CardContent,
@@ -23,7 +24,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Select from 'react-select';
 import { useCookies } from 'react-cookie';
-
+import './FacutlyAllocationRequests.css'
 const FacultyAllocationRequests = (props) => {
   const [requests, setRequests] = useState([]);
   const [selectedHOD, setSelectedHOD] = useState(null);
@@ -38,7 +39,7 @@ const FacultyAllocationRequests = (props) => {
   // State to track individual approvals for each faculty in each course
   const [individualApproval, setIndividualApproval] = useState({}); 
   useEffect(()=>{
-    props.setTitle("Alloc Requests")
+    props.setTitle("Requests")
 },[])
   const fetchRequests = async () => {
     console.log('Fetching faculty allocation requests...');
@@ -130,40 +131,44 @@ const FacultyAllocationRequests = (props) => {
     
   };
 
-  const handleReject = async () => {
-    if (reason.trim() === '') {
-      alert('Please provide a reason for rejection.');
+  const handleGroupReject = async () => {
+    const selectedFaculties = Object.entries(individualApproval).filter(([facultyId, isApproved]) => isApproved);
+  
+    if (selectedFaculties.length === 0) {
+      toast.warn('No faculty selected for group rejection.');
       return;
     }
-
-    if (!selectedRequest) return;
-
-    const { facultyInfo, courseInfo } = selectedRequest;
-
+  
+    if (reason.trim() === '') {
+      toast.error('Please provide a reason for rejection.');
+      return;
+    }
+  console.log(reason)
     try {
-      for (let i = 0; i < facultyInfo.length; i++) {
-        const facultyId = facultyInfo[i].facultyId; // Use facultyId directly
-        const courseId = courseInfo[i].id;
-
+      await Promise.all(selectedFaculties.map(async ([facultyId]) => {
+        const facultyIndex = selectedRequest.facultyInfo.findIndex(f => f.id === facultyId);
+        const courseId = selectedRequest.courseInfo[facultyIndex].id;
+  
         await axios.put(`${apiHost}/api/facultyPaperAllocation/status`, {
           facultyId,
           courseId,
-          status: '-2', // Status for rejection
-          reason, // Include the reason for rejection
-        },{ headers:{
-          Auth: cookies.auth
-       }});
-      }
-      toast.success('Allocations rejected successfully!');
-      setSelectedHOD(null);
+          semCode: selectedRequest.semCode,
+          status: -2, // Status for rejection
+          remark:reason, // Include the reason for rejection
+        }, { headers: { Auth: cookies.auth } });
+  
+        toast.success(`Faculty ${facultyId} rejected successfully!`);
+      }));
+  
+      fetchRequests();
       setReason('');
       setOpenModal(false);
-      setSelectedRequest(null);
     } catch (error) {
-      console.error('Error rejecting allocations:', error);
-      toast.error('Failed to reject allocations. Please try again.');
+      console.error('Error rejecting faculties:', error);
+      toast.error('Failed to reject faculties. Please try again.');
     }
   };
+  
 
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => setOpenModal(false);
@@ -361,20 +366,27 @@ const FacultyAllocationRequests = (props) => {
         </div>
       )}
 
-      <Modal open={openModal} onClose={handleCloseModal}>
-        <Box sx={{ width: 400 }}>
+      <Modal className='rejectModal' open={openModal} onClose={handleCloseModal}>
+        <Box className="rejectModalContent" sx={{ width: 400 }}>
           <Typography variant="h6">Reject Reason</Typography>
           <TextareaAutosize
             aria-label="reason"
-            minRows={3}
+            minRows={8}
             placeholder="Provide a reason for rejection"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             style={{ width: '100%', marginTop: 10, borderRadius: 4, borderColor: '#ccc' }}
           />
-          <Button variant="contained" color="error" onClick={handleReject} style={{ marginTop: 10 }}>
+          <div style={{display:"flex",width:"100%",justifyContent:"center",gap:"30px"}}>
+          <Button variant="contained" color="info" onClick={handleCloseModal} style={{ marginTop: 10 }}>
+            Cancel
+          </Button>
+          <Button variant="contained" color="error" onClick={handleGroupReject} style={{ marginTop: 10 }}>
             Reject
           </Button>
+          </div>
+           
+          
         </Box>
       </Modal>
     </div>

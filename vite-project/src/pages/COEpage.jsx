@@ -107,7 +107,9 @@ const COEpage = (props) => {
         setLoading(true); // Set loading state to true
 
         try {
-            const response = await axios.post(`${apiHost}/api/semcodes`, newSemcode);
+            const response = await axios.post(`${apiHost}/api/semcodes`, newSemcode,{headers:{
+                Auth:cookies.auth
+            }});
             console.log('Submission successful:', response.data);
             toast.success('Submission successful!'); // Success toast
             resetForm();
@@ -140,7 +142,7 @@ const COEpage = (props) => {
 
       </div>
             <ToastContainer /> {/* Toast container */}
-            <div className='formContainer' style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px' }}>
+            <div  className='formContainer' style={{  borderRadius: '8px', padding: '20px' }}>
                 <Box display="flex" flexDirection="row" alignItems="center" flexWrap="wrap">
                     <FormControl sx={{ marginRight: 2, flex: 1 }} required>
                         <InputLabel>Regulation</InputLabel>
@@ -220,7 +222,7 @@ const COEpage = (props) => {
                             backgroundColor: isFormValid ? "#0d0030" : "#ccc",
                             color: isFormValid ? "white" : "#888",
                             '&:hover': {
-                                backgroundColor: isFormValid ? '#0f8000' : "#ccc",
+                                backgroundColor: isFormValid ? 'black' : "#ccc",
                                 boxShadow: 'none',
                             },
                             height: '56px',

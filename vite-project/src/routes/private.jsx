@@ -7,6 +7,12 @@ import COEpage from "../pages/COEpage";
 import ReportDownloadPage from "../pages/ReportDownloadPage"
 export const privateRoutes =(setTitle)=> [
     
+
+    {
+        path:'',
+        element:<Dashboard setTitle={setTitle}/>,
+        authorizedRole:"faculty"
+    },
     {
         path:'dashboard',
         element:<Dashboard setTitle={setTitle}/>,

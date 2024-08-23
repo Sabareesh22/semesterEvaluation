@@ -392,11 +392,11 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
   return (
     <div>
       <TableContainer
-        component={Paper}
+      
         style={{ marginTop: '20px', width: '100%', marginLeft: 'auto', marginRight: 'auto', padding: '10px' }}
       >
         <Table style={{ borderCollapse: 'collapse' }}>
-          <TableHead sx={{ backgroundColor: "#0d0030", color: "white", fontWeight: "bold" }}>
+          <TableHead sx={{ color: "white", fontWeight: "bold" }}>
             <TableRow>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" rowSpan={2} style={{ border: '1px solid black' }}>Course</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center" rowSpan={2} style={{ border: '1px solid black' }}>Paper Count</TableCell>
@@ -827,7 +827,6 @@ const FacultyUploadTable = ({ headers, data, onCancel, onSubmit }) => {
 };
 
 const FacultyAllocation = (props) => {
-  props.setTitle("Faculty Allocation")
   const [semesterCodes, setSemesterCodes] = useState([]);
   const [selectedSemesterCode, setSelectedSemesterCode] = useState(null);
   const [departments, setDepartments] = useState([]);
@@ -843,6 +842,12 @@ const FacultyAllocation = (props) => {
   const [cookies,setCookie] = useCookies(['auth'])
   const [roles,setRoles] =  useState([])
   const [hodDetails,setHodDetails] = useState({})
+
+useEffect(()=>{
+  props.setTitle("Allocation")
+
+},[])
+
   useEffect(() => {
     const fetchSemesterCodes = async () => {
       if(!batch || !year){
@@ -1064,7 +1069,7 @@ useEffect(() => {
       <div style={{padding:"10px"}}>
       </div>
       
-      <div style={{boxShadow:"rgba(0, 0, 0, 0.1) 0px 4px 12px", margin: '20px 20px',backgroundColor:'white',padding:"20px",borderRadius:"10px", display: 'flex',gap:"10px", justifyContent: 'space-between' }}>
+      <div className='selectContainer' style={{ margin: '20px 20px',padding:"20px",borderRadius:"10px", display: 'flex',gap:"10px", justifyContent: 'space-between' }}>
        
          
      
