@@ -15,6 +15,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import axios from 'axios';
 import apiHost from '../../config/config';
 import { ToastContainer, toast } from 'react-toastify'; // Import Toastify
+import NoData from '../components/NoData';
 
 const FacultyChangeRequests = (props) => {
   const [requests, setRequests] = useState([]);
@@ -104,7 +105,7 @@ const FacultyChangeRequests = (props) => {
       </div>
       <ToastContainer /> {/* Add ToastContainer for Toastify notifications */}
       <Grid container spacing={2} direction="column">
-        {!requests?.length>0 && <div style={{width:"100%",display:"flex",marginTop:"15%",justifyContent:"center"}}><p>**** No requests Available ****</p></div>}
+        {!requests?.length>0 && <NoData/>}
         {requests?.map((request) => (
           <Grid item xs={12} key={request.request_id}>
             <Card style={{ width: '100%' }}>

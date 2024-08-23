@@ -25,6 +25,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Select from 'react-select';
 import { useCookies } from 'react-cookie';
 import './FacutlyAllocationRequests.css'
+import NoData from '../components/NoData';
 const FacultyAllocationRequests = (props) => {
   const [requests, setRequests] = useState([]);
   const [selectedHOD, setSelectedHOD] = useState(null);
@@ -60,6 +61,8 @@ const FacultyAllocationRequests = (props) => {
 
   useEffect(() => {
     if (selectedSemesterCode) {
+      setSelectedHOD(null)
+      setSelectedRequest(null)
       fetchRequests();
     }
   }, [selectedSemesterCode]);
@@ -197,7 +200,7 @@ const FacultyAllocationRequests = (props) => {
         />
       </div>
 
-        {!requests?.length>0 && <div style={{width:"100%",display:"flex",marginTop:"15%",justifyContent:"center"}}><p>**** No requests Available ****</p></div>}
+        {!requests?.length>0 && <NoData/>}
 
       <ToastContainer />
       {selectedHOD ? (
@@ -218,7 +221,7 @@ const FacultyAllocationRequests = (props) => {
             </Button>
           </div>
 
-          <TableContainer component={Paper} style={{ marginTop: '20px', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+          <TableContainer style={{ marginTop: '20px', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
   <Table style={{ borderCollapse: 'collapse' }}>
     <TableHead sx={{ backgroundColor: "#0d0030", color: "white" }}>
       <TableRow>

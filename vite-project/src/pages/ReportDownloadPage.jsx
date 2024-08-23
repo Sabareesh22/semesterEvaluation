@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { ToastContainer, toast } from 'react-toastify';
 import apiHost from '../../config/config';
 import { useCookies } from 'react-cookie';
+import NoData from '../components/NoData';
 const ReportDownloadPage = (props) => {
     const [departmentId, setDepartmentId] = useState('');
     const [semcode, setSemcode] = useState('');
@@ -119,6 +120,10 @@ const ReportDownloadPage = (props) => {
                     ))}
                 </Select>
             </div>
+{
+    !data?.length>0 && <NoData/>
+}
+
             {loading ? (
                 <CircularProgress size={24} />
             ) : data.length > 0 && (

@@ -695,7 +695,9 @@ const handleInputChange = (event, courseName, facultyId, facultyName, courseId,t
                 <TableCell colSpan={9} align="center" style={{ border: '1px solid black' }}>
                   <Button
                     variant="contained"
-                    color="secondary"
+                    sx={{
+                      backgroundColor:"rgba(2, 0, 48, 0.868)"
+                    }}
                     onClick={() => handleAllocateAll(currentCourse.courseId, currentCourse.faculties, currentCourse.paperCount,currentCourse.time)}
                   >
                     Allocate

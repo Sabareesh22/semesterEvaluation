@@ -59,7 +59,7 @@ function Layout({ title, userDetails, loading, setLoading }) {
     return (
         <div className="layoutContainer">
             <div ref={sidebarRef} className={isOpen ? "layoutSidebarOpen" : "layoutSidebar"}>
-                <Sidebar setLoading={setLoading} />
+                <Sidebar setIsOpen={setIsOpen} setLoading={setLoading} />
             </div>
             <div className="layoutContent">
                 <div className="layoutHeader">
@@ -72,6 +72,7 @@ function Layout({ title, userDetails, loading, setLoading }) {
                             <IconButton disableRipple={true}  className="icon">
                                 <div className={`profileMenu ${isProfileMenuOpen ? 'active' : 'inactive'}`}>
                                     <div className={`profileDetails ${isProfileMenuOpen ? 'active' : 'inactive'}`}>
+                            
                                         <p>{userDetails?.name}</p>
                                         {userDetails?.picture ? (
                                             <img onClick={() => { setIsProfileMenuOpen((prev) => (!prev)) }}

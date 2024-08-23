@@ -21,6 +21,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import apiHost from '../../config/config';
 import { useCookies } from 'react-cookie';
+import NoData from '../components/NoData';
 const FacultyApprovalPage = (props) => {
   
   const [openModal, setOpenModal] = useState(false);
@@ -180,7 +181,9 @@ const FacultyApprovalPage = (props) => {
 
       <div style={{padding:"10px"}}>
       </div>
-
+      {
+        (!groupedAllocations?.length>0) &&<NoData/>
+      }
       {/* Display grouped allocations */}
       {Object.keys(groupedAllocations).map((semesterCode, index) => (
         <div key={index} style={{ marginTop: '40px' }}>

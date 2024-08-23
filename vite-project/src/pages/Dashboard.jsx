@@ -9,6 +9,7 @@ import axios from 'axios';
 import apiHost from '../../config/config';
 import Select from 'react-select';
 import { useCookies } from 'react-cookie';
+import NoData from '../components/NoData';
 const Dashboard = (props) => {
     const [activeIndex, setActiveIndex] = useState(-1);
   const [selectData, setSelectData] = useState([]);
@@ -398,6 +399,11 @@ const fetchPendingCourseAllocationCount = async () => {
                   />
               </div>
           </div>
+          {!selectedSemesterCode && <NoData/>}
+          {
+            selectedSemesterCode &&
+            <>
+          
           <div className='boardDetailsContainer'>
             <div className='boardDetailsElement' >
            
@@ -504,6 +510,8 @@ const fetchPendingCourseAllocationCount = async () => {
               */}
               </div>
           </div>
+          </>
+}
       </div>
   );
 };

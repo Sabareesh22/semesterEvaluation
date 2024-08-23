@@ -7,7 +7,7 @@ import Logo from '../assets/logo.png';
 import { useCookies } from 'react-cookie';
 import axios from 'axios';
 import apiHost from '../../config/config';
-const Sidebar = ({setLoading}) => {
+const Sidebar = ({setLoading,setIsOpen}) => {
   const [open, setOpen] = useState({ COE: false, HOD: false, Faculty: false });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
@@ -24,6 +24,7 @@ const Sidebar = ({setLoading}) => {
 
   const closeMobileMenu = () => {
     if (isMobileOpen) setIsMobileOpen(false);
+    if(setIsOpen) setIsOpen(false);
   };
 
 
