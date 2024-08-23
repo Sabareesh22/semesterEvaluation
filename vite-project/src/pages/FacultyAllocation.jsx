@@ -25,6 +25,7 @@ import Pagination from '@mui/material/Pagination';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useCookies } from 'react-cookie';
+import NoData from '../components/NoData';
 const FacultyAllocationTable = ({ departmentId,selectedSemesterCode, courses }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [allocations, setAllocations] = useState({});
@@ -1103,6 +1104,7 @@ useEffect(() => {
           />
         </div>
       </div>
+      {(!courses.length>0 && !showUploadContainer) && <NoData/>}
       {courses.length > 0 ? (
         <FacultyAllocationTable
         departmentId={departmentId}
