@@ -11,7 +11,11 @@ import { useEffect } from 'react';
 const Login = ({setLoading})=>{
     const navigate = useNavigate();
     const [cookies, setCookie] = useCookies(['user','auth'])
-
+    useEffect(()=>{
+         if(cookies.auth){
+            navigate('/paperallocation',{replace:true});
+         }
+    },[cookies.auth])
  
     const handleLogin = (response)=>{
         if(setLoading){

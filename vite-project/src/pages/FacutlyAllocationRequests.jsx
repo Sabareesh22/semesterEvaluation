@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Button,
   Grid,
   Table,
   TableBody,
@@ -26,6 +25,7 @@ import Select from 'react-select';
 import { useCookies } from 'react-cookie';
 import './FacutlyAllocationRequests.css'
 import NoData from '../components/NoData';
+import Button from '../components/Button';
 const FacultyAllocationRequests = (props) => {
   const [requests, setRequests] = useState([]);
   const [selectedHOD, setSelectedHOD] = useState(null);
@@ -205,19 +205,19 @@ const FacultyAllocationRequests = (props) => {
       <ToastContainer />
       {selectedHOD ? (
         <div>
-          <Button variant="outlined" color="secondary" onClick={() => setSelectedHOD(null)}>
-            Back to Requests
+          <Button  label={"Back to Requests"} color="primary" onClick={() => setSelectedHOD(null)}>
+            
           </Button>
           <Typography variant="h5" style={{ marginTop: 16 }}>
             Faculty Allocation of {selectedHOD}
           </Typography>
 
           <div style={{ marginTop: '20px', textAlign: 'right' }}>
-            <Button variant="contained" color="success" onClick={handleGroupApprove} style={{ marginRight: '10px' }}>
-              Approve Selected
+            <Button styles={{backgroundColor:"green"}} label={"Approve Selected"} color="success" onClick={handleGroupApprove} style={{ marginRight: '10px' }}>
+              
             </Button>
-            <Button variant="contained" color="error" onClick={handleOpenModal}>
-              Reject
+            <Button styles={{backgroundColor:"red"}}  label={"Reject"} color="error" onClick={handleOpenModal}>
+             
             </Button>
           </div>
 
@@ -342,7 +342,7 @@ const FacultyAllocationRequests = (props) => {
         <div>
 
           <Typography variant="h5" style={{ marginTop: 16 }}>Select a HOD to view requests</Typography>
-          <TableContainer component={Paper} style={{ marginTop: '20px' }}>
+          <TableContainer style={{ marginTop: '20px' }}>
             <Table>
               <TableHead sx={{ backgroundColor: "#0d0030", color: "white" }}>
                 <TableRow>
@@ -357,8 +357,8 @@ const FacultyAllocationRequests = (props) => {
                     <TableCell align="center">{request.hodName}</TableCell>
                     <TableCell align="center">{request.department}</TableCell>
                     <TableCell align="center">
-                      <Button variant="contained" onClick={() => handleViewClick(request)}>
-                        View
+                      <Button label={"View"} onClick={() => handleViewClick(request)}>
+                        
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -381,11 +381,10 @@ const FacultyAllocationRequests = (props) => {
             style={{ width: '100%', marginTop: 10, borderRadius: 4, borderColor: '#ccc' }}
           />
           <div style={{display:"flex",width:"100%",justifyContent:"center",gap:"30px"}}>
-          <Button variant="contained" color="info" onClick={handleCloseModal} style={{ marginTop: 10 }}>
-            Cancel
+          <Button label={"Cancel"} onClick={handleCloseModal} style={{ marginTop: 10 }}>
+
           </Button>
-          <Button variant="contained" color="error" onClick={handleGroupReject} style={{ marginTop: 10 }}>
-            Reject
+          <Button label={"Reject"} color="error" onClick={handleGroupReject} style={{ marginTop: 10 }}>
           </Button>
           </div>
            

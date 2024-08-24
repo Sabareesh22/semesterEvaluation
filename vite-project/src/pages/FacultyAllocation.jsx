@@ -790,7 +790,7 @@ const FacultyUploadTable = ({ headers, data, onCancel, onSubmit }) => {
 
   return (
     <div>
-      <TableContainer component={Paper} style={{ marginTop: '20px', width: '80%', marginLeft: 'auto', marginRight: 'auto' }}>
+      <TableContainer  style={{ marginTop: '20px', width: '80%', marginLeft: 'auto', marginRight: 'auto' }}>
         <Table style={{ borderCollapse: 'collapse' }}>
           <TableHead sx={{ backgroundColor: "#0d0030", color: "white", fontWeight: "bold" }}>
             <TableRow>

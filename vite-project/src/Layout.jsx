@@ -63,26 +63,30 @@ function Layout({ title, userDetails, loading, setLoading }) {
             </div>
             <div className="layoutContent">
                 <div className="layoutHeader">
+                    <div className="burgerAndTitle">
                     <div onClick={handleBurgerClick} className="burgerMenu">
                         <MenuOutlined />
                     </div>
                     <h2>{title}</h2>
+                    </div>
+                    
                     <div className="layoutProfile">
                         <div>
                             <IconButton disableRipple={true}  className="icon">
                                 <div className={`profileMenu ${isProfileMenuOpen ? 'active' : 'inactive'}`}>
                                     <div className={`profileDetails ${isProfileMenuOpen ? 'active' : 'inactive'}`}>
                             
-                                        <p>{userDetails?.name}</p>
+                                        
                                         {userDetails?.picture ? (
                                             <img onClick={() => { setIsProfileMenuOpen((prev) => (!prev)) }}
-                                                style={{ borderRadius: "100px", height: "50px" }}
+                                                style={{ borderRadius: "100px", height: "2.25rem" }}
                                                 src={userDetails?.picture}
                                                 alt="Profile"
                                             />
                                         ) : (
                                             <AccountCircle sx={{ fontSize: "50px" }} />
                                         )}
+                                        <p>{userDetails?.name}</p>
                                     </div>
                                     <ul className={`profileOptions ${isProfileMenuOpen ? 'visible' : 'hidden'}`} ref={profileIconRef}>
                                         <li onClick={handleLogout}>Log Out <Logout /></li>

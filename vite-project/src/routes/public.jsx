@@ -6,7 +6,7 @@ import UnAuthorized from "../pages/UnAuthorized";
 export const publicRoutes =(setLoading)=> [
     {
         path:'/login',
-        element:<Login setLoading={setLoading} />
+        element:<Login setLoading={setLoading} />,
     },
 
 ]
