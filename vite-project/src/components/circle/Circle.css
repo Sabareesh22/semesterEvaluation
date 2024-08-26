@@ -1,0 +1,16 @@
+.circle-icon {
+    width: 30px;  /* Adjust the size as needed */
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px; /* Adjust the font size as needed */
+    color: white;    /* Text color */
+    text-align: center;
+}
+
+.circle-text {
+    margin: 0;
+}

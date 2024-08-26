@@ -1,0 +1,37 @@
+.rejectModal{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.rejectModalContent{
+    display: flex;
+    flex-direction: column;
+    gap:20px;
+    background-color: white;
+    padding: 40px;
+    border-radius: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.requestContainer{
+   padding: 30px;
+   width: 100%;
+   gap: 10px;
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+}
+.requestCardsContainer{
+    display: grid;
+    grid-template-columns: 20% 20% 20% 20%  20%;
+    gap: 20px;
+ 
+}
+
+.requestCardContianer{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+}

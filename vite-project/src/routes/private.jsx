@@ -1,10 +1,11 @@
-import FacultyAllocation from "../pages/FacultyAllocation";
-import FacultyAllocationRequests from "../pages/FacutlyAllocationRequests";
-import FacultyApprovalPage from "../pages/FacultyApprovalPage";
-import FacultyChangeRequests from "../pages/FacultyChangeRequests";
-import Dashboard from "../pages/Dashboard";
-import COEpage from "../pages/COEpage";
-import ReportDownloadPage from "../pages/ReportDownloadPage"
+import FacultyAllocation from "../pages/allocation/FacultyAllocation";
+import FacultyAllocationRequests from "../pages/allocationRequest/FacutlyAllocationRequests";
+import FacultyApprovalPage from "../pages/approval/FacultyApprovalPage";
+import FacultyChangeRequests from "../pages/changeRequest/FacultyChangeRequests";
+import Dashboard from "../pages/dashboard/Dashboard";
+import COEpage from "../pages/coePage/COEpage";
+import ReportDownloadPage from "../pages/report/ReportDownloadPage"
+import FoilCard from "../pages/foilCard/FoilCard";
 export const privateRoutes =(setTitle)=> [
     
 
@@ -26,6 +27,11 @@ export const privateRoutes =(setTitle)=> [
     {
         path:'allocationrequests',
         element:<FacultyAllocationRequests setTitle={setTitle}/>,
+        authorizedRole:"coe"
+    },
+    {
+        path:'foilcardentry',
+        element:<FoilCard setTitle={setTitle}/>,
         authorizedRole:"coe"
     },
     {

@@ -1,0 +1,44 @@
+.foilCardTopSelects{
+    width: 100%;
+    display: flex;
+    justify-content:flex-end;
+    align-items: center;
+    gap: 20px;
+  
+} 
+.foilCardPageContainer{
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 20px;
+    overflow: hidden;
+}
+.foilTableContainer{
+    overflow-y: scroll;
+}
+.foilCardPageContainer th{
+    color: white;
+    padding: 10px;
+    border: solid darkblue 1px;
+}
+.foilCardPageContainer table{
+    
+    border: solid darkblue 1px;
+}
+.foilCardPageContainer tr{
+    border-bottom: solid darkblue 1px;
+    padding: 10px;
+}
+.foilCardPageContainer td{
+    border: solid darkblue 1px;
+    padding: 20px;
+}
+.foilCardPageContainer td tr td{
+    border:none;
+    width: 100%;
+    text-align: center;
+}
+.foilCardPageContainer td tr{
+    display: flex;
+} 

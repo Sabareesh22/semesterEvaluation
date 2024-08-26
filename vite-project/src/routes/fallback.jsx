@@ -1,6 +1,6 @@
 
-import PageNotFound from "../pages/PageNotFound";
-import UnAuthorized from "../pages/UnAuthorized";
+import PageNotFound from "../pages/notFound/PageNotFound";
+import UnAuthorized from "../pages/unAuthorized/UnAuthorized";
 
 export const fallbackRoutes = [
     {
