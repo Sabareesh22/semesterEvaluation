@@ -4,3 +4,6 @@ const foilCardController = require('../controllers/foilCardController')
 
 router.post('/addFoilCard',foilCardController.postFoilCard)
 router.put('/changeFoilCard',foilCardController.updateFoilCard)
+router.get('/foilCardEntryTableData',foilCardController.getApprovedFacultyAllocationData)
+
+module.exports = router

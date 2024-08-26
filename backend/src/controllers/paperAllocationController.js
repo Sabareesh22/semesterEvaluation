@@ -332,3 +332,26 @@ exports.getPaperCount =  async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 }
+
+exports.postFacultyChangeRequests =  async (req, res) => {
+    const { old_faculty,new_faculty, course, semcode,remark } = req.body;
+    // Validate the input
+    if (old_faculty == null||new_faculty==null || course == null || semcode == null ) {
+        return res.status(400).json({ message: 'All fields are required: faculty, course, semcode' });
+    }
+
+    const insertQuery = `
+        INSERT INTO faculty_change_requests (old_faculty,new_faculty, course, semcode,remark) 
+        VALUES (?,?, ?, ?,?)
+    `;
+    
+    try {
+        const values = [old_faculty,new_faculty, course, semcode,remark];
+        const [insertResult] = await db.query(insertQuery, values);
+        
+        res.status(201).json({ message: 'Faculty change request added successfully', requestId: insertResult.insertId });
+    } catch (error) {
+        console.error('Error inserting faculty change request:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+}
