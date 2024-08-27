@@ -10,9 +10,10 @@ import Button from "../../components/button/Button";
 import apiHost from "../../../config/config";
 import Select from "react-select";
 import { useCookies } from "react-cookie";
-import { Box, Modal } from "@mui/material";
+import { Box, Modal, TextareaAutosize, TextField } from "@mui/material";
 import NoData from "../../components/noData/NoData";
 import StyledModal from "../../components/modal/StyledModal";
+import { toast,ToastContainer } from "react-toastify";
 const Dashboard = (props) => {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [selectData, setSelectData] = useState([]);
@@ -42,6 +43,143 @@ const Dashboard = (props) => {
   const [cookies, setCookie] = useCookies(["auth"]);
   const [roles, setRoles] = useState([]);
   const [hodDetails, setHodDetails] = useState({});
+
+  const [facultyOptions,setFacultyOptions] = useState([])
+  const [selectedBcReplacement,setSelectedBcReplacement] = useState(null)
+  const [selectedCeReplacement,setSelectedCeReplacement] = useState([])
+  const [reason,setReason] = useState("");
+  const [selectedCeAddition,setSelectedCeAddition] = useState(null)
+  const fetchFacultyOptions = async (excludeId = []) => { 
+    try {
+        const params = {};
+        
+        if (excludeId.length > 0) {
+            params.excludeId = excludeId; // Pass as an array if there are multiple ids
+        }
+
+        const response = await axios.get(`${apiHost}/api/faculty`, {
+            params,
+            headers: {
+                auth: cookies.auth
+            }
+        });
+
+        const processedFacultyOptions = response.data.map((data) => ({
+            value: data.id,
+            label: data.faculty_info
+        }));
+
+        setFacultyOptions(processedFacultyOptions);
+    } catch (error) {
+        toast.error("Couldn't Fetch Options");
+        console.error("Error fetching faculty options:", error);
+    }
+};
+
+const updateBoardChiefExaminer = async(mapping_id,faculty_id)=>{
+  console.log(faculty_id)
+  if(!mapping_id || !faculty_id){
+    return toast.error("Couldn't Change CE")
+  }
+  
+  else{
+    try {
+      await axios.put(`${apiHost}/api/board-chief-examiner`,{
+        id:mapping_id,
+        faculty:faculty_id
+      },{
+        headers:{
+          auth:cookies.auth
+        }
+      }).then((res)=>{
+        if(res.status ===200){
+          toast.success(res.data.message)
+          fetchBoardChiefExaminer()
+        }
+        else{
+          toast.error(res.data.error || "Unable to Change CE")
+        }
+      })
+    } catch (error) {
+      return toast.error("Unable to Update CE")
+    }
+  }
+}
+
+const sendCeAddRequest = async(mapping_id,old_chief_examiner,new_chief_examiner)=>{
+
+  if(!mapping_id || !old_chief_examiner || !new_chief_examiner){
+     return toast.error("Insuffient Data Cannot Request")
+  }
+  else{
+    
+  }
+}
+
+const addBoardChairman = async(mapping_id,new_board_chairman)=>{
+    if(!mapping_id,!new_board_chairman){
+      return toast.error("Insufficient Data Cannot Change");
+    }
+    else{
+      try {
+         await axios.put(`${apiHost}/api/board-chairman`,{
+          id:mapping_id,
+          chairman : new_board_chairman
+         },{
+          headers:{
+            auth:cookies.auth
+          }
+         }).then((res)=>{
+          if(res.status === 200){
+            toast.success(res.data.message)
+            fetchBoardChairman()
+            setBcModalOpen(false)
+          }
+          else{
+            toast.error(res.data.message || "Unable to Update BC")
+          }
+         })
+      } catch (error) {
+          toast.error(error)
+      }
+    }
+}
+
+useEffect(()=>{
+   console.log(facultyOptions)
+},[facultyOptions])
+
+useEffect(()=>{
+  if(bcModalOpen){
+    fetchFacultyOptions([boardChairman[0].faculty_id]);
+  }
+  else{
+    if(selectedBcReplacement){
+      setSelectedBcReplacement(null)
+    }
+  }
+},[bcModalOpen])
+
+useEffect(()=>{
+  if(ceModalOpen || ceSelectionOpen){
+    console.log([...chiefExaminers.map((data)=>(data.faculty_id)),boardChairman[0].faculty_id])
+    fetchFacultyOptions([...chiefExaminers.map((data)=>(data.faculty_id)),boardChairman[0].faculty_id]);
+  }
+  else{
+    if(selectedCeReplacement){
+      setSelectedCeReplacement([])
+    }
+    if(selectedCeAddition){
+      setSelectedCeAddition(null)
+    }
+  }
+},[ceModalOpen,ceSelectionOpen])
+
+
+useEffect(()=>{
+  console.log(chiefExaminers)
+},[chiefExaminers])
+
   useEffect(() => {
     props.setTitle("Dashboard");
   }, []);
@@ -100,26 +238,27 @@ const Dashboard = (props) => {
   const onPieEnter = (_, index) => {
     setActiveIndex(index);
   };
+  const fetchBoardChiefExaminer = async () => {
+    try {
+      const response = await axios.get(`${apiHost}/api/boardChiefExaminer`, {
+        params: {
+          departmentId: departmentId.value,
+          semcode: selectedSemesterCode.value, // Replace with your selected department ID
+        },
+        headers: {
+          Auth: cookies.auth,
+        },
+      });
+      setChiefExaminers(response.data);
+    } catch (error) {
+      console.error("Error fetching board chief examiner:", error);
+    }
+  };
   useEffect(() => {
     if (!departmentId || !selectedSemesterCode) {
       return;
     }
-    const fetchBoardChiefExaminer = async () => {
-      try {
-        const response = await axios.get(`${apiHost}/api/boardChiefExaminer`, {
-          params: {
-            departmentId: departmentId.value,
-            semcode: selectedSemesterCode.value, // Replace with your selected department ID
-          },
-          headers: {
-            Auth: cookies.auth,
-          },
-        });
-        setChiefExaminers(response.data);
-      } catch (error) {
-        console.error("Error fetching board chief examiner:", error);
-      }
-    };
+    
 
     fetchBoardChiefExaminer();
   }, [departmentId, selectedSemesterCode, cookies.auth]);
@@ -277,27 +416,30 @@ useEffect(()=>{
     fetchCourseAllocationCount();
     fetchPendingCourseAllocationCount();
   }, [selectedSemesterCode, cookies.auth]);
-  useEffect(() => {
-    const fetchBoardChairman = async () => {
-      if (!selectedSemesterCode || !departmentId) {
-        return;
-      }
-      try {
-        const response = await axios.get(`${apiHost}/api/boardChairman`, {
-          params: {
-            semcode: selectedSemesterCode.value,
-            departmentId: departmentId.value,
-          },
-          headers: {
-            Auth: cookies.auth,
-          },
-        });
-        setBoardChairman(response.data);
-      } catch (error) {
-        console.error("Error fetching board chairman:", error);
-      }
-    };
 
+  const fetchBoardChairman = async () => {
+    if (!selectedSemesterCode || !departmentId) {
+      return;
+    }
+    try {
+      const response = await axios.get(`${apiHost}/api/boardChairman`, {
+        params: {
+          semcode: selectedSemesterCode.value,
+          departmentId: departmentId.value,
+        },
+        headers: {
+          Auth: cookies.auth,
+        },
+      });
+      setBoardChairman(response.data);
+    } catch (error) {
+      console.error("Error fetching board chairman:", error);
+    }
+  };
+
+
+  useEffect(() => {
+    
     fetchBoardChairman();
   }, [selectedSemesterCode, departmentId, cookies.auth]);
 
@@ -393,6 +535,7 @@ useEffect(()=>{
 
   return (
     <div style={{ width: "100%", height: "100%", padding: "10px 15px" }}>
+      <ToastContainer/>
       <div
         className="selectContainer"
         style={{
@@ -633,24 +776,35 @@ useEffect(()=>{
           </div>
 
           <StyledModal
-            open={bcModalOpen}
-            setOpen={setBcModalOpen}
-            title={"Change Board Chairman"}
-            content={
-              <div className="bcAllocateModal">
-                <Select />
-              </div>
-            }
-          />
+  open={bcModalOpen}
+  setOpen={setBcModalOpen}
+  submitAction={() => {
+    addBoardChairman(boardChairman[0].mapping_id,selectedBcReplacement.value);
+  }}
+  title={"Change Board Chairman"}
+  content={
+    <div className="bcAllocateModal">
+      <Select
+        menuPortalTarget={document.body}
+        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+        value={selectedBcReplacement}
+        onChange={setSelectedBcReplacement}
+        options={facultyOptions}
+      />
+     
+    </div>
+  }
+/>
+
 
           <StyledModal 
 
           open={ceModalOpen}
-
+          
           setOpen={setCeModalOpen}
 
           title={
-            "Add/Change C.E"
+            "Modify C.E"
           }
            
           content={
@@ -666,7 +820,16 @@ useEffect(()=>{
                     <li style={{display:"flex",justifyContent:"space-between",alignItems:"center"}} key={examiner.id}>
                     {replace[index]?
                     <div style={{width:"100%"}}>
-                       <Select /> 
+                       <Select 
+                        menuPortalTarget={document.body} 
+                        onChange={(value)=>{setSelectedCeReplacement((prev)=>{
+                          let newPrev = [...prev]
+                          newPrev[index] = value
+                          return(newPrev)
+
+                        })}}
+                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                       value={selectedCeReplacement?selectedCeReplacement[index]:null} options={facultyOptions} /> 
                     </div>
                        :
                         <>{examiner.examiner_name} - {examiner.examiner_faculty_id}</> 
@@ -686,7 +849,9 @@ useEffect(()=>{
                       newPrev[index]=false
                       return(newPrev)
                       })}}/>
-                     <Done/>
+                      <div>
+                      <Done onClick={()=>{updateBoardChiefExaminer(examiner.mapping_id,selectedCeReplacement[index].value)}}/>
+                      </div>
                      </div>
                     }
                    
@@ -697,8 +862,10 @@ useEffect(()=>{
               </div>
             ) : null}
             {
-              ceSelectionOpen && <div>
-                <Select/>
+              ceSelectionOpen && <div style={{display:"flex",flexDirection:"column",gap:"10px"}}> 
+                <Select value={selectedCeAddition} onChange={setSelectedCeAddition} options={facultyOptions}/>
+                <p>Reason</p>
+                <TextareaAutosize value={reason} onChange={(e)=>{setReason(e.value)}} style={{width:"100%"}}  minRows={5}/>
               </div>
             }
            
@@ -708,6 +875,7 @@ useEffect(()=>{
  <Button onClick={
   ()=>{
     setCeSelectionOpen(false);
+    setSelectedCeAddition(null)
   }
 } size={"small"} label={
   <p style={{display:"flex",alignItems:"center"}} > <ArrowBack/> Go Back</p>

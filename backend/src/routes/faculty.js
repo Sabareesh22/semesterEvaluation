@@ -8,4 +8,6 @@ router.post('/allocateFaculty',facultyController.allocateFaculty);
 
 router.get('/check-old-faculty',facultyController.checkOldFaculty );
 
+router.get('/faculty',facultyController.getFaculty); 
+
 module.exports = router;

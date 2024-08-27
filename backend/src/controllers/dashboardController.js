@@ -71,6 +71,7 @@ exports.getCe = async (req, res) => {
         const query = `
             SELECT 
                 bcem.id AS mapping_id,
+                mf.id AS faculty_id,
                 mf.name AS examiner_name,
                 mf.faculty_id AS examiner_faculty_id,
                 md.department AS department_name,
@@ -113,6 +114,7 @@ exports.getBc = async (req, res) => {
         const query = `
             SELECT 
                 bcm.id AS mapping_id,
+                mf.id AS faculty_id,
                 mf.name AS chairman_name,
                 mf.faculty_id AS chairman_faculty_id,
                 md.department AS department_name,

@@ -5,9 +5,8 @@ import clsx from 'clsx';
 import { styled, css } from '@mui/system';
 import { Modal as BaseModal } from '@mui/base/Modal';
 import Button from '../button/Button';
- function StyledModal({open,setOpen,content,onSumbit,title}) {
+ function StyledModal({open,setOpen,content,submitAction,title}) {
   const handleClose = () => setOpen(false);
-
   return (
     <div className='modalContainer'> 
       <Modal
@@ -24,7 +23,7 @@ import Button from '../button/Button';
           </div>
        <div className='buttonsContainer'>
        <Button size={"small"} label={"Cancel"} onClick={handleClose}/>
-       <Button size={"small"} label={"Sumbit"} onClick={onSumbit} />
+       <Button size={"small"} label={"Submit"} onClick={submitAction} />
        </div>
         </ModalContent>
       </Modal>

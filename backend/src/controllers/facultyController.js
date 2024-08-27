@@ -142,3 +142,42 @@ exports.checkOldFaculty = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 }
+
+exports.getFaculty = async (req, res) => {
+    const { excludeId } = req.query;
+    let excludeIds;
+
+    try {
+        // If excludeId is provided, convert it to an array
+        if (excludeId) {
+            excludeIds = Array.isArray(excludeId) ? excludeId : [excludeId];
+        }
+
+        // Main query with subquery to fetch the minimum id per faculty_id
+        let query = `
+            SELECT id, faculty_id, CONCAT(faculty_id, ' - ', name) as faculty_info
+            FROM master_faculty
+            WHERE id IN (
+                SELECT MIN(id)
+                FROM master_faculty
+                GROUP BY faculty_id
+            )
+        `;
+
+        // If excludeIds are provided, add the WHERE clause to exclude them
+        if (excludeIds) {
+            query += ` AND id NOT IN (${excludeIds.map(() => '?').join(', ')})`;
+        }
+
+        // Final query with sorting
+        query += ` ORDER BY faculty_id;`;
+
+        // Execute the query with provided parameters
+        const [rows] = await db.query(query, excludeIds || []);
+        res.json(rows);
+    } catch (error) {
+        console.error('Error fetching faculty data:', error);
+        res.status(500).json({ error: 'An error occurred while fetching faculty data' });
+    }
+};
+
