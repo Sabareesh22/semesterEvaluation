@@ -355,3 +355,48 @@ exports.postFacultyChangeRequests =  async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 }
+
+exports.getTotalPaperCount =  async (req, res) => {
+    const { department, batch, semcode } = req.query;
+  
+    // Validate the required query parameters
+    if (!department || !batch || !semcode) {
+      return res.status(400).json({ error: 'Department, Batch, and Semcode are required' });
+    }
+  
+    try {
+      // Construct the SQL query
+      const query = `
+        SELECT 
+            department, 
+            batch, 
+            semcode, 
+            SUM(paper_count) AS total_papers
+        FROM 
+            board_course_mapping
+        WHERE 
+            department = ? AND 
+            batch = ? AND 
+            semcode = ?
+        GROUP BY 
+            department, 
+            batch, 
+            semcode
+      `;
+  
+      // Execute the query
+      const [results] = await db.query(query, [department, batch, semcode]);
+  
+      // Check if results are found
+      if (results.length === 0) {
+        return res.status(404).json({ message: 'No records found for the provided department, batch, and semcode' });
+      }
+  
+      // Return the results
+      return res.status(200).json(results[0]); // Since GROUP BY returns one row per group
+  
+    } catch (error) {
+      console.error('Error fetching total papers:', error);
+      return res.status(500).json({ error: 'An error occurred while fetching total papers' });
+    }
+  }

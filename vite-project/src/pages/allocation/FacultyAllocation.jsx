@@ -1019,10 +1019,16 @@ const FacultyAllocationTable = ({
               <TableRow>
                 <TableCell
                   colSpan={9}
+                  
                   align="center"
                   style={{ border: "1px solid black" }}
                 >
+                  <div style={{display:
+                    "flex",justifyContent:"center"
+                  }}>
+                 
                   <Button
+                 
                     size={"small"}
                     label={"Allocate"}
                     onClick={() =>
@@ -1034,6 +1040,8 @@ const FacultyAllocationTable = ({
                       )
                     }
                   ></Button>
+                     
+                     </div>
                 </TableCell>
               </TableRow>
             )}

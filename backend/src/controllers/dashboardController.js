@@ -85,7 +85,6 @@ exports.getCe = async (req, res) => {
             WHERE 
                 bcem.board = ? AND
                 bcem.semcode = ?
-                AND bcem.status = '1'
                 AND mf.status = '1'
                 AND md.status = '1';
         `;

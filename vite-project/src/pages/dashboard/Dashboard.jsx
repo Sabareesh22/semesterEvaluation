@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { PieChart, Pie, Tooltip, Cell, Legend } from "recharts";
-import  MuiToolTip from "@mui/material/Tooltip";
+import MuiToolTip from "@mui/material/Tooltip";
 import { PieArcLabel } from "@mui/x-charts";
-import { Add, Approval, ArrowBack, Cancel, ChangeCircle, Circle, Done, Edit, Info, NotificationAdd, Send } from "@mui/icons-material";
+import {
+  Add,
+  Approval,
+  ArrowBack,
+  Cancel,
+  ChangeCircle,
+  Circle,
+  Done,
+  Edit,
+  Info,
+  NotificationAdd,
+  Send,
+} from "@mui/icons-material";
 import { Label } from "recharts";
 import "./Dashboard.css";
 import axios from "axios";
@@ -10,10 +22,11 @@ import Button from "../../components/button/Button";
 import apiHost from "../../../config/config";
 import Select from "react-select";
 import { useCookies } from "react-cookie";
-import { Box, Modal, TextareaAutosize, TextField } from "@mui/material";
+import { Box, Modal, selectClasses, TextareaAutosize, TextField, useRadioGroup } from "@mui/material";
 import NoData from "../../components/noData/NoData";
 import StyledModal from "../../components/modal/StyledModal";
-import { toast,ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import AreYouSure from "../../components/areYouSure/AreYouSure";
 const Dashboard = (props) => {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [selectData, setSelectData] = useState([]);
@@ -21,8 +34,8 @@ const Dashboard = (props) => {
   const [departments, setDepartments] = useState([]);
   const [batchOptions, setBatchOptions] = useState([]);
   const [year, setYear] = useState("");
-  const [replace,setReplace] =  useState(false)
-  const  [ceSelectionOpen,setCeSelectionOpen] =   useState(false);
+  const [replace, setReplace] = useState(false);
+  const [ceSelectionOpen, setCeSelectionOpen] = useState(false);
   const [yearOptions, setYearOptions] = useState([]);
   const [batch, setBatch] = useState("");
   const [bcModalOpen, setBcModalOpen] = useState(false);
@@ -43,142 +56,232 @@ const Dashboard = (props) => {
   const [cookies, setCookie] = useCookies(["auth"]);
   const [roles, setRoles] = useState([]);
   const [hodDetails, setHodDetails] = useState({});
-
-  const [facultyOptions,setFacultyOptions] = useState([])
-  const [selectedBcReplacement,setSelectedBcReplacement] = useState(null)
-  const [selectedCeReplacement,setSelectedCeReplacement] = useState([])
-  const [reason,setReason] = useState("");
-  const [selectedCeAddition,setSelectedCeAddition] = useState(null)
-  const fetchFacultyOptions = async (excludeId = []) => { 
+  const [sure, setSure] = useState(false);
+  const [sureOpen, setSureOpen] = useState(false);
+  const [facultyOptions, setFacultyOptions] = useState([]);
+  const [selectedBcReplacement, setSelectedBcReplacement] = useState(null);
+  const [selectedCeReplacement, setSelectedCeReplacement] = useState([]);
+  const [reason, setReason] = useState("");
+  const [selectedCeAddition, setSelectedCeAddition] = useState(null);
+  const [ceToBeDeleted,setCeToBeDeleted] = useState(null)
+  const [totalPaperCount,setTotalPaperCount] = useState(0);
+  const fetchFacultyOptions = async (excludeId = []) => {
     try {
-        const params = {};
-        
-        if (excludeId.length > 0) {
-            params.excludeId = excludeId; // Pass as an array if there are multiple ids
-        }
+      const params = {};
 
-        const response = await axios.get(`${apiHost}/api/faculty`, {
-            params,
-            headers: {
-                auth: cookies.auth
-            }
-        });
+      if (excludeId.length > 0) {
+        params.excludeId = excludeId; // Pass as an array if there are multiple ids
+      }
 
-        const processedFacultyOptions = response.data.map((data) => ({
-            value: data.id,
-            label: data.faculty_info
-        }));
+      const response = await axios.get(`${apiHost}/api/faculty`, {
+        params,
+        headers: {
+          auth: cookies.auth,
+        },
+      });
 
-        setFacultyOptions(processedFacultyOptions);
+      const processedFacultyOptions = response.data.map((data) => ({
+        value: data.id,
+        label: data.faculty_info,
+      }));
+
+      setFacultyOptions(processedFacultyOptions);
     } catch (error) {
-        toast.error("Couldn't Fetch Options");
-        console.error("Error fetching faculty options:", error);
+      toast.error("Couldn't Fetch Options");
+      console.error("Error fetching faculty options:", error);
     }
-};
+  };
 
-const updateBoardChiefExaminer = async(mapping_id,faculty_id)=>{
-  console.log(faculty_id)
-  if(!mapping_id || !faculty_id){
-    return toast.error("Couldn't Change CE")
-  }
-  
-  else{
-    try {
-      await axios.put(`${apiHost}/api/board-chief-examiner`,{
-        id:mapping_id,
-        faculty:faculty_id
-      },{
-        headers:{
+  useEffect(() => {
+    console.log(reason);
+  }, [reason]);
+
+
+  const getTotalPaperCount = async(department,semcode,batch)=>{
+   
+     axios.get(`${apiHost}/api/total-papers`,{
+        params:{
+          department,
+          batch,
+          semcode
+        },headers:{
           auth:cookies.auth
         }
-      }).then((res)=>{
-        if(res.status ===200){
-          toast.success(res.data.message)
-          fetchBoardChiefExaminer()
-        }
-        else{
-          toast.error(res.data.error || "Unable to Change CE")
-        }
-      })
-    } catch (error) {
-      return toast.error("Unable to Update CE")
-    }
+       }).then((res)=>{
+          console.log("Total Paper Count is : ",res.data)
+          setTotalPaperCount(res.data?.total_papers)
+       })
   }
-}
 
-const sendCeAddRequest = async(mapping_id,old_chief_examiner,new_chief_examiner)=>{
-
-  if(!mapping_id || !old_chief_examiner || !new_chief_examiner){
-     return toast.error("Insuffient Data Cannot Request")
+ useEffect(()=>{
+ 
+  if(batch && selectedSemesterCode && departmentId){
+    getTotalPaperCount(departmentId?.value,selectedSemesterCode?.value,batch?.value)
   }
-  else{
-    
-  }
-}
 
-const addBoardChairman = async(mapping_id,new_board_chairman)=>{
-    if(!mapping_id,!new_board_chairman){
-      return toast.error("Insufficient Data Cannot Change");
-    }
-    else{
+ },[departmentId,selectedSemesterCode,batch])
+
+
+ useEffect(()=>{
+
+   console.log("Chief Examiners : ",chiefExaminers)
+
+ },[chiefExaminers])
+
+
+
+useEffect(()=>{
+  console.log(totalPaperCount)
+  if(totalPaperCount>0){
+    setChiefExaminers(Array(Math.ceil(totalPaperCount/251)).fill({}))
+  }
+},[totalPaperCount])
+
+  const updateBoardChiefExaminer = async (mapping_id, faculty_id) => {
+    console.log(faculty_id);
+    if (!mapping_id || !faculty_id) {
+      return toast.error("Couldn't Change CE");
+    } else {
       try {
-         await axios.put(`${apiHost}/api/board-chairman`,{
-          id:mapping_id,
-          chairman : new_board_chairman
-         },{
-          headers:{
-            auth:cookies.auth
-          }
-         }).then((res)=>{
-          if(res.status === 200){
-            toast.success(res.data.message)
-            fetchBoardChairman()
-            setBcModalOpen(false)
-          }
-          else{
-            toast.error(res.data.message || "Unable to Update BC")
-          }
-         })
+        await axios
+          .put(
+            `${apiHost}/api/board-chief-examiner`,
+            {
+              id: mapping_id,
+              faculty: faculty_id,
+            },
+            {
+              headers: {
+                auth: cookies.auth,
+              },
+            }
+          )
+          .then((res) => {
+            if (res.status === 200) {
+              toast.success(res.data.message);
+              fetchBoardChiefExaminer();
+            } else {
+              toast.error(res.data.error || "Unable to Change CE");
+            }
+          });
       } catch (error) {
-          toast.error(error)
+        return toast.error("Unable to Update CE");
       }
     }
-}
+  };
 
-useEffect(()=>{
-   console.log(facultyOptions)
-},[facultyOptions])
+  useEffect(() => {
+    console.log(departmentId);
+  }, [departmentId]);
 
-useEffect(()=>{
-  if(bcModalOpen){
-    fetchFacultyOptions([boardChairman[0].faculty_id]);
-  }
-  else{
-    if(selectedBcReplacement){
-      setSelectedBcReplacement(null)
+  const sendCeAddRequest = async (chief_examiner) => {
+    if (!chief_examiner || !reason) {
+      console.log(chief_examiner, reason);
+      return toast.error("Insuffient Data");
+    } else if (reason.trim() === "") {
+      return toast.error("Please provide a reason");
+    } else {
+      try {
+        await axios
+          .post(
+            `${apiHost}/api/board-chief-examiner-add-request`,
+            {
+              chief_examiner,
+              board: departmentId.value,
+              semcode: selectedSemesterCode.value,
+              reason: reason,
+            },
+            {
+              headers: {
+                auth: cookies.auth,
+              },
+            }
+          )
+          .then((res) => {
+            console.log(res);
+            if (res.status === 201) {
+              fetchBoardChiefExaminer();
+              toast.success(res.data.message);
+            } else {
+              toast.error(res.data.message);
+            }
+          });
+      } catch (error) {
+        toast.error(error);
+      }
     }
-  }
-},[bcModalOpen])
+  };
 
-useEffect(()=>{
-  if(ceModalOpen || ceSelectionOpen){
-    console.log([...chiefExaminers.map((data)=>(data.faculty_id)),boardChairman[0].faculty_id])
-    fetchFacultyOptions([...chiefExaminers.map((data)=>(data.faculty_id)),boardChairman[0].faculty_id]);
-  }
-  else{
-    if(selectedCeReplacement){
-      setSelectedCeReplacement([])
+  const addBoardChairman = async (mapping_id, new_board_chairman) => {
+    if ((!mapping_id, !new_board_chairman)) {
+      return toast.error("Insufficient Data Cannot Change");
+    } else {
+      try {
+        await axios
+          .put(
+            `${apiHost}/api/board-chairman`,
+            {
+              id: mapping_id,
+              chairman: new_board_chairman,
+            },
+            {
+              headers: {
+                auth: cookies.auth,
+              },
+            }
+          )
+          .then((res) => {
+            if (res.status === 200) {
+              toast.success(res.data.message);
+              fetchBoardChairman();
+              setBcModalOpen(false);
+            } else {
+              toast.error(res.data.message || "Unable to Update BC");
+            }
+          });
+      } catch (error) {
+        toast.error(error);
+      }
     }
-    if(selectedCeAddition){
-      setSelectedCeAddition(null)
+  };
+
+  useEffect(() => {
+    console.log(facultyOptions);
+  }, [facultyOptions]);
+
+  useEffect(() => {
+    if (bcModalOpen) {
+      fetchFacultyOptions([boardChairman[0].faculty_id]);
+    } else {
+      if (selectedBcReplacement) {
+        setSelectedBcReplacement(null);
+      }
     }
-  }
-},[ceModalOpen,ceSelectionOpen])
+  }, [bcModalOpen]);
 
+  useEffect(() => {
+    if (ceModalOpen || ceSelectionOpen) {
+      console.log([
+        ...chiefExaminers.map((data) => data.faculty_id),
+        boardChairman[0].faculty_id,
+      ]);
+      fetchFacultyOptions([
+        ...chiefExaminers.map((data) => data.faculty_id),
+        boardChairman[0].faculty_id,
+      ]);
+    } else {
+      if (selectedCeReplacement) {
+        setSelectedCeReplacement([]);
+      }
+      if (selectedCeAddition) {
+        setSelectedCeAddition(null);
+      }
+    }
+  }, [ceModalOpen, ceSelectionOpen]);
 
-useEffect(()=>{
-  console.log(chiefExaminers)
-},[chiefExaminers])
+  useEffect(() => {
+    console.log(chiefExaminers);
+  }, [chiefExaminers]);
 
   useEffect(() => {
     props.setTitle("Dashboard");
@@ -249,6 +352,7 @@ useEffect(()=>{
           Auth: cookies.auth,
         },
       });
+      console.log(response.data);
       setChiefExaminers(response.data);
     } catch (error) {
       console.error("Error fetching board chief examiner:", error);
@@ -258,15 +362,14 @@ useEffect(()=>{
     if (!departmentId || !selectedSemesterCode) {
       return;
     }
-    
 
     fetchBoardChiefExaminer();
   }, [departmentId, selectedSemesterCode, cookies.auth]);
 
-useEffect(()=>{
-    const newReplace = chiefExaminers.map(()=>(false))
-    setReplace(newReplace)
-},[chiefExaminers])
+  useEffect(() => {
+    const newReplace = chiefExaminers.map(() => false);
+    setReplace(newReplace);
+  }, [chiefExaminers]);
 
   useEffect(() => {
     const fetchPendingAllocations = async () => {
@@ -437,9 +540,7 @@ useEffect(()=>{
     }
   };
 
-
   useEffect(() => {
-    
     fetchBoardChairman();
   }, [selectedSemesterCode, departmentId, cookies.auth]);
 
@@ -533,9 +634,49 @@ useEffect(()=>{
     fetchDepartments();
   }, [cookies.auth]);
 
+
+useEffect(()=>{
+  console.log("triggered")
+   if(sure){
+    
+    handleRemoveCe(ceToBeDeleted);
+   }
+},[sure])
+
+const handleRemoveCe = async(mapping_id)=>{
+
+  if(sure && mapping_id){
+      await axios.delete(`${apiHost}/api/board-chief-examiner`,{
+       params:{
+id:mapping_id
+       } ,
+       headers:{
+        auth:cookies.auth
+       }
+      }).then((res)=>{
+        if(res.status === 200){
+          toast.success(res.data.message)
+          setSureOpen(false);
+          setSure(false)
+          fetchBoardChiefExaminer();
+        }
+      })
+      setCeToBeDeleted(null);
+  }
+}
+
+
   return (
     <div style={{ width: "100%", height: "100%", padding: "10px 15px" }}>
-      <ToastContainer/>
+      <AreYouSure
+        setSure={()=>{
+          setSure(true);
+        }}
+        open={sureOpen}
+        setOpen={setSureOpen}
+        content={"On deleting a Chief Examiner"}
+      />
+      <ToastContainer />
       <div
         className="selectContainer"
         style={{
@@ -605,8 +746,8 @@ useEffect(()=>{
                       }}
                       className="changeIcon"
                     >
-                       <MuiToolTip title="Replace Board Chairman">
-                      <ChangeCircle />
+                      <MuiToolTip title="Replace Board Chairman">
+                        <ChangeCircle />
                       </MuiToolTip>
                     </div>
                   </li>
@@ -617,17 +758,17 @@ useEffect(()=>{
               )}
             </div>
 
-            {chiefExaminers && chiefExaminers.length > 0 ? (
+            {chiefExaminers  ? (
               <div className="boardDetailsElement">
                 <div className="boardChiefExaminers">
                   <h2>Board Chief Examiners </h2>
                   <MuiToolTip title="Edit Chief Examiners">
-                  <Edit
-                    onClick={() => {
-                      setCeModalOpen(true);
-                    }}
-                    className="editIcon"
-                  />
+                    <Edit
+                      onClick={() => {
+                        setCeModalOpen(true);
+                      }}
+                      className="editIcon"
+                    />
                   </MuiToolTip>
                 </div>
                 <ul>
@@ -683,44 +824,40 @@ useEffect(()=>{
                   <h4 style={{ textAlign: "center" }}>Allocations Report</h4>
                 </div>
               </div>
-             
+
               <div className="piechartContainer">
-               
                 <div>
                   <div className="facultyPie">
-                  <PieChart width={350} height={250}>
-                    
-                    <Pie
-                      activeIndex={activeIndex}
-                      data={data2}
-                      dataKey="students"
-                      fill="green"
-                      onMouseEnter={onPieEnter}
-                      style={{ cursor: "pointer", outline: "none" }} // Ensure no outline on focus
-                    >
-                      {data2.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS2[index % COLORS2.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend
-                      wrapperStyle={{ fontSize: "12px", width: "100%" }}
-                      align="left"
-                    />
-                  </PieChart>
-                  
-                  <MuiToolTip title="Send Notfications to Faculty">
-                
-                  <div className="sendNotifactionsContainer">
-                <Send/>
-                </div>
-                    
-                </MuiToolTip>
+                    <PieChart width={350} height={250}>
+                      <Pie
+                        activeIndex={activeIndex}
+                        data={data2}
+                        dataKey="students"
+                        fill="green"
+                        onMouseEnter={onPieEnter}
+                        style={{ cursor: "pointer", outline: "none" }} // Ensure no outline on focus
+                      >
+                        {data2.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS2[index % COLORS2.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend
+                        wrapperStyle={{ fontSize: "12px", width: "100%" }}
+                        align="left"
+                      />
+                    </PieChart>
+
+                    <MuiToolTip title="Send Notfications to Faculty">
+                      <div className="sendNotifactionsContainer">
+                        <Send />
+                      </div>
+                    </MuiToolTip>
                   </div>
-               
+
                   <h4 style={{ textAlign: "center" }}>
                     Faculty Approvals Report
                   </h4>
@@ -776,136 +913,218 @@ useEffect(()=>{
           </div>
 
           <StyledModal
-  open={bcModalOpen}
-  setOpen={setBcModalOpen}
-  submitAction={() => {
-    addBoardChairman(boardChairman[0].mapping_id,selectedBcReplacement.value);
-  }}
-  title={"Change Board Chairman"}
-  content={
-    <div className="bcAllocateModal">
-      <Select
-        menuPortalTarget={document.body}
-        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-        value={selectedBcReplacement}
-        onChange={setSelectedBcReplacement}
-        options={facultyOptions}
-      />
-     
-    </div>
-  }
-/>
-
-
-          <StyledModal 
-
-          open={ceModalOpen}
-          
-          setOpen={setCeModalOpen}
-
-          title={
-            "Modify C.E"
-          }
-           
-          content={
-            <div style={{display:"flex",flexDirection:'column',justifyContent:"space-around",gap:"10px"}}>
-                 {(chiefExaminers && chiefExaminers.length > 0 && !ceSelectionOpen ) ? (
-              <div className="boardDetailsElement">
-                <div className="boardChiefExaminers">
-                  <h2>Board Chief Examiners </h2>
-                 
-                </div>
-                <ul style={{width:"100%"}}>
-                  {chiefExaminers.map((examiner,index) => (
-                    <li style={{display:"flex",justifyContent:"space-between",alignItems:"center"}} key={examiner.id}>
-                    {replace[index]?
-                    <div style={{width:"100%"}}>
-                       <Select 
-                        menuPortalTarget={document.body} 
-                        onChange={(value)=>{setSelectedCeReplacement((prev)=>{
-                          let newPrev = [...prev]
-                          newPrev[index] = value
-                          return(newPrev)
-
-                        })}}
-                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                       value={selectedCeReplacement?selectedCeReplacement[index]:null} options={facultyOptions} /> 
-                    </div>
-                       :
-                        <>{examiner.examiner_name} - {examiner.examiner_faculty_id}</> 
-                    }  
-                    {
-                      !replace[index]? <div className="changeCeIcons">
-                      <Cancel onClick={{}}/>
-                     <ChangeCircle onClick={()=>{setReplace((prev)=>{
-                      let newPrev = [...prev];
-                      newPrev[index]=true
-                      return(newPrev)
-                      })}}/> 
-                     </div>:
-                     <div className="changeCeIcons">
-                     <Cancel onClick={()=>{setReplace((prev)=>{
-                      let newPrev = [...prev];
-                      newPrev[index]=false
-                      return(newPrev)
-                      })}}/>
-                      <div>
-                      <Done onClick={()=>{updateBoardChiefExaminer(examiner.mapping_id,selectedCeReplacement[index].value)}}/>
-                      </div>
-                     </div>
-                    }
-                   
-                    </li>
-                  ))}
-                </ul>
-                {/* Other dashboard content */}
-              </div>
-            ) : null}
-            {
-              ceSelectionOpen && <div style={{display:"flex",flexDirection:"column",gap:"10px"}}> 
-                <Select value={selectedCeAddition} onChange={setSelectedCeAddition} options={facultyOptions}/>
-                <p>Reason</p>
-                <TextareaAutosize value={reason} onChange={(e)=>{setReason(e.value)}} style={{width:"100%"}}  minRows={5}/>
+            open={bcModalOpen}
+            setOpen={setBcModalOpen}
+            submitAction={() => {
+              addBoardChairman(
+                boardChairman[0].mapping_id,
+                selectedBcReplacement.value
+              );
+            }}
+            title={"Change Board Chairman"}
+            content={
+              <div className="bcAllocateModal">
+                <Select
+                  menuPortalTarget={document.body}
+                  styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+                  value={selectedBcReplacement}
+                  onChange={setSelectedBcReplacement}
+                  options={facultyOptions}
+                />
               </div>
             }
-           
-              <div style={{display:"flex",flexDirection:"column",justifyContent:"space-around",gap:"10px"}}>
-                <div >
-                  { ceSelectionOpen ?
- <Button onClick={
-  ()=>{
-    setCeSelectionOpen(false);
-    setSelectedCeAddition(null)
-  }
-} size={"small"} label={
-  <p style={{display:"flex",alignItems:"center"}} > <ArrowBack/> Go Back</p>
-}>
+          />
 
-</Button> :  <Button onClick={
-                  ()=>{
-                    setCeSelectionOpen(true);
-                  }
-                } size={"small"} label={
-                  <p style={{display:"flex",alignItems:"center"}} > <Add/> Add C.E</p>
-                }>
-               
-                </Button>
-                  }
-               
-              
-                    
+          <StyledModal
+            submitAction={() => {
+              sendCeAddRequest(selectedCeAddition.value);
+            }}
+            open={ceModalOpen}
+            setOpen={setCeModalOpen}
+            title={"Modify C.E"}
+            content={
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-around",
+                  gap: "10px",
+                }}
+              >
+                {chiefExaminers &&
+                chiefExaminers.length > 0 &&
+                !ceSelectionOpen ? (
+                  <div className="boardDetailsElement">
+                    <div className="boardChiefExaminers">
+                      <h2>Board Chief Examiners </h2>
+                    </div>
+                    <ul style={{ width: "100%" }}>
+                      {chiefExaminers.map((examiner, index) => (
+                        <li
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                          key={examiner.id}
+                        >
+                          {replace[index] ? (
+                            <div style={{ width: "100%" }}>
+                              <Select
+                                menuPortalTarget={document.body}
+                                onChange={(value) => {
+                                  setSelectedCeReplacement((prev) => {
+                                    let newPrev = [...prev];
+                                    newPrev[index] = value;
+                                    return newPrev;
+                                  });
+                                }}
+                                styles={{
+                                  menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 9999,
+                                  }),
+                                }}
+                                value={
+                                  selectedCeReplacement
+                                    ? selectedCeReplacement[index]
+                                    : null
+                                }
+                                options={facultyOptions}
+                              />
+                            </div>
+                          ) : (
+                            <p
+                              style={{
+                                color:
+                                  examiner.mapping_status === "0" ? "red" : "",
+                              }}
+                            >
+                              {examiner.examiner_name} -{" "}
+                              {examiner.examiner_faculty_id} <br></br>{" "}
+                              {examiner.mapping_status === "0"
+                                ? "COE approval pending"
+                                : ""}{" "}
+                            </p>
+                          )}
+                          {!replace[index] ? (
+                            <div className="changeCeIcons">
+                              <Cancel
+                                onClick={() => {
+                                  setCeToBeDeleted(examiner.mapping_id);
+                                  setSureOpen(true);
+                                }}
+                              />
+                              <ChangeCircle
+                                onClick={() => {
+                                  setReplace((prev) => {
+                                    let newPrev = [...prev];
+                                    newPrev[index] = true;
+                                    return newPrev;
+                                  });
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="changeCeIcons">
+                              <Cancel
+                                onClick={() => {
+                                  setReplace((prev) => {
+                                    let newPrev = [...prev];
+                                    newPrev[index] = false;
+                                    return newPrev;
+                                  });
+                                }}
+                              />
+                              <div>
+                                <Done
+                                  onClick={() => {
+                                    updateBoardChiefExaminer(
+                                      examiner.mapping_id,
+                                      selectedCeReplacement[index].value
+                                    );
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {ceSelectionOpen && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                    }}
+                  >
+                    <Select
+                      value={selectedCeAddition}
+                      onChange={setSelectedCeAddition}
+                      options={facultyOptions}
+                    />
+                    <p>Reason</p>
+                    <TextareaAutosize
+                      value={reason}
+                      onChange={(e) => {
+                        setReason(e.target.value);
+                      }}
+                      style={{ width: "100%" }}
+                      minRows={5}
+                    />
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-around",
+                    gap: "10px",
+                  }}
+                >
+                  <div>
+                    {ceSelectionOpen ? (
+                      <Button
+                        onClick={() => {
+                          setCeSelectionOpen(false);
+                          setSelectedCeAddition(null);
+                        }}
+                        size={"small"}
+                        label={
+                          <p style={{ display: "flex", alignItems: "center" }}>
+                            {" "}
+                            <ArrowBack /> Go Back
+                          </p>
+                        }
+                      ></Button>
+                    ) : (
+                      <Button
+                        onClick={() => {
+                          setCeSelectionOpen(true);
+                        }}
+                        size={"small"}
+                        label={
+                          <p style={{ display: "flex", alignItems: "center" }}>
+                            {" "}
+                            <Add /> Add C.E
+                          </p>
+                        }
+                      ></Button>
+                    )}
+                  </div>
+                  {ceSelectionOpen && (
+                    <p style={{ color: "orangered", display: "flex" }}>
+                      <Info /> adding extra C.Es require COE approval
+                    </p>
+                  )}
                 </div>
-                {
-                  ceSelectionOpen && <p style={{color:"orangered",display:"flex"}}>
-                  <Info/> adding extra C.Es require COE approval
-                  </p>
-                }
-               
               </div>
-            </div>
-          }
-
-           />
+            }
+          />
         </>
       )}
     </div>

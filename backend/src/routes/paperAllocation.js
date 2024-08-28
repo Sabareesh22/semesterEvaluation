@@ -15,6 +15,7 @@ router.get('/allocations/faculty',paperAllocationController.getAllocationBasedOn
 // GET route to retrieve paper count based on various parameters
 router.get('/paperCount',paperAllocationController.getPaperCount);
 
+router.get('/total-papers',paperAllocationController.getTotalPaperCount);
 
 router.post('/facultyChangeRequests',paperAllocationController.postFacultyChangeRequests);
 
