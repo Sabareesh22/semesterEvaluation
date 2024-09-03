@@ -19,7 +19,7 @@ import Button from '../button/Button';
         <ModalContent >
           <h3>{title}</h3>
           <div className='modalContent'>
-          {content}
+          {open && content}
           </div>
        <div className='buttonsContainer'>
        <Button size={"small"} label={"Cancel"} onClick={handleClose}/>

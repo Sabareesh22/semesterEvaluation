@@ -34,3 +34,10 @@ table{
     opacity: 1;
     transition: 0.5s;
 }
+
+.ceSelectContainer{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}

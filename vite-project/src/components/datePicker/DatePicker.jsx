@@ -1,32 +1,15 @@
 import * as React from 'react';
-import { useState } from 'react';
-import dayjs from 'dayjs';
-import { DemoContainer, DemoItem } from '@mui/x-date-pickers/internals/demo';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
-import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
-
-export default function DateRangePickerValue() {
-  const [value, setValue] =useState([
-    dayjs('2022-04-17'),
-    dayjs('2022-04-21'),
-  ]);
-
+export default function DatePickerWithRange({startDate,isDisabled, endDate,label,value}) {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DemoContainer components={['DateRangePicker', 'DateRangePicker']}>
-        <DemoItem label="Uncontrolled picker" component="DateRangePicker">
-          <DateRangePicker
-            defaultValue={[dayjs('2022-04-17'), dayjs('2022-04-21')]}
-          />
-        </DemoItem>
-        <DemoItem label="Controlled picker" component="DateRangePicker">
-          <DateRangePicker
-            value={value}
-            onChange={(newValue) => setValue(newValue)}
-          />
-        </DemoItem>
+      <DemoContainer components={['DatePicker']}>
+        <DatePicker disabled={isDisabled} value={value} minDate={startDate} maxDate={endDate}  label={label}/>
       </DemoContainer>
     </LocalizationProvider>
   );

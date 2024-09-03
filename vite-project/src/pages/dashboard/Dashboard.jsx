@@ -22,7 +22,14 @@ import Button from "../../components/button/Button";
 import apiHost from "../../../config/config";
 import Select from "react-select";
 import { useCookies } from "react-cookie";
-import { Box, Modal, selectClasses, TextareaAutosize, TextField, useRadioGroup } from "@mui/material";
+import {
+  Box,
+  Modal,
+  selectClasses,
+  TextareaAutosize,
+  TextField,
+  useRadioGroup,
+} from "@mui/material";
 import NoData from "../../components/noData/NoData";
 import StyledModal from "../../components/modal/StyledModal";
 import { toast, ToastContainer } from "react-toastify";
@@ -64,8 +71,8 @@ const Dashboard = (props) => {
   const [selectedCeReplacement, setSelectedCeReplacement] = useState([]);
   const [reason, setReason] = useState("");
   const [selectedCeAddition, setSelectedCeAddition] = useState(null);
-  const [ceToBeDeleted,setCeToBeDeleted] = useState(null)
-  const [totalPaperCount,setTotalPaperCount] = useState(0);
+  const [ceToBeDeleted, setCeToBeDeleted] = useState(null);
+  const [totalPaperCount, setTotalPaperCount] = useState(0);
   const fetchFacultyOptions = async (excludeId = []) => {
     try {
       const params = {};
@@ -97,40 +104,37 @@ const Dashboard = (props) => {
     console.log(reason);
   }, [reason]);
 
-
-  const getTotalPaperCount = async(department,semcode,batch)=>{
-   
-     axios.get(`${apiHost}/api/total-papers`,{
-        params:{
+  const getTotalPaperCount = async (department, semcode, batch) => {
+    axios
+      .get(`${apiHost}/api/total-papers`, {
+        params: {
           department,
           batch,
-          semcode
-        },headers:{
-          auth:cookies.auth
-        }
-       }).then((res)=>{
-          console.log("Total Paper Count is : ",res.data)
-          setTotalPaperCount(res.data?.total_papers)
-       })
-  }
+          semcode,
+        },
+        headers: {
+          auth: cookies.auth,
+        },
+      })
+      .then((res) => {
+        console.log("Total Paper Count is : ", res.data);
+        setTotalPaperCount(res.data?.total_papers);
+      });
+  };
 
- useEffect(()=>{
- 
-  if(batch && selectedSemesterCode && departmentId){
-    getTotalPaperCount(departmentId?.value,selectedSemesterCode?.value,batch?.value)
-  }
+  useEffect(() => {
+    if (batch && selectedSemesterCode && departmentId) {
+      getTotalPaperCount(
+        departmentId?.value,
+        selectedSemesterCode?.value,
+        batch?.value
+      );
+    }
+  }, [departmentId, selectedSemesterCode, batch]);
 
- },[departmentId,selectedSemesterCode,batch])
-
-
- useEffect(()=>{
-
-   console.log("Chief Examiners : ",chiefExaminers)
-
- },[chiefExaminers])
-
-
-
+  useEffect(() => {
+    console.log("Chief Examiners : ", chiefExaminers);
+  }, [chiefExaminers]);
 
   const updateBoardChiefExaminer = async (mapping_id, faculty_id) => {
     console.log(faculty_id);
@@ -587,6 +591,8 @@ const Dashboard = (props) => {
     fetchYears();
   }, [cookies.auth]);
 
+
+
   useEffect(() => {
     const fetchBatches = async () => {
       try {
@@ -629,42 +635,40 @@ const Dashboard = (props) => {
     fetchDepartments();
   }, [cookies.auth]);
 
+  useEffect(() => {
+    console.log("triggered");
+    if (sure) {
+      handleRemoveCe(ceToBeDeleted);
+    }
+  }, [sure]);
 
-useEffect(()=>{
-  console.log("triggered")
-   if(sure){
-    
-    handleRemoveCe(ceToBeDeleted);
-   }
-},[sure])
-
-const handleRemoveCe = async(mapping_id)=>{
-
-  if(sure && mapping_id){
-      await axios.delete(`${apiHost}/api/board-chief-examiner`,{
-       params:{
-id:mapping_id
-       } ,
-       headers:{
-        auth:cookies.auth
-       }
-      }).then((res)=>{
-        if(res.status === 200){
-          toast.success(res.data.message)
-          setSureOpen(false);
-          setSure(false)
-          fetchBoardChiefExaminer();
-        }
-      })
+  const handleRemoveCe = async (mapping_id) => {
+    if (sure && mapping_id) {
+      await axios
+        .delete(`${apiHost}/api/board-chief-examiner`, {
+          params: {
+            id: mapping_id,
+          },
+          headers: {
+            auth: cookies.auth,
+          },
+        })
+        .then((res) => {
+          if (res.status === 200) {
+            toast.success(res.data.message);
+            setSureOpen(false);
+            setSure(false);
+            fetchBoardChiefExaminer();
+          }
+        });
       setCeToBeDeleted(null);
-  }
-}
-
+    }
+  };
 
   return (
     <div style={{ width: "100%", height: "100%", padding: "10px 15px" }}>
       <AreYouSure
-        setSure={()=>{
+        setSure={() => {
           setSure(true);
         }}
         open={sureOpen}
@@ -753,22 +757,23 @@ id:mapping_id
               )}
             </div>
 
-            {chiefExaminers  ? (
+            {chiefExaminers ? (
               <div className="boardDetailsElement">
                 <div className="boardChiefExaminers">
                   <h2>Board Chief Examiners </h2>
                   <MuiToolTip title="Edit Chief Examiners">
                     <Edit
                       onClick={() => {
+                     
                         setCeModalOpen(true);
                       }}
                       className="editIcon"
                     />
                   </MuiToolTip>
                 </div>
-              <div className="ChiefExaminerSelection">
-                <ChiefExaminerSelection/>
-              </div>
+                <div className="ChiefExaminerSelection">
+                  <ChiefExaminerSelection departmentId={departmentId.value} semcode={selectedSemesterCode.value} isEditable={false} />
+                </div>
                 {/* Other dashboard content */}
               </div>
             ) : null}
@@ -933,9 +938,9 @@ id:mapping_id
             open={ceModalOpen}
             setOpen={setCeModalOpen}
             title={"Modify C.E"}
-            content={ <ChiefExaminerSelection/> }
-            
-               
+            content={<div>
+              <ChiefExaminerSelection departmentId={departmentId.value} semcode={selectedSemesterCode.value} isEditable={ceModalOpen} />
+            </div>}
           />
         </>
       )}

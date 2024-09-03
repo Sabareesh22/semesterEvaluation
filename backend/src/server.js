@@ -14,6 +14,7 @@ const courseRoutes = require("./routes/courses");
 const changeRequestRoutes = require("./routes/changeRequests");
 const foilCardRoutes = require('./routes/foilCard')
 const boardRoutes = require('./routes/board')
+const courseMappingRoutes = require('./routes/courseMapping');
 // Middleware
 app.use(express.json());
 
@@ -30,7 +31,8 @@ app.use(
   courseRoutes,
   changeRequestRoutes,
   foilCardRoutes,
-  boardRoutes
+  boardRoutes,
+  courseMappingRoutes
 ); // Protected routes
 app.use("/",
    verifyToken,
