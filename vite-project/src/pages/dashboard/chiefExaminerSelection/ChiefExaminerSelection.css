@@ -1,0 +1,36 @@
+th{
+    color: white !important;
+    padding:20px;
+    border: 0.5px solid rgb(255, 255, 255);
+
+}
+
+td{
+    padding:20px;
+    border: 0.5px solid black;
+}
+
+table{
+    border-collapse: collapse;
+}
+ 
+
+.courseDataBc{
+
+     display: flex;
+     flex-wrap: wrap;
+     gap: 10px;
+}
+.addIconButton{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.addIconButtonContainer{
+    opacity: 0;
+}
+.courseDataBc:hover .addIconButtonContainer{
+    opacity: 1;
+    transition: 0.5s;
+}

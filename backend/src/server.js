@@ -32,7 +32,9 @@ app.use(
   foilCardRoutes,
   boardRoutes
 ); // Protected routes
-app.use("/", verifyToken, apiRoutes); // Protected routes for other API functionality
+app.use("/",
+   verifyToken,
+    apiRoutes); // Protected routes for other API functionality
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

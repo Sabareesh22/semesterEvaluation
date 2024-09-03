@@ -27,6 +27,7 @@ import NoData from "../../components/noData/NoData";
 import StyledModal from "../../components/modal/StyledModal";
 import { toast, ToastContainer } from "react-toastify";
 import AreYouSure from "../../components/areYouSure/AreYouSure";
+import ChiefExaminerSelection from "./chiefExaminerSelection/ChiefExaminerSelection";
 const Dashboard = (props) => {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [selectData, setSelectData] = useState([]);
@@ -130,12 +131,6 @@ const Dashboard = (props) => {
 
 
 
-useEffect(()=>{
-  console.log(totalPaperCount)
-  if(totalPaperCount>0){
-    setChiefExaminers(Array(Math.ceil(totalPaperCount/251)).fill({}))
-  }
-},[totalPaperCount])
 
   const updateBoardChiefExaminer = async (mapping_id, faculty_id) => {
     console.log(faculty_id);
@@ -771,13 +766,9 @@ id:mapping_id
                     />
                   </MuiToolTip>
                 </div>
-                <ul>
-                  {chiefExaminers.map((examiner) => (
-                    <li key={examiner.id}>
-                      {examiner.examiner_name} - {examiner.examiner_faculty_id}
-                    </li>
-                  ))}
-                </ul>
+              <div className="ChiefExaminerSelection">
+                <ChiefExaminerSelection/>
+              </div>
                 {/* Other dashboard content */}
               </div>
             ) : null}
@@ -942,188 +933,9 @@ id:mapping_id
             open={ceModalOpen}
             setOpen={setCeModalOpen}
             title={"Modify C.E"}
-            content={
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-around",
-                  gap: "10px",
-                }}
-              >
-                {chiefExaminers &&
-                chiefExaminers.length > 0 &&
-                !ceSelectionOpen ? (
-                  <div className="boardDetailsElement">
-                    <div className="boardChiefExaminers">
-                      <h2>Board Chief Examiners </h2>
-                    </div>
-                    <ul style={{ width: "100%" }}>
-                      {chiefExaminers.map((examiner, index) => (
-                        <li
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                          key={examiner.id}
-                        >
-                          {replace[index] ? (
-                            <div style={{ width: "100%" }}>
-                              <Select
-                                menuPortalTarget={document.body}
-                                onChange={(value) => {
-                                  setSelectedCeReplacement((prev) => {
-                                    let newPrev = [...prev];
-                                    newPrev[index] = value;
-                                    return newPrev;
-                                  });
-                                }}
-                                styles={{
-                                  menuPortal: (base) => ({
-                                    ...base,
-                                    zIndex: 9999,
-                                  }),
-                                }}
-                                value={
-                                  selectedCeReplacement
-                                    ? selectedCeReplacement[index]
-                                    : null
-                                }
-                                options={facultyOptions}
-                              />
-                            </div>
-                          ) : (
-                            <p
-                              style={{
-                                color:
-                                  examiner.mapping_status === "0" ? "red" : "",
-                              }}
-                            >
-                              {examiner.examiner_name} -{" "}
-                              {examiner.examiner_faculty_id} <br></br>{" "}
-                              {examiner.mapping_status === "0"
-                                ? "COE approval pending"
-                                : ""}{" "}
-                            </p>
-                          )}
-                          {!replace[index] ? (
-                            <div className="changeCeIcons">
-                              <Cancel
-                                onClick={() => {
-                                  setCeToBeDeleted(examiner.mapping_id);
-                                  setSureOpen(true);
-                                }}
-                              />
-                              <ChangeCircle
-                                onClick={() => {
-                                  setReplace((prev) => {
-                                    let newPrev = [...prev];
-                                    newPrev[index] = true;
-                                    return newPrev;
-                                  });
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <div className="changeCeIcons">
-                              <Cancel
-                                onClick={() => {
-                                  setReplace((prev) => {
-                                    let newPrev = [...prev];
-                                    newPrev[index] = false;
-                                    return newPrev;
-                                  });
-                                }}
-                              />
-                              <div>
-                                <Done
-                                  onClick={() => {
-                                    updateBoardChiefExaminer(
-                                      examiner.mapping_id,
-                                      selectedCeReplacement[index].value
-                                    );
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-                {ceSelectionOpen && (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "10px",
-                    }}
-                  >
-                    <Select
-                      value={selectedCeAddition}
-                      onChange={setSelectedCeAddition}
-                      options={facultyOptions}
-                    />
-                    <p>Reason</p>
-                    <TextareaAutosize
-                      value={reason}
-                      onChange={(e) => {
-                        setReason(e.target.value);
-                      }}
-                      style={{ width: "100%" }}
-                      minRows={5}
-                    />
-                  </div>
-                )}
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-around",
-                    gap: "10px",
-                  }}
-                >
-                  <div>
-                    {ceSelectionOpen ? (
-                      <Button
-                        onClick={() => {
-                          setCeSelectionOpen(false);
-                          setSelectedCeAddition(null);
-                        }}
-                        size={"small"}
-                        label={
-                          <p style={{ display: "flex", alignItems: "center" }}>
-                            {" "}
-                            <ArrowBack /> Go Back
-                          </p>
-                        }
-                      ></Button>
-                    ) : (
-                      <Button
-                        onClick={() => {
-                          setCeSelectionOpen(true);
-                        }}
-                        size={"small"}
-                        label={
-                          <p style={{ display: "flex", alignItems: "center" }}>
-                            {" "}
-                            <Add /> Add C.E
-                          </p>
-                        }
-                      ></Button>
-                    )}
-                  </div>
-                  {ceSelectionOpen && (
-                    <p style={{ color: "orangered", display: "flex" }}>
-                      <Info /> adding extra C.Es require COE approval
-                    </p>
-                  )}
-                </div>
-              </div>
-            }
+            content={ <ChiefExaminerSelection/> }
+            
+               
           />
         </>
       )}

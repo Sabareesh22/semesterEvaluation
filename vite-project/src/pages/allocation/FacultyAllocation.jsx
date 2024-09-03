@@ -26,6 +26,8 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useCookies } from "react-cookie";
 import NoData from "../../components/noData/NoData";
+import "./FacultyAllocation.css";
+import { Lock } from "@mui/icons-material";
 const FacultyAllocationTable = ({
   departmentId,
   selectedSemesterCode,
@@ -462,245 +464,349 @@ const FacultyAllocationTable = ({
   const currentCourse = courses[currentPage];
 
   return (
-    <div>
-      <TableContainer
-        style={{
-          marginTop: "20px",
-          width: "100%",
-          marginLeft: "auto",
-          marginRight: "auto",
-          padding: "10px",
-        }}
-      >
-        <Table style={{ borderCollapse: "collapse" }}>
-          <TableHead sx={{ color: "white", fontWeight: "bold" }}>
-            <TableRow>
-              <TableCell
-                sx={{ color: "white", fontWeight: "bold" }}
-                align="center"
-                rowSpan={2}
-                style={{ border: "1px solid black" }}
-              >
-                Course
-              </TableCell>
-              <TableCell
-                sx={{ color: "white", fontWeight: "bold" }}
-                align="center"
-                rowSpan={2}
-                style={{ border: "1px solid black" }}
-              >
-                Paper Count
-              </TableCell>
-              <TableCell
-                sx={{ color: "white", fontWeight: "bold" }}
-                align="center"
-                rowSpan={2}
-                style={{ border: "1px solid black" }}
-              >
-                Time
-              </TableCell>
-              <TableCell
-                sx={{ color: "white", fontWeight: "bold" }}
-                align="center"
-                style={{ border: "1px solid black" }}
-              >
-                Faculty
-              </TableCell>
-              <TableCell
-                sx={{ color: "white", fontWeight: "bold" }}
-                align="center"
-                style={{ border: "1px solid black" }}
-              >
-                Allocation
-              </TableCell>
-              <TableCell
-                sx={{ color: "white", fontWeight: "bold" }}
-                align="center"
-                style={{ border: "1px solid black" }}
-              >
-                Time
-              </TableCell>
-              <TableCell
-                sx={{ color: "white", fontWeight: "bold" }}
-                align="center"
-                style={{ border: "1px solid black" }}
-              >
-                BC/CE
-              </TableCell>
-              <TableCell
-                colSpan={2}
-                sx={{ color: "white", fontWeight: "bold" }}
-                align="center"
-                style={{ border: "1px solid black" }}
-              >
-                {" "}
-                Actions
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {courses.slice(currentPage, currentPage + 1).map((course) =>
-              course.faculties.map((faculty, i) => (
-                <TableRow key={`${course.courseId}-${faculty.facultyId}`}>
-                  {i === 0 && (
-                    <>
-                      <TableCell
-                        rowSpan={course.faculties.length}
-                        align="center"
-                        style={{ border: "1px solid black" }}
-                      >
-                        {course.courseName}
-                      </TableCell>
-                      <TableCell
-                        rowSpan={course.faculties.length}
-                        align="center"
-                        style={{ border: "1px solid black" }}
-                      >
-                        {course.paperCount}
-                      </TableCell>
-                      <TableCell
-                        rowSpan={course.faculties.length}
-                        align="center"
-                        style={{ border: "1px solid black" }}
-                      >
-                        {course.time}{" "}
-                        {course.time > 0 && course.time < 1 ? " day" : " days"}
-                      </TableCell>
-                    </>
-                  )}
-                  <TableCell
-                    align="center"
-                    style={{ border: "1px solid black" }}
-                  >
-                    {faculty.facultyName}
-                  </TableCell>
-                  <TableCell
-                    align="center"
-                    style={{ border: "1px solid black" }}
-                  >
-                    <TextField
-                      type="number"
-                      size="small"
-                      disabled={
-                        facultyStatuses[
-                          `${course.courseId}-${faculty.facultyId}`
-                        ] != 0 ||
-                        statuses[`${course.courseId}-${faculty.facultyId}`] !=
-                          -100 ||
-                        faculty.facultyName == "External"
-                      }
-                      variant="outlined"
-                      value={
-                        allocations[course.courseId]?.[faculty.facultyId] || ""
-                      }
-                      onChange={(e) =>
-                        handleInputChange(
-                          e,
-                          course.courseName,
-                          faculty.facultyId,
-                          faculty.facultyName,
-                          course.courseId,
-                          course.time
-                        )
-                      }
-                      placeholder={
-                        paperCounts[
-                          `${`${course.courseId}-${faculty.facultyId}`}`
-                        ] || 0
-                      }
-                    />
-                  </TableCell>
+    <div >
+     
 
-                  <TableCell
-                    align="center"
-                    style={{ border: "1px solid black" }}
-                  >
-                    {allocations[course.courseId]?.[faculty.facultyId]
-                      ? (() => {
-                          const roundedValue = roundToHalfOrCeiling(
-                            allocations[course.courseId][faculty.facultyId] / 50
-                          );
-
-                          return `${roundedValue} ${
-                            roundedValue === 0.5 || roundedValue === 1
-                              ? "day"
-                              : "days"
-                          }`;
-                        })()
-                      : "0 days"}
-                  </TableCell>
-                  <TableCell
-                    width={"100%"}
-                    align="center"
-                    style={{ border: "1px solid black" }}
-                  >
-                    {faculty.facultyName != "External" ? (
-                      <Select
-                        options={bcCe}
-                        value={
-                          selectedBcCe[
-                            `${`${course.courseId}-${faculty.facultyId}`}`
-                          ]
-                        }
-                        onChange={(value) => {
-                          setSelectedBcCe((prev) => {
-                            let newPrev = { ...prev };
-                            newPrev[
-                              `${`${course.courseId}-${faculty.facultyId}`}`
-                            ] = value;
-                            return newPrev;
-                          });
-                        }}
-                        isDisabled={
+      <div>
+        
+        <TableContainer
+         className="allocationTable"
+          style={{
+            marginTop: "20px",
+            width: "100%",
+            marginLeft: "auto",
+            marginRight: "auto",
+            padding: "10px",
+          }}
+        >
+          { courses[currentPage].status === '0' && <div className="lockAllocation">
+        <Button label={<><Lock/> {courses[currentPage].courseCode} Locked Until CE Selection</>}/>
+      </div>}
+          <Table style={{ borderCollapse: "collapse" }}>
+            <TableHead sx={{ color: "white", fontWeight: "bold" }}>
+              <TableRow>
+                <TableCell
+                  sx={{ color: "white", fontWeight: "bold" }}
+                  align="center"
+                  rowSpan={2}
+                  style={{ border: "1px solid black" }}
+                >
+                  Course
+                </TableCell>
+                <TableCell
+                  sx={{ color: "white", fontWeight: "bold" }}
+                  align="center"
+                  rowSpan={2}
+                  style={{ border: "1px solid black" }}
+                >
+                  Paper Count
+                </TableCell>
+                <TableCell
+                  sx={{ color: "white", fontWeight: "bold" }}
+                  align="center"
+                  rowSpan={2}
+                  style={{ border: "1px solid black" }}
+                >
+                  Time
+                </TableCell>
+                <TableCell
+                  sx={{ color: "white", fontWeight: "bold" }}
+                  align="center"
+                  style={{ border: "1px solid black" }}
+                >
+                  Faculty
+                </TableCell>
+                <TableCell
+                  sx={{ color: "white", fontWeight: "bold" }}
+                  align="center"
+                  style={{ border: "1px solid black" }}
+                >
+                  Allocation
+                </TableCell>
+                <TableCell
+                  sx={{ color: "white", fontWeight: "bold" }}
+                  align="center"
+                  style={{ border: "1px solid black" }}
+                >
+                  Time
+                </TableCell>
+                <TableCell
+                  sx={{ color: "white", fontWeight: "bold" }}
+                  align="center"
+                  style={{ border: "1px solid black" }}
+                >
+                  BC/CE
+                </TableCell>
+                <TableCell
+                  colSpan={2}
+                  sx={{ color: "white", fontWeight: "bold" }}
+                  align="center"
+                  style={{ border: "1px solid black" }}
+                >
+                  {" "}
+                  Actions
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {courses.slice(currentPage, currentPage + 1).map((course) =>
+                course.faculties.map((faculty, i) => (
+                  <TableRow key={`${course.courseId}-${faculty.facultyId}`}>
+                    {i === 0 && (
+                      <>
+                        <TableCell
+                          rowSpan={course.faculties.length}
+                          align="center"
+                          style={{ border: "1px solid black" }}
+                        >
+                          {course.courseName}
+                        </TableCell>
+                        <TableCell
+                          rowSpan={course.faculties.length}
+                          align="center"
+                          style={{ border: "1px solid black" }}
+                        >
+                          {course.paperCount}
+                        </TableCell>
+                        <TableCell
+                          rowSpan={course.faculties.length}
+                          align="center"
+                          style={{ border: "1px solid black" }}
+                        >
+                          {course.time}{" "}
+                          {course.time > 0 && course.time < 1
+                            ? " day"
+                            : " days"}
+                        </TableCell>
+                      </>
+                    )}
+                    <TableCell
+                      align="center"
+                      style={{ border: "1px solid black" }}
+                    >
+                      {faculty.facultyName}
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      style={{ border: "1px solid black" }}
+                    >
+                      <TextField
+                        type="number"
+                        size="small"
+                        disabled={
                           facultyStatuses[
                             `${course.courseId}-${faculty.facultyId}`
                           ] != 0 ||
                           statuses[`${course.courseId}-${faculty.facultyId}`] !=
-                            -100
+                            -100 ||
+                          faculty.facultyName == "External"
+                        }
+                        variant="outlined"
+                        value={
+                          allocations[course.courseId]?.[faculty.facultyId] ||
+                          ""
+                        }
+                        onChange={(e) =>
+                          handleInputChange(
+                            e,
+                            course.courseName,
+                            faculty.facultyId,
+                            faculty.facultyName,
+                            course.courseId,
+                            course.time
+                          )
+                        }
+                        placeholder={
+                          paperCounts[
+                            `${`${course.courseId}-${faculty.facultyId}`}`
+                          ] || 0
                         }
                       />
-                    ) : (
-                      <Typography variant="body1" color="red">
-                        External Allocation is Done by COE only
-                      </Typography>
-                    )}
-                  </TableCell>
-                  {facultyStatuses[
-                    `${course.courseId}-${faculty.facultyId}`
-                  ] !== undefined &&
-                  facultyStatuses[`${course.courseId}-${faculty.facultyId}`] !==
-                    null ? (
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      style={{ border: "1px solid black" }}
+                    >
+                      {allocations[course.courseId]?.[faculty.facultyId]
+                        ? (() => {
+                            const roundedValue = roundToHalfOrCeiling(
+                              allocations[course.courseId][faculty.facultyId] /
+                                50
+                            );
+                            return `${roundedValue} ${
+                              roundedValue === 0.5 || roundedValue === 1
+                                ? "day"
+                                : "days"
+                            }`;
+                          })()
+                        : "0 days"}
+                    </TableCell>
+                    <TableCell
+                      width={"100%"}
+                      align="center"
+                      style={{ border: "1px solid black" }}
+                    >
+                      {faculty.facultyName != "External" ? (
+                        <Select
+                          options={bcCe}
+                          value={
+                            selectedBcCe[
+                              `${`${course.courseId}-${faculty.facultyId}`}`
+                            ]
+                          }
+                          onChange={(value) => {
+                            setSelectedBcCe((prev) => {
+                              let newPrev = { ...prev };
+                              newPrev[
+                                `${`${course.courseId}-${faculty.facultyId}`}`
+                              ] = value;
+                              return newPrev;
+                            });
+                          }}
+                          isDisabled={
+                            facultyStatuses[
+                              `${course.courseId}-${faculty.facultyId}`
+                            ] != 0 ||
+                            statuses[
+                              `${course.courseId}-${faculty.facultyId}`
+                            ] != -100
+                          }
+                        />
+                      ) : (
+                        <Typography variant="body1" color="red">
+                          External Allocation is Done by COE only
+                        </Typography>
+                      )}
+                    </TableCell>
+                    {facultyStatuses[
+                      `${course.courseId}-${faculty.facultyId}`
+                    ] !== undefined &&
                     facultyStatuses[
                       `${course.courseId}-${faculty.facultyId}`
-                    ] === 0 ? (
-                      statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                      0 ? (
-                        <TableCell
-                          align="center"
-                          style={{ border: "1px solid black" }}
-                        >
-                          <Typography variant="body1" color="orangered">
-                            Waiting for Faculty Approval
-                          </Typography>
-                        </TableCell>
-                      ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                        1 ? (
-                        <TableCell
-                          align="center"
-                          style={{ border: "1px solid black" }}
-                        >
-                          <Typography variant="body1" color="orangered">
-                            Waiting for COE Approval
-                          </Typography>
-                        </TableCell>
-                      ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                        2 ? (
+                    ] !== null ? (
+                      facultyStatuses[
+                        `${course.courseId}-${faculty.facultyId}`
+                      ] === 0 ? (
+                        statuses[`${course.courseId}-${faculty.facultyId}`] ==
+                        0 ? (
+                          <TableCell
+                            align="center"
+                            style={{ border: "1px solid black" }}
+                          >
+                            <Typography variant="body1" color="orangered">
+                              Waiting for Faculty Approval
+                            </Typography>
+                          </TableCell>
+                        ) : statuses[
+                            `${course.courseId}-${faculty.facultyId}`
+                          ] == 1 ? (
+                          <TableCell
+                            align="center"
+                            style={{ border: "1px solid black" }}
+                          >
+                            <Typography variant="body1" color="orangered">
+                              Waiting for COE Approval
+                            </Typography>
+                          </TableCell>
+                        ) : statuses[
+                            `${course.courseId}-${faculty.facultyId}`
+                          ] == 2 ? (
+                          <TableCell
+                            align="center"
+                            style={{ border: "1px solid black" }}
+                          >
+                            <Typography variant="body1" color="green">
+                              Approved By COE
+                            </Typography>
+                          </TableCell>
+                        ) : statuses[
+                            `${course.courseId}-${faculty.facultyId}`
+                          ] == -1 ? (
+                          <TableCell
+                            align="center"
+                            style={{ border: "1px solid black" }}
+                          >
+                            <Typography variant="body1" color="red">
+                              Rejected By Faculty
+                            </Typography>
+                          </TableCell>
+                        ) : statuses[
+                            `${course.courseId}-${faculty.facultyId}`
+                          ] == -2 ? (
+                          <TableCell
+                            align="center"
+                            style={{ border: "1px solid black" }}
+                          >
+                            <Typography variant="body1" color="red">
+                              Rejected By COE
+                            </Typography>
+                          </TableCell>
+                        ) : statuses[
+                            `${course.courseId}-${faculty.facultyId}`
+                          ] == -3 ? (
+                          <TableCell
+                            align="center"
+                            style={{ border: "1px solid black" }}
+                          >
+                            <Typography variant="body1" color="red">
+                              Rejected By Replaced Faculty
+                            </Typography>
+                          </TableCell>
+                        ) : statuses[
+                            `${course.courseId}-${faculty.facultyId}`
+                          ] == -4 ? (
+                          <TableCell
+                            align="center"
+                            style={{ border: "1px solid black" }}
+                          >
+                            <Typography variant="body1" color="red">
+                              Replace - Rejected By COE
+                            </Typography>
+                          </TableCell>
+                        ) : statuses[
+                            `${course.courseId}-${faculty.facultyId}`
+                          ] == -5 ? (
+                          <TableCell
+                            align="center"
+                            style={{ border: "1px solid black" }}
+                          >
+                            <Typography variant="body1" color="red">
+                              Faculty is Replaced - not active for this course
+                            </Typography>
+                          </TableCell>
+                        ) : null
+                      ) : facultyStatuses[
+                          `${course.courseId}-${faculty.facultyId}`
+                        ] == 3 ? (
                         <TableCell
                           align="center"
                           style={{ border: "1px solid black" }}
                         >
                           <Typography variant="body1" color="green">
-                            Approved By COE
+                            Replace - Approved by COE{" "}
+                            {`${course.courseId}-${faculty.facultyId}`}
+                          </Typography>
+                        </TableCell>
+                      ) : facultyStatuses[
+                          `${course.courseId}-${faculty.facultyId}`
+                        ] == 2 ? (
+                        <TableCell
+                          align="center"
+                          style={{ border: "1px solid black" }}
+                        >
+                          <Typography variant="body1" color="orangered">
+                            Replace - Waiting for COE Approval
+                          </Typography>
+                        </TableCell>
+                      ) : facultyStatuses[
+                          `${course.courseId}-${faculty.facultyId}`
+                        ] == 1 ? (
+                        <TableCell
+                          align="center"
+                          style={{ border: "1px solid black" }}
+                        >
+                          <Typography variant="body1" color="orangered">
+                            Replace - Waiting for Faculty Approval
                           </Typography>
                         </TableCell>
                       ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
@@ -754,38 +860,34 @@ const FacultyAllocationTable = ({
                           </Typography>
                         </TableCell>
                       ) : null
-                    ) : facultyStatuses[
-                        `${course.courseId}-${faculty.facultyId}`
-                      ] == 3 ? (
+                    ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
+                      0 ? (
+                      <TableCell
+                        align="center"
+                        style={{ border: "1px solid black" }}
+                      >
+                        <Typography variant="body1" color="orangered">
+                          Waiting for Faculty Approval
+                        </Typography>
+                      </TableCell>
+                    ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
+                      1 ? (
+                      <TableCell
+                        align="center"
+                        style={{ border: "1px solid black" }}
+                      >
+                        <Typography variant="body1" color="orangered">
+                          Waiting for COE Approval
+                        </Typography>
+                      </TableCell>
+                    ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
+                      2 ? (
                       <TableCell
                         align="center"
                         style={{ border: "1px solid black" }}
                       >
                         <Typography variant="body1" color="green">
-                          Replace - Approved by COE{" "}
-                          {`${course.courseId}-${faculty.facultyId}`}
-                        </Typography>
-                      </TableCell>
-                    ) : facultyStatuses[
-                        `${course.courseId}-${faculty.facultyId}`
-                      ] == 2 ? (
-                      <TableCell
-                        align="center"
-                        style={{ border: "1px solid black" }}
-                      >
-                        <Typography variant="body1" color="orangered">
-                          Replace - Waiting for COE Approval
-                        </Typography>
-                      </TableCell>
-                    ) : facultyStatuses[
-                        `${course.courseId}-${faculty.facultyId}`
-                      ] == 1 ? (
-                      <TableCell
-                        align="center"
-                        style={{ border: "1px solid black" }}
-                      >
-                        <Typography variant="body1" color="orangered">
-                          Replace - Waiting for Faculty Approval
+                          Approved By COE
                         </Typography>
                       </TableCell>
                     ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
@@ -838,127 +940,79 @@ const FacultyAllocationTable = ({
                           Faculty is Replaced - not active for this course
                         </Typography>
                       </TableCell>
-                    ) : null
-                  ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                    0 ? (
+                    ) : null}
                     <TableCell
                       align="center"
                       style={{ border: "1px solid black" }}
                     >
-                      <Typography variant="body1" color="orangered">
-                        Waiting for Faculty Approval
-                      </Typography>
-                    </TableCell>
-                  ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                    1 ? (
-                    <TableCell
-                      align="center"
-                      style={{ border: "1px solid black" }}
-                    >
-                      <Typography variant="body1" color="orangered">
-                        Waiting for COE Approval
-                      </Typography>
-                    </TableCell>
-                  ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                    2 ? (
-                    <TableCell
-                      align="center"
-                      style={{ border: "1px solid black" }}
-                    >
-                      <Typography variant="body1" color="green">
-                        Approved By COE
-                      </Typography>
-                    </TableCell>
-                  ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                    -1 ? (
-                    <TableCell
-                      align="center"
-                      style={{ border: "1px solid black" }}
-                    >
-                      <Typography variant="body1" color="red">
-                        Rejected By Faculty
-                      </Typography>
-                    </TableCell>
-                  ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                    -2 ? (
-                    <TableCell
-                      align="center"
-                      style={{ border: "1px solid black" }}
-                    >
-                      <Typography variant="body1" color="red">
-                        Rejected By COE
-                      </Typography>
-                    </TableCell>
-                  ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                    -3 ? (
-                    <TableCell
-                      align="center"
-                      style={{ border: "1px solid black" }}
-                    >
-                      <Typography variant="body1" color="red">
-                        Rejected By Replaced Faculty
-                      </Typography>
-                    </TableCell>
-                  ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                    -4 ? (
-                    <TableCell
-                      align="center"
-                      style={{ border: "1px solid black" }}
-                    >
-                      <Typography variant="body1" color="red">
-                        Replace - Rejected By COE
-                      </Typography>
-                    </TableCell>
-                  ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                    -5 ? (
-                    <TableCell
-                      align="center"
-                      style={{ border: "1px solid black" }}
-                    >
-                      <Typography variant="body1" color="red">
-                        Faculty is Replaced - not active for this course
-                      </Typography>
-                    </TableCell>
-                  ) : null}
-
-                  <TableCell
-                    align="center"
-                    style={{ border: "1px solid black" }}
-                  >
-                    {facultyStatuses[
-                      `${course.courseId}-${faculty.facultyId}`
-                    ] === 1 && (
-                      <Typography variant="body1" color="red">
-                        Replace request active - Faculty Approval Pending
-                      </Typography>
-                    )}
-                    {facultyStatuses[
-                      `${course.courseId}-${faculty.facultyId}`
-                    ] === 2 && (
-                      <Typography variant="body1" color="red">
-                        Replace request active - initiated COE approval pending
-                      </Typography>
-                    )}
-                    {facultyStatuses[
-                      `${course.courseId}-${faculty.facultyId}`
-                    ] === 0 ? (
-                      // If facultyStatuses is 0, check statuses
-                      statuses[`${course.courseId}-${faculty.facultyId}`] ===
-                      0 ? (
-                        <Typography variant="body1" color="orangered">
-                          Waiting for Faculty Approval
-                        </Typography>
-                      ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                        1 ? (
-                        <Typography variant="body1" color="orangered">
-                          Waiting for COE Approval
-                        </Typography>
-                      ) : statuses[`${course.courseId}-${faculty.facultyId}`] ==
-                        -5 ? (
+                      {facultyStatuses[
+                        `${course.courseId}-${faculty.facultyId}`
+                      ] === 1 && (
                         <Typography variant="body1" color="red">
-                          Replaced
+                          Replace request active - Faculty Approval Pending
                         </Typography>
-                      ) : (
+                      )}
+                      {facultyStatuses[
+                        `${course.courseId}-${faculty.facultyId}`
+                      ] === 2 && (
+                        <Typography variant="body1" color="red">
+                          Replace request active - initiated COE approval
+                          pending
+                        </Typography>
+                      )}
+                      {facultyStatuses[
+                        `${course.courseId}-${faculty.facultyId}`
+                      ] === 0 ? (
+                        // If facultyStatuses is 0, check statuses
+                        statuses[`${course.courseId}-${faculty.facultyId}`] ===
+                        0 ? (
+                          <Typography variant="body1" color="orangered">
+                            Waiting for Faculty Approval
+                          </Typography>
+                        ) : statuses[
+                            `${course.courseId}-${faculty.facultyId}`
+                          ] == 1 ? (
+                          <Typography variant="body1" color="orangered">
+                            Waiting for COE Approval
+                          </Typography>
+                        ) : statuses[
+                            `${course.courseId}-${faculty.facultyId}`
+                          ] == -5 ? (
+                          <Typography variant="body1" color="red">
+                            Replaced
+                          </Typography>
+                        ) : (
+                          <IconButton
+                            onClick={() =>
+                              handleOpenModal(
+                                faculty.facultyId,
+                                course.courseId,
+                                course.faculties.map((fac) => ({
+                                  ...fac,
+                                  notEligible:
+                                    (facultyStatuses[
+                                      `${course.courseId}-${fac.facultyId}`
+                                    ] != 0 ||
+                                      statuses[
+                                        `${course.courseId}-${fac.facultyId}`
+                                      ] != -100) &&
+                                    statuses[
+                                      `${course.courseId}-${fac.facultyId}`
+                                    ] != 2,
+                                }))
+                              )
+                            }
+                          >
+                            <RotateLeftIcon />
+                          </IconButton>
+                        )
+                      ) : facultyStatuses[
+                          `${course.courseId}-${faculty.facultyId}`
+                        ] === null ||
+                        facultyStatuses[
+                          `${course.courseId}-${faculty.facultyId}`
+                        ] === undefined ? (
+                        // If facultyStatuses is not present, show the icon
                         <IconButton
                           onClick={() =>
                             handleOpenModal(
@@ -967,140 +1021,101 @@ const FacultyAllocationTable = ({
                               course.faculties.map((fac) => ({
                                 ...fac,
                                 notEligible:
-                                  (facultyStatuses[
+                                  facultyStatuses[
                                     `${course.courseId}-${fac.facultyId}`
                                   ] != 0 ||
-                                    statuses[
-                                      `${course.courseId}-${fac.facultyId}`
-                                    ] != -100) &&
                                   statuses[
                                     `${course.courseId}-${fac.facultyId}`
-                                  ] != 2,
+                                  ] != -100,
                               }))
                             )
                           }
                         >
                           <RotateLeftIcon />
                         </IconButton>
-                      )
-                    ) : facultyStatuses[
-                        `${course.courseId}-${faculty.facultyId}`
-                      ] === null ||
-                      facultyStatuses[
-                        `${course.courseId}-${faculty.facultyId}`
-                      ] === undefined ? (
-                      // If facultyStatuses is not present, show the icon
-                      <IconButton
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+              {currentCourse && (
+                <TableRow>
+                  <TableCell
+                    colSpan={9}
+                    align="center"
+                    style={{ border: "1px solid black" }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "center" }}>
+                      <Button
+                        size={"small"}
+                        label={"Allocate"}
                         onClick={() =>
-                          handleOpenModal(
-                            faculty.facultyId,
-                            course.courseId,
-                            course.faculties.map((fac) => ({
-                              ...fac,
-                              notEligible:
-                                facultyStatuses[
-                                  `${course.courseId}-${fac.facultyId}`
-                                ] != 0 ||
-                                statuses[
-                                  `${course.courseId}-${fac.facultyId}`
-                                ] != -100,
-                            }))
+                          handleAllocateAll(
+                            currentCourse.courseId,
+                            currentCourse.faculties,
+                            currentCourse.paperCount,
+                            currentCourse.time
                           )
                         }
-                      >
-                        <RotateLeftIcon />
-                      </IconButton>
-                    ) : null}
+                      ></Button>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-            {currentCourse && (
-              <TableRow>
-                <TableCell
-                  colSpan={9}
-                  
-                  align="center"
-                  style={{ border: "1px solid black" }}
-                >
-                  <div style={{display:
-                    "flex",justifyContent:"center"
-                  }}>
-                 
-                  <Button
-                 
-                    size={"small"}
-                    label={"Allocate"}
-                    onClick={() =>
-                      handleAllocateAll(
-                        currentCourse.courseId,
-                        currentCourse.faculties,
-                        currentCourse.paperCount,
-                        currentCourse.time
-                      )
-                    }
-                  ></Button>
-                     
-                     </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
+              )}
+            </TableBody>
 
-          <StyledModal
-            open={openModal}
-            setOpen={setOpenModal}
-            onSumbit={handleSubmit}
-            content={<div
-             
-            >
-              <h2 id="modal-title">Select Faculty and Reason</h2>
-              <CloseIcon
-                style={{
-                  cursor: "pointer",
-                  position: "absolute",
-                  top: "10px",
-                  right: "10px",
-                }}
-                onClick={handleCloseModal}
-              />
-              <br></br>
-              {}
-              <Select
-                placeholder="Select Faculty"
-                value={suggestedFaculties.find(
-                  (fac) => fac.value === selectedFaculty
-                )}
-                onChange={(option) => setSelectedFaculty(option.value)}
-                options={suggestedFaculties}
-                styles={{
-                  container: (provided) => ({ ...provided, width: "100%" }),
-                }}
-              />
-
-              <TextField
-                placeholder="Reason"
-                value={selectedReason}
-                onChange={(e) => setSelectedReason(e.target.value)} // Change this line
-                variant="outlined"
-                margin="normal"
-                fullWidth
-              />
-            </div>}
-          >
-            
-          </StyledModal>
-        </Table>
-      </TableContainer>
-      <center>
-        <TablePagination
-          rowsPerPageOptions={[1]} // Set to 1 to show one course per page
-          count={courses.length} // Total number of courses
-          rowsPerPage={1} // Show one course per page
-          page={currentPage} // Current page index
-          onPageChange={handlePageChange} // Function to handle page changes
-        />
-      </center>
+            <StyledModal
+              open={openModal}
+              setOpen={setOpenModal}
+              onSumbit={handleSubmit}
+              content={
+                <div>
+                  <h2 id="modal-title">Select Faculty and Reason</h2>
+                  <CloseIcon
+                    style={{
+                      cursor: "pointer",
+                      position: "absolute",
+                      top: "10px",
+                      right: "10px",
+                    }}
+                    onClick={handleCloseModal}
+                  />
+                  <br></br>
+                  {}
+                  <Select
+                    placeholder="Select Faculty"
+                    value={suggestedFaculties.find(
+                      (fac) => fac.value === selectedFaculty
+                    )}
+                    onChange={(option) => setSelectedFaculty(option.value)}
+                    options={suggestedFaculties}
+                    styles={{
+                      container: (provided) => ({ ...provided, width: "100%" }),
+                    }}
+                  />
+                  <TextField
+                    placeholder="Reason"
+                    value={selectedReason}
+                    onChange={(e) => setSelectedReason(e.target.value)} // Change this line
+                    variant="outlined"
+                    margin="normal"
+                    fullWidth
+                  />
+                </div>
+              }
+            ></StyledModal>
+          </Table>
+        </TableContainer>
+        <center>
+          <TablePagination
+            rowsPerPageOptions={[1]} // Set to 1 to show one course per page
+            count={courses.length} // Total number of courses
+            rowsPerPage={1} // Show one course per page
+            page={currentPage} // Current page index
+            onPageChange={handlePageChange} // Function to handle page changes
+          />
+        </center>
+      </div>
     </div>
   );
 };

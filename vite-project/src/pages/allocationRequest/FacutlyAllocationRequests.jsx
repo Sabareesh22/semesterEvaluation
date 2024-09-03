@@ -211,18 +211,21 @@ const FacultyAllocationRequests = (props) => {
 
   return (
     <div className="requestContainer">
-      <div style={{ width: "100%",position:"relative",zIndex
-        :"1"
-      }}>
-        <div style={{float:"right"}}>
-          <Card content={<Select
-          placeholder="Select Semester Code"
-          value={selectedSemesterCode}
-          onChange={(selectedOption) => setSelectedSemesterCode(selectedOption)}
-          options={semesterCodes}
-          isClearable
-        />}/>
-        
+      <div style={{ width: "100%", position: "relative", zIndex: "1" }}>
+        <div style={{ float: "right" }}>
+          <Card
+            content={
+              <Select
+                placeholder="Select Semester Code"
+                value={selectedSemesterCode}
+                onChange={(selectedOption) =>
+                  setSelectedSemesterCode(selectedOption)
+                }
+                options={semesterCodes}
+                isClearable
+              />
+            }
+          />
         </div>
       </div>
 
@@ -234,16 +237,24 @@ const FacultyAllocationRequests = (props) => {
           <Card
             content={
               <>
-              <div style={{display:"flex",gap:"10px",justifyContent:"space-between",alignItems:"center",width:"100%"}}>
-              <Button
-                  size={"small"}
-                  label={"Back"}
-                  color="primary"
-                  onClick={() => setSelectedHOD(null)}
-                ></Button>
-                <p>HOD : {selectedHOD}</p>
-              </div>
-               
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "100%",
+                  }}
+                >
+                  <Button
+                    size={"small"}
+                    label={"Back"}
+                    color="primary"
+                    onClick={() => setSelectedHOD(null)}
+                  ></Button>
+                  <p>HOD : {selectedHOD}</p>
+                </div>
+
                 <div
                   style={{
                     textAlign: "right",
@@ -325,6 +336,7 @@ const FacultyAllocationRequests = (props) => {
                   >
                     Paper Count
                   </TableCell>
+
                   <TableCell
                     align="center"
                     style={{
@@ -463,12 +475,14 @@ const FacultyAllocationRequests = (props) => {
       ) : (
         requests?.length > 0 && (
           <div className="requestCardsContainer">
-            {
-              requests?.map((data)=>(
-                <Button label={`${data.department}`} onClick={()=>{handleViewClick(data)}} />
-                              
-              ))
-            }
+            {requests?.map((data) => (
+              <Button
+                label={`${data.department}`}
+                onClick={() => {
+                  handleViewClick(data);
+                }}
+              />
+            ))}
           </div>
         )
       )}

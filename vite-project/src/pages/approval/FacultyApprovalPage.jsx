@@ -253,14 +253,17 @@ const FacultyApprovalPage = (props) => {
                     Action
                   </TableCell>
                 </TableRow>
+                
               </TableHead>
               <TableBody>
+              
                 {groupedAllocations[semesterCode].map((course, courseIndex) => (
                   <TableRow key={courseIndex}>
                     <TableCell
                       align="center"
                       style={{ border: "1px solid black" }}
                     >
+                   
                       {course.courseName}
                     </TableCell>
                     <TableCell

@@ -28,8 +28,10 @@ exports.courseFacultyDetails  = async (req, res) => {
                 bcm.time_in_days,
                 mc.id AS course_id,
                 mc.course_name, 
+                mc.course_code,
                 mf.id AS faculty_id,
-                mf.name AS faculty_name
+                mf.name AS faculty_name,
+                bcm.status
             FROM 
                 board_course_mapping bcm
             INNER JOIN 
@@ -87,7 +89,7 @@ exports.courseFacultyDetails  = async (req, res) => {
         const courses = {};
         console.log(rows)
         rows.forEach(row => {
-            const { course_id, course_name, faculty_id, faculty_name, paper_count, time_in_days } = row;
+            const { course_id, course_name, course_code, faculty_id, faculty_name, paper_count, time_in_days } = row;
             const key = `${course_id}`;
 
 
@@ -95,9 +97,11 @@ exports.courseFacultyDetails  = async (req, res) => {
                 courses[course_name] = {
                     courseId: course_id,
                     courseName: course_name,
+                    courseCode : course_code,
                     paperCount: paper_count,
                     externalCount : externalAllocationMap[key] || 0,
                     time: time_in_days,
+                    status: row.status,
                     department: `Department ${departmentId}`,
                     faculties: []
                 };

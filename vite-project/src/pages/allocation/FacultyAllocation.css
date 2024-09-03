@@ -1,0 +1,28 @@
+.allocationTable {
+    position: relative; /* Parent element for the overlay */
+    width: 100%; /* Define the width of the allocationTable */
+    height: 100%; /* Define the height of the allocationTable */
+    background-color: #f0f0f0; /* Background color for visibility */
+    margin: 20px; /* Optional: for spacing around the allocationTable */
+}
+
+.lockAllocation {
+    /* From https://css.glass */
+background: rgba(255, 255, 255, 0.2);
+border-radius: 16px;
+box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+backdrop-filter: blur(5px);
+-webkit-backdrop-filter: blur(5px);
+border: 1px solid rgba(255, 255, 255, 0.3);
+    position: absolute; /* Absolute positioning relative to the parent (allocationTable) */
+    top: 0;
+    left: 0;
+    width: 100%; /* Full width of the parent */
+    height: 100%; /* Full height of the parent */
+    z-index: 1000; /* Ensure it's on top of the allocationTable */
+    display: flex; /* Optional: to center any content inside */
+    align-items: center; /* Optional: to center vertically */
+    justify-content: center; /* Optional: to center horizontally */
+    color: white; /* Text color for visibility if needed */
+    font-size: 20px; /* Font size if you want to display text */
+}
