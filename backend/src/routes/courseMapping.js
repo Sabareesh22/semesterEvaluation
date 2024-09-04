@@ -22,4 +22,8 @@ router.put('/board-course-mapping/:id', courseMappingController.updateBoardCours
 // Delete
 router.delete('/board-course-mapping/:id', courseMappingController.deleteBoardCourseMapping);
 
+router.get('/courses-with-null-fields', courseMappingController.getCoursesWithNullFields);
+
+router.get('/free-faculties', courseMappingController.getFreeFaculties);
+
 module.exports = router;

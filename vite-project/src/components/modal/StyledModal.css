@@ -6,7 +6,7 @@
     
 }
 .modalContent{
-   
+    max-height: 60vh;
+    overflow: scroll;
     padding: 10px;
-
 }

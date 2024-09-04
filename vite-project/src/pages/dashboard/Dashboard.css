@@ -173,5 +173,6 @@ border: 1px solid rgba(255, 255, 255, 0.3);
  .ChiefExaminerSelection{
    padding:10px;
    overflow: scroll;
+   max-height: 500px;
    width: 100%;
  }
