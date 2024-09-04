@@ -181,3 +181,14 @@ exports.getFaculty = async (req, res) => {
     }
 };
 
+exports.getFacultyById = async(req, res) => {
+    const facultyId = req.params.id; // Extract the faculty ID from the request parameters
+   
+    // SQL query to get faculty details by ID
+    const query = `SELECT * FROM master_faculty WHERE id = ? AND status = '1'`; // Fetch only active faculty
+  
+    // Execute the query using the pool
+    const [results]  = await db.query(query, [facultyId]);
+    console.log(results[0])
+      res.json(results[0]);
+  };

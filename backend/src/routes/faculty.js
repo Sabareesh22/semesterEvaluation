@@ -10,4 +10,7 @@ router.get('/check-old-faculty',facultyController.checkOldFaculty );
 
 router.get('/faculty',facultyController.getFaculty); 
 
+router.get('/faculty/:id', facultyController.getFacultyById);
+
+
 module.exports = router;

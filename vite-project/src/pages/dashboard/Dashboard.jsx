@@ -771,9 +771,9 @@ const Dashboard = (props) => {
                     />
                   </MuiToolTip>
                 </div>
-                <div className="ChiefExaminerSelection">
+               {!ceModalOpen&&<div className="ChiefExaminerSelection">
                   <ChiefExaminerSelection departmentId={departmentId.value} semcode={selectedSemesterCode.value} isEditable={false} />
-                </div>
+                </div>}
                 {/* Other dashboard content */}
               </div>
             ) : null}

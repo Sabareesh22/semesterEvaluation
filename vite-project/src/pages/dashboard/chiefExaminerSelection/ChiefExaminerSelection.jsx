@@ -23,7 +23,9 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
   ];
   const [isAddingFaculty, setIsAddingFaculty] = useState([]);
   const [isAddingCourse, setIsAddingCourse] = useState(false);
+  const [isReplacingCe, setIsReplacingCe] = useState(false);
   const [cookies, setCookie] = useCookies(["auth"]);
+  const [changeCeId,setChangeCeId] = useState(null);
   const [newCourseData, setNewCourseData] = useState({
     course_id: "",
     semester: semcode,
@@ -58,6 +60,10 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
     fetchChiefExaminerSelectionTableData();
   }, [cookies.auth]);
 
+  const handleChiefExaminerReplace = (mappingId) => {
+    setIsReplacingCe(true);
+  };
+
   const fetchNewCourseSuggestion = () => {
     console.log("Fetching new course suggestion");
     axios
@@ -85,14 +91,14 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
       });
   };
 
-  const fetchNewFacultySuggestion = () => {
+  const fetchNewFacultySuggestion = (start_date,end_date) => {
     console.log("Fetching new course suggestion");
     axios
       .get(`${apiHost}/api/free-faculties`, {
         params: {
           departmentId,
-          startDate:newCourseData.start_date,
-          endDate: newCourseData.end_date,
+          startDate: start_date || newCourseData.start_date,
+          endDate: end_date || newCourseData.end_date,
           semcode,
         },
         headers: {
@@ -113,12 +119,83 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
       });
   };
 
+  const handleChangeCe = (mappingId,facultyId)=>{
+    console.log(mappingId,facultyId);
+        if(mappingId && facultyId){
+          axios
+          .put(
+            `${apiHost}/api/board-course-mapping/${mappingId}`,
+            {
+              in_charge:facultyId
+            },
+            {
+              headers: {
+                auth: cookies.auth,
+              },
+            }
+          )
+          .then((res) => {
+            console.log(res.data);
+            if (res.data) {
+              toast.success(res.data.message);
+              setChangeCeId(null);
+              setIsReplacingCe(false);
+              fetchChiefExaminerSelectionTableData();
+            }
+          });
+        }
+        else{
+          toast.error("Please select a valid faculty and course");
+        }
+  } 
+
+  const handleAddCourse = () => {
+    if (
+      departmentId &&
+      semcode &&
+      newCourseData.start_date &&
+      newCourseData.end_date &&
+      newCourseData.course_id &&
+      newCourseData.in_charge
+    ) {
+      axios
+        .put(
+          `${apiHost}/api/update-by-details`,
+          {
+            start_date: newCourseData.start_date,
+            end_date: newCourseData.end_date,
+            in_charge: newCourseData.in_charge,
+            status: "1",
+          },
+          {
+            params: {
+              department: departmentId,
+              semcode: semcode,
+              course: newCourseData.course_id,
+            },
+            headers: {
+              auth: cookies.auth,
+            },
+          }
+        )
+        .then((response) => {
+          if (response.status == 200) {
+            toast.success("Course added successfully");
+            setIsAddingCourse(false);
+            fetchChiefExaminerSelectionTableData();
+          } else {
+            toast.error("Failed to add course");
+          }
+        });
+    } else {
+      toast.error("Please fill all required fields");
+    }
+  };
 
   useEffect(() => {
     if (isAddingCourse) {
       fetchNewCourseSuggestion();
-    }
-    else{
+    } else {
       setNewCourseData({
         course_id: "",
         semester: semcode,
@@ -127,7 +204,7 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
         in_charge: null,
         start_date: null,
         end_date: null,
-      })
+      });
       setNewCourseSuggestion([]);
       setNewFacultySuggestion([]);
     }
@@ -159,9 +236,11 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
   };
 
   useEffect(() => {
-    if(newCourseData.end_date && newCourseData.start_date) {
-      if(dayjs(newCourseData.end_date).isBefore(dayjs(newCourseData.start_date))){
-        toast.error("End date must be on/after start date")
+    if (newCourseData.end_date && newCourseData.start_date) {
+      if (
+        dayjs(newCourseData.end_date).isBefore(dayjs(newCourseData.start_date))
+      ) {
+        toast.error("End date must be on/after start date");
         setNewCourseData((prev) => {
           const newState = { ...prev };
           newState.start_date = null;
@@ -169,12 +248,11 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
           console.log(newState);
           return newState;
         });
-      }
-      else{
-        fetchNewFacultySuggestion()
+      } else {
+        fetchNewFacultySuggestion();
       }
     }
-  },[newCourseData])
+  }, [newCourseData]);
 
   const handleChangeDate = (startDate, endDate, id) => {
     console.log("Date changed", startDate, endDate, id);
@@ -264,7 +342,7 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
       </td>
       <td>{renderCourseData(data, index)}</td>
       <td>{renderTotalCountData(data.totalCount)}</td>
-      <td>{renderChiefExaminerData(data.chiefExaminer, index)}</td>
+      <td>{renderChiefExaminerData(data, index)}</td>
     </tr>
   );
 
@@ -273,6 +351,8 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
       items={data.course}
       mappingId={data.mapping_id}
       index={index}
+      isCourse={true}
+      isClosable={true}
       toggleAdd={toggleAddCourse}
       addButtonLabel={"Add Course"}
       colors={colorsForIndexes}
@@ -292,11 +372,15 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
     </div>
   );
 
-  const renderChiefExaminerData = (examiners, index) => (
+  const renderChiefExaminerData = (data, index) => (
     <DataSection
-      items={examiners}
+      items={data.chiefExaminer}
       index={index}
+      mappingId={data.mapping_id}
       isAdding={isAddingFaculty}
+      isClosable={false}
+      isCourse={false}
+      isReplacable={true}
       toggleAdd={toggleAddFaculty}
       colors={colorsForIndexes}
     />
@@ -306,22 +390,42 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
     items,
     index,
     mappingId,
+    isClosable,
+    isReplacable,
+    isCourse,
     toggleAdd,
     colors,
     addButtonLabel,
   }) => (
     <div className="courseDataBc">
-      {items.map((item, i) => (
-        <Label
-          onClose={() => {
-            handleRemoveCourse(mappingId);
-          }}
-          key={i}
-          isClosable={isEditable}
-          backgroundColor={colors[i]}
-          content={item}
-        />
-      ))}
+      {items.map((item, i) =>
+        !isReplacingCe || isCourse ? (
+          <Label
+            onClose={() => {
+              handleRemoveCourse(mappingId);
+            }}
+            onReplace={() => {
+              handleChiefExaminerReplace(mappingId);
+              fetchNewFacultySuggestion(chiefExaminerSelectionTableData[index].start_date,chiefExaminerSelectionTableData[index].end_date);
+            }}
+            key={i}
+            isClosable={isEditable && isClosable}
+            isReplacable={isEditable && isReplacable}
+            backgroundColor={colors[i]}
+            content={item}
+          />
+        ) : (
+          <div className="ceSelectContainer">
+            <Select 
+            options={newFacultySuggestion} 
+            value={changeCeId}
+            onChange={setChangeCeId}
+            />
+            <Cancel onClick={()=>{setIsReplacingCe(false)}}/>
+            <Check onClick={()=>{handleChangeCe(mappingId,changeCeId.value)}}/>
+          </div>
+        )
+      )}
     </div>
   );
 
@@ -363,18 +467,31 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
               }
             />
           )}
-          <Button
-            onClick={() => {
-              setIsAddingCourse(true);
-            }}
-            size={"small"}
-            label={
-              <p className="addIconButton">
-                {" "}
-                <Add /> Add Courses
-              </p>
-            }
-          />
+          {!isAddingCourse ? (
+            <Button
+              onClick={() => {
+                setIsAddingCourse(true);
+              }}
+              size={"small"}
+              label={
+                <p className="addIconButton">
+                  {" "}
+                  <Add /> Add Courses
+                </p>
+              }
+            />
+          ) : (
+            <Button
+              onClick={() => {
+                handleAddCourse();
+              }}
+              label={
+                <p className="addIconButton">
+                  <Check /> Add
+                </p>
+              }
+            />
+          )}
         </div>
       )}
       <table>
@@ -396,7 +513,7 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
                   onChange={(val) => {
                     setNewCourseData((prev) => {
                       const newState = { ...prev };
-                      newState.start_date = dayjs(val).format('YYYY-MM-DD');
+                      newState.start_date = dayjs(val).format("YYYY-MM-DD");
                       console.log(newState);
                       return newState;
                     });
@@ -406,7 +523,7 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
                   onChange={(val) => {
                     setNewCourseData((prev) => {
                       const newState = { ...prev };
-                      newState.end_date = dayjs(val).format('YYYY-MM-DD')
+                      newState.end_date = dayjs(val).format("YYYY-MM-DD");
                       console.log(newState);
                       return newState;
                     });
@@ -437,7 +554,7 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
                   onChange={(val) => {
                     setNewCourseData((prev) => {
                       const newState = { ...prev };
-                      newState.in_charge = val.id;
+                      newState.in_charge = val.value;
                       console.log(newState);
                       return newState;
                     });
@@ -445,7 +562,7 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
                 />
                 {!(newCourseData.end_date && newCourseData.start_date) && (
                   <p style={{ color: "red" }}>
-                    Select the date range to see available Chief Examiners
+                    Select a valid date range to see available Chief Examiners
                   </p>
                 )}
               </td>

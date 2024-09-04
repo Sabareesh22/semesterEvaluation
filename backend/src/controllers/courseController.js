@@ -25,6 +25,7 @@ exports.courseFacultyDetails  = async (req, res) => {
             SELECT 
                 bcm.id,
                 bcm.paper_count,
+                bcm.in_charge,
                 bcm.time_in_days,
                 mc.id AS course_id,
                 mc.course_name, 
@@ -98,6 +99,7 @@ exports.courseFacultyDetails  = async (req, res) => {
                     courseId: course_id,
                     courseName: course_name,
                     courseCode : course_code,
+                    inCharge: row.in_charge,
                     paperCount: paper_count,
                     externalCount : externalAllocationMap[key] || 0,
                     time: time_in_days,

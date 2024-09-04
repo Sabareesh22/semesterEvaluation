@@ -189,3 +189,55 @@ exports.getFreeFaculties=async(req, res)=>{
     res.status(500).json({ error: 'Internal Server Error' });
   }
 }
+
+exports.updateBoardCourseMappingByDetails = async (req, res) => {
+  const { department, semcode, course } = req.query; // Get the parameters from the query string
+  const updates = req.body; // Get the fields to be updated from the request body
+
+  // Check if required parameters are provided
+  if (!department || !semcode || !course) {
+    return res.status(400).json({ message: 'department, semcode, and course are required to find the record' });
+  }
+
+  // Check if there's any data to update
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ message: 'No data provided for update' });
+  }
+
+  try {
+    // Step 1: Fetch the ID based on department, semcode, and course
+    const [rows] = await db.query(
+      `SELECT id FROM board_course_mapping WHERE department = ? AND semcode = ? AND course = ?`,
+      [department, semcode, course]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Record not found for the provided department, semcode, and course' });
+    }
+
+    const { id } = rows[0]; // Retrieve the ID from the result
+
+    // Step 2: Construct the SQL query dynamically for updating
+    const setClause = Object.keys(updates)
+      .map(key => `${key} = ?`)
+      .join(', ');
+
+    const values = [...Object.values(updates), id];
+    console.log(setClause,req.body)
+    // Step 3: Execute the Update Query
+    const [result] = await db.query(
+      `UPDATE board_course_mapping SET ${setClause} WHERE id = ?`,
+      values
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'No changes made to the record' });
+    }
+
+    res.status(200).json({ message: 'Record updated successfully' });
+
+  } catch (error) {
+    console.error('Error updating record:', error);
+    res.status(500).json({ error: error.message });
+  }
+};

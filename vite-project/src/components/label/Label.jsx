@@ -1,8 +1,8 @@
-import { Cancel } from '@mui/icons-material';
+import { Cancel, ChangeCircle, Refresh } from '@mui/icons-material';
 import './Label.css';
 
 
-const Label = ({content,backgroundColor,isClosable,onClose})=>{
+const Label = ({content,backgroundColor,isClosable,onClose,isReplacable,onReplace})=>{
    
     return(
        <div style={{backgroundColor:backgroundColor}} className="labelContainer">
@@ -10,6 +10,11 @@ const Label = ({content,backgroundColor,isClosable,onClose})=>{
            { isClosable && <div className='closeIcon'>
             <Cancel onClick={onClose}/>
             </div>}
+            { isReplacable && 
+                <div className='closeIcon'>
+            <ChangeCircle onClick={onReplace}/>
+            </div>
+            }
        </div>
     )
 }

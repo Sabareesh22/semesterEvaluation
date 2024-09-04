@@ -26,4 +26,6 @@ router.get('/courses-with-null-fields', courseMappingController.getCoursesWithNu
 
 router.get('/free-faculties', courseMappingController.getFreeFaculties);
 
+router.put('/update-by-details', courseMappingController.updateBoardCourseMappingByDetails);
+
 module.exports = router;

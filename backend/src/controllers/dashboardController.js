@@ -152,7 +152,7 @@ exports.getPendingAllocationSummary =  async (req, res) => {
 
     // Constructing the query to get pending allocations with course codes and paper counts
     let query = `
-        SELECT mc.course_code, bcm.paper_count
+        SELECT mc.course_code, bcm.paper_count,bcm.type
         FROM board_course_mapping bcm
         INNER JOIN master_courses mc ON bcm.course = mc.id
         WHERE NOT EXISTS (
@@ -188,7 +188,8 @@ exports.getPendingAllocationSummary =  async (req, res) => {
         // Format the response data
         const pendingAllocations = rows.map(row => ({
             course_code: row.course_code,
-            paper_count: `${row.course_code} - ${row.paper_count} papers`
+            paper_count: `${row.course_code} - ${row.paper_count} papers`,
+            type:row.type
         }));
 
         // Return the pending allocations summary

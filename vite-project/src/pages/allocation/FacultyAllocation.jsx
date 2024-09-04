@@ -206,7 +206,6 @@ const FacultyAllocationTable = ({
             newSelectedBcCe[`${`${courseId}-${faculty.facultyId}`}`] =
               bcCe.find((data) => data.value == bc_ce);
             // Update paper counts and statuses
-            console.log(bcCe.find((data) => data.value == bc_ce));
             newPaperCounts[`${courseId}-${faculty.facultyId}`] = paperCount;
             newStatuses[`${courseId}-${faculty.facultyId}`] = status;
             if (faculty.facultyName == "External") {
@@ -226,11 +225,44 @@ const FacultyAllocationTable = ({
         }
       }
     }
-    setSelectedBcCe(newSelectedBcCe);
     setPaperCounts(newPaperCounts); // Update state with paper counts
     setStatuses(newStatuses); // Update state with statuses
     setAllocations(newAllocations); // Update state with allocations
   };
+
+  useEffect(() => {
+    courses.map((course) => {
+      console.log("Hi");
+      if (course.inCharge) {
+        axios
+          .get(`${apiHost}/api/faculty/${course.inCharge}`, {
+            headers: {
+              Auth: cookies.auth,
+            },
+          })
+          .then((response) => {
+            if (response.data) {
+              setSelectedBcCe((prev) => {
+                const newSelectedBcCe = [...selectedBcCe];
+                course.faculties.map((faculty) => {
+                  newSelectedBcCe[
+                    `${`${course.courseId}-${faculty.facultyId}`}`
+                  ] = {
+                    label:response.data.name+' - '+response.data.faculty_id,
+                    value:response.data.id
+                  };
+                });
+                console.log(
+                  "New Selected BcCe",
+                  newSelectedBcCe);
+                return newSelectedBcCe;
+              });
+              
+            }
+          });
+      }
+    });
+  }, [courses,bcCe]);
 
   const fetchFacultyStatuses = async () => {
     const newStatuses = {};
@@ -464,13 +496,10 @@ const FacultyAllocationTable = ({
   const currentCourse = courses[currentPage];
 
   return (
-    <div >
-     
-
+    <div>
       <div>
-        
         <TableContainer
-         className="allocationTable"
+          className="allocationTable"
           style={{
             marginTop: "20px",
             width: "100%",
@@ -479,9 +508,18 @@ const FacultyAllocationTable = ({
             padding: "10px",
           }}
         >
-          { courses[currentPage].status === '0' && <div className="lockAllocation">
-        <Button label={<><Lock/> {courses[currentPage].courseCode} Locked Until CE Selection</>}/>
-      </div>}
+          {courses[currentPage].status === "0" && (
+            <div className="lockAllocation">
+              <Button
+                label={
+                  <>
+                    <Lock /> {courses[currentPage].courseCode} Locked Until CE
+                    Selection
+                  </>
+                }
+              />
+            </div>
+          )}
           <Table style={{ borderCollapse: "collapse" }}>
             <TableHead sx={{ color: "white", fontWeight: "bold" }}>
               <TableRow>
@@ -647,31 +685,38 @@ const FacultyAllocationTable = ({
                       style={{ border: "1px solid black" }}
                     >
                       {faculty.facultyName != "External" ? (
-                        <Select
-                          options={bcCe}
-                          value={
-                            selectedBcCe[
-                              `${`${course.courseId}-${faculty.facultyId}`}`
-                            ]
-                          }
-                          onChange={(value) => {
-                            setSelectedBcCe((prev) => {
-                              let newPrev = { ...prev };
-                              newPrev[
+                        <div style={{width:"100%"}}>
+                          <p>{selectedBcCe[
                                 `${`${course.courseId}-${faculty.facultyId}`}`
-                              ] = value;
-                              return newPrev;
-                            });
-                          }}
-                          isDisabled={
-                            facultyStatuses[
-                              `${course.courseId}-${faculty.facultyId}`
-                            ] != 0 ||
-                            statuses[
-                              `${course.courseId}-${faculty.facultyId}`
-                            ] != -100
-                          }
-                        />
+                              ]?.label}</p>
+                          {/* <Select
+                          
+                            options={bcCe}
+                            value={
+                              selectedBcCe[
+                                `${`${course.courseId}-${faculty.facultyId}`}`
+                              ]
+                            }
+                            onChange={(value) => {
+                              setSelectedBcCe((prev) => {
+                                let newPrev = { ...prev };
+                                newPrev[
+                                  `${`${course.courseId}-${faculty.facultyId}`}`
+                                ] = value;
+                                return newPrev;
+                              });
+                            }} */}
+                            {/* isDisabled={
+                              true
+                              facultyStatuses[
+                                `${course.courseId}-${faculty.facultyId}`
+                              ] != 0 ||
+                              statuses[
+                                `${course.courseId}-${faculty.facultyId}`
+                              ] != -100
+                            }
+                          /> */}
+                        </div>
                       ) : (
                         <Typography variant="body1" color="red">
                           External Allocation is Done by COE only
@@ -1235,6 +1280,9 @@ const FacultyAllocation = (props) => {
   useEffect(() => {
     props.setTitle("Allocation");
   }, []);
+  useEffect(() => {
+    console.log("courses", courses);
+  }, [courses]);
 
   useEffect(() => {
     const fetchSemesterCodes = async () => {
