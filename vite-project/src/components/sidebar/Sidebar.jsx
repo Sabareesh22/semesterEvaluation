@@ -1,6 +1,6 @@
 import React, { useState,useEffect } from 'react';
 import './Sidebar.css';
-import { ExpandMore, ExpandLess, Menu, Dashboard, Logout, SchoolRounded, Receipt, ConfirmationNumber } from '@mui/icons-material';
+import { ExpandMore, ExpandLess, Menu, Dashboard, Logout, SchoolRounded, Receipt, ConfirmationNumber, ManageAccounts } from '@mui/icons-material';
 import { School, Download, Assignment, SwapHoriz, People, Book } from '@mui/icons-material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '../../assets/logo.png';
@@ -99,6 +99,9 @@ const handleLogout = ()=>{
      <ul>
      <Link to="dashboard" onClick={closeMobileMenu}>
          <div className="submenuItem"><Dashboard className="icon" /> Dashboard</div>
+       </Link>
+       <Link to="managefaculty" onClick={closeMobileMenu}>
+         <div className="submenuItem"><ManageAccounts className="icon" /> Manage Faculty</div>
        </Link>
        <Link to="createsemcode" onClick={closeMobileMenu}>
          <div className="submenuItem"><Assignment className="icon" /> Create Evaluation</div>

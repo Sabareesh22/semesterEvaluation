@@ -12,5 +12,8 @@ router.get('/faculty',facultyController.getFaculty);
 
 router.get('/faculty/:id', facultyController.getFacultyById);
 
+router.post('/faculty', facultyController.createFaculty);
+
+router.put('/faculty/:id',facultyController.updateFacultyById);
 
 module.exports = router;

@@ -176,3 +176,32 @@ border: 1px solid rgba(255, 255, 255, 0.3);
    max-height: 500px;
    width: 100%;
  }
+ .pendingAllocationBullets{
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+ }
+.coursesContainer{
+  display: flex;
+  gap:10px;
+  flex-direction: column;
+  padding: 20px;
+  flex:1;
+  height: 100%;
+  overflow: scroll;
+}
+
+.pendingCoursesContent{
+  display: flex;
+  /* background-color: blue; */
+  height: 100%;
+}
+.pendingContentHeading{
+  display: flex;
+  justify-content: center;
+}
+.pendingCoursesMasterContainer{
+  padding: 10px; 
+  /* background-color: red; */
+  flex: 1;
+}

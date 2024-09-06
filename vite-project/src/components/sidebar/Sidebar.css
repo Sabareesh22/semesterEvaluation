@@ -3,8 +3,8 @@
   height: 100vh;
   background: #bdc3c7;  /* fallback for old browsers */
 background: linear-gradient(to right, #13122b, #000000); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-
   padding: 20px; /* Padding around content */
+  /* padding-top: 7px; */
   color: rgb(255, 255, 255); /* Text color */
   box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.245); /* Subtle shadow */
   overflow-y:scroll;

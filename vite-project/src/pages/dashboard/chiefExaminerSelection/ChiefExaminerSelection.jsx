@@ -419,6 +419,8 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
             <Select 
             options={newFacultySuggestion} 
             value={changeCeId}
+            menuPortalTarget={document.body} 
+    styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
             onChange={setChangeCeId}
             />
             <Cancel onClick={()=>{setIsReplacingCe(false)}}/>
@@ -532,6 +534,8 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
               </td>
               <td>
                 <Select
+                menuPortalTarget={document.body} 
+                styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                   onChange={(val) => {
                     setNewCourseData((prev) => {
                       const newState = { ...prev };
@@ -547,6 +551,8 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
               <td key={newCourseData.course_id}>{newCourseData.paper_count}</td>
               <td>
                 <Select
+                menuPortalTarget={document.body} 
+                styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                   isDisabled={
                     !(newCourseData.end_date && newCourseData.start_date)
                   }

@@ -5,7 +5,6 @@ const Button = ({label,onClick,styles,size})=>{
     const setHeight = (height)=>{
         setButtonStyles((prev)=>{
             const newPrev = {...prev,height:height};
-            console.log(newPrev)
             return(newPrev)
         }
     )

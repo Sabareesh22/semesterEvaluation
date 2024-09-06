@@ -188,7 +188,7 @@ exports.getPendingAllocationSummary =  async (req, res) => {
         // Format the response data
         const pendingAllocations = rows.map(row => ({
             course_code: row.course_code,
-            paper_count: `${row.course_code} - ${row.paper_count} papers`,
+            paper_count: row.paper_count,
             type:row.type
         }));
 

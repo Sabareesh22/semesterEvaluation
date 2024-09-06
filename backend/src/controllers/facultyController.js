@@ -40,7 +40,7 @@ exports.uploadEligibleFaculty = async (req, res) => {
 exports.allocateFaculty =  async (req, res) => {
     const { facultyId, courseId, paperCount, semCode,handledBy,time,handlingFacultyRole,departmentId} = req.body[0];
     console.log(req.body[0])
-    if (facultyId == null || courseId == null || paperCount == null || semCode == null||handledBy==null||handlingFacultyRole==null) {
+    if (facultyId == null || courseId == null || paperCount == null || semCode == null) {
         return res.status(400).json({ message: 'All fields are required: faculty, course, paper_count, and semCode' });
     }
     function roundToHalfOrCeiling(value) {
@@ -89,10 +89,10 @@ exports.allocateFaculty =  async (req, res) => {
         }
 
         const insertQuery = `
-            INSERT INTO faculty_paper_allocation (faculty, course, paper_count, semcode,handlingFaculty) 
-            VALUES (?, ?, ?, ?,?)
+            INSERT INTO faculty_paper_allocation (faculty, course, paper_count, semcode) 
+            VALUES (?, ?, ?, ?)
         `;
-        const [insertResult] = await db.query(insertQuery, [facultyId, courseId, paperCount, semCode,handledBy]);
+        const [insertResult] = await db.query(insertQuery, [facultyId, courseId, paperCount, semCode]);
         res.status(201).json({ message: 'Faculty paper allocation added successfully', allocationId: insertResult.insertId });
 
     } catch (error) {
@@ -155,7 +155,7 @@ exports.getFaculty = async (req, res) => {
 
         // Main query with subquery to fetch the minimum id per faculty_id
         let query = `
-            SELECT id, faculty_id, CONCAT(faculty_id, ' - ', name) as faculty_info
+            SELECT id, faculty_id, CONCAT(faculty_id, ' - ', name) as faculty_info,name,department,status
             FROM master_faculty
             WHERE id IN (
                 SELECT MIN(id)
@@ -192,3 +192,52 @@ exports.getFacultyById = async(req, res) => {
     console.log(results[0])
       res.json(results[0]);
   };
+
+  exports.createFaculty = async (req, res) => {
+    const { name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status } = req.body;
+  
+    try {
+      const [result] = await pool.query(
+        'INSERT INTO master_faculty (name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status]
+      );
+      res.status(201).json({ id: result.insertId, ...req.body });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  };
+  
+  // controllers/facultyController.js
+
+exports.updateFacultyById = async (req, res) => {
+    const { id } = req.params;
+    const fields = req.body; // Fields to update from request body
+  
+    // Check if there are fields to update
+    if (Object.keys(fields).length === 0) {
+      return res.status(400).json({ error: 'No fields provided for update' });
+    }
+  
+    // Dynamically create query parts
+    const setClause = Object.keys(fields)
+      .map((field) => `${field} = ?`)
+      .join(', ');
+    const values = Object.values(fields);
+  
+    try {
+      // Build dynamic SQL query
+      const query = `UPDATE master_faculty SET ${setClause} WHERE id = ?`;
+      values.push(id); // Add ID to the end of the values array
+  
+      const [result] = await db.query(query, values);
+  
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Faculty not found' });
+      }
+  
+      res.status(200).json({ message: 'Faculty updated successfully', id, ...fields });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  };
+  

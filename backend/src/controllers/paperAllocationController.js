@@ -298,7 +298,7 @@ exports.getPaperCount =  async (req, res) => {
     const { faculty, course, semcode } = req.query;
 
     let query = `
-        SELECT paper_count,handlingFaculty,status
+        SELECT paper_count,status
         FROM faculty_paper_allocation 
         WHERE 1=1
     `;
