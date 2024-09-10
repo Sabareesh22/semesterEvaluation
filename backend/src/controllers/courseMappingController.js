@@ -3,18 +3,18 @@ const db = require('../config/db');
 
 // Controller function to get course mapping data
 exports.getCourseMappingData = async (req, res) => {
-  const  {departmentId,semcode} = req.query;
+  const { departmentId, semcode } = req.query;
   console.log(req.query);
+  
   const sqlQuery = `
     SELECT 
-      bcm.id AS mapping_id,
+      GROUP_CONCAT(bcm.id ORDER BY mc.course_name SEPARATOR ', ') AS mapping_ids,
       DATE_FORMAT(bcm.start_date, '%Y-%m-%d') AS start_date,
-      DATE_FORMAT(
-        IFNULL(bcm.end_date, bcm.start_date), '%Y-%m-%d'
-      ) AS end_date,
-      GROUP_CONCAT(mc.course_name ORDER BY mc.course_name SEPARATOR ', ') AS course,
+      DATE_FORMAT(IFNULL(bcm.end_date, bcm.start_date), '%Y-%m-%d') AS end_date,
+      GROUP_CONCAT(mc.course_name ORDER BY mc.course_name SEPARATOR ', ') AS courses,
       GROUP_CONCAT(bcm.paper_count ORDER BY mc.course_name SEPARATOR ', ') AS totalCount,
-      GROUP_CONCAT(mf.name ORDER BY mf.name SEPARATOR ', ') AS chiefExaminer
+      mf.name AS chiefExaminer,
+      mf.id AS chiefExaminerId
     FROM 
       board_course_mapping bcm
     JOIN 
@@ -24,33 +24,37 @@ exports.getCourseMappingData = async (req, res) => {
     WHERE  
       mc.status = '1' 
       AND mf.status = '1' 
-      AND bcm.department =?
-      AND bcm.semcode =?
+      AND bcm.department = ?
+      AND bcm.semcode = ?
     GROUP BY 
-      bcm.id, 
+      bcm.in_charge, 
       bcm.start_date, 
-      bcm.end_date;
+      bcm.end_date, 
+      mf.name, 
+      mf.id;
   `;
 
   try {
-    const [rows] = await db.query(sqlQuery,[departmentId,semcode]);
+    const [rows] = await db.query(sqlQuery, [departmentId, semcode]);
     
     // Format the data to match the desired output format
     const result = rows.map(row => ({
-      mapping_id: row.mapping_id,
+      mapping_ids: row.mapping_ids.split(', '),  // Split the concatenated mapping IDs into an array
       start_date: row.start_date,
       end_date: row.end_date,
-      course: row.course.split(', '),
-      totalCount: row.totalCount.split(', ').map(Number),
-      chiefExaminer: row.chiefExaminer.split(', ')
+      courses: row.courses.split(', '),  // Split the concatenated course names into an array
+      totalCount: row.totalCount.split(', ').map(Number),  // Split the concatenated counts into an array and convert to numbers
+      chiefExaminer: [row.chiefExaminer],  // Chief Examiner's name is a single value
+      chiefExaminerIds: [row.chiefExaminerId]  // Chief Examiner's ID is a single value
     }));
-
+    console.log(result)
     res.json(result);
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
 
 exports.createBoardCourseMapping = async (req, res) => {
   const { department, course, paper_count, semcode, batch, start_date, end_date, in_charge, time_in_days, status } = req.body;

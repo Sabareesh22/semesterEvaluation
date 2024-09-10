@@ -1,32 +1,23 @@
 
 const db = require('../config/db'); 
 
-exports.getPaperAllocationRequests =  async (req, res) => {
+exports.getPaperAllocationRequests = async (req, res) => {
     const { semcode } = req.query;
 
     let query = `
         SELECT 
-            GROUP_CONCAT(
-                CONCAT(
-                    c.id, ':',
-                    c.course_name, ':',
-                    c.course_code, ':' ,
-                    bcm.paper_count  -- Using the total paper count from the subquery
-                ) 
-                SEPARATOR '|'
-            ) AS course_info,
-            GROUP_CONCAT(
-                CONCAT(
-                    f.id, ':', f.faculty_id, ':', f.name, ':', faculty_total_papers.faculty_paper_count  -- Using the total paper count from the subquery
-                ) 
-                SEPARATOR '|'
-            ) AS faculty_info,
-            SUM(fa.paper_count) AS paperCount,
+            c.id AS course_id,
+            c.course_name,
+            c.course_code,
+            bcm.paper_count AS course_paper_count,
+            f.id AS faculty_id,
+            f.name AS faculty_name,
+            fa.paper_count AS faculty_paper_count,
             h.id AS hod_id,
             h.faculty AS hod_faculty_id,
-            md.department,
             hf.name AS hod_name,
-            fa.semcode  -- Include semcode in the SELECT statement
+            md.department,
+            fa.semcode
         FROM 
             faculty_paper_allocation fa
         JOIN 
@@ -41,16 +32,6 @@ exports.getPaperAllocationRequests =  async (req, res) => {
             master_faculty hf ON h.faculty = hf.id
         JOIN 
             master_department md ON md.id = h.department
-        JOIN (
-            SELECT course, semcode, SUM(paper_count) as course_paper_count
-            FROM faculty_paper_allocation
-            GROUP BY course, semcode  -- Group by course and semcode to handle different semcodes separately
-        ) as course_total_papers ON fa.course = course_total_papers.course AND fa.semcode = course_total_papers.semcode
-        JOIN (
-            SELECT faculty, semcode, SUM(paper_count) as faculty_paper_count
-            FROM faculty_paper_allocation
-            GROUP BY faculty, semcode  -- Group by faculty and semcode to handle different semcodes separately
-        ) as faculty_total_papers ON fa.faculty = faculty_total_papers.faculty AND fa.semcode = faculty_total_papers.semcode
         WHERE 
             fa.status = '1'
     `;
@@ -61,32 +42,60 @@ exports.getPaperAllocationRequests =  async (req, res) => {
     }
 
     query += `
-        GROUP BY 
-            h.id,    -- Group by HOD information
-            fa.semcode  -- Group by semcode as well
         ORDER BY 
-            h.id;  -- Order by HOD id or any other relevant field
+            md.department, c.id, f.id;  -- Order by department, course id, and faculty id
     `;
 
     try {
         const [rows] = await db.query(query);
 
-        // Parse the results
-        const parsedResults = rows.map(row => ({
-            hodId: row.hod_id,
-            hodFacultyId: row.hod_faculty_id,
-            hodName: row.hod_name,
-            department: row.department,
-            semCode: row.semcode,
-            paperCount: row.paperCount,
-            courseInfo: row.course_info ? row.course_info.split('|').map(course => {
-                const [id, name, code, count] = course.split(':');
-                return { id, name, code, count };
-            }) : [],
-            facultyInfo: row.faculty_info ? row.faculty_info.split('|').map(faculty => {
-                const [id, facultyId, name, paperCount] = faculty.split(':');
-                return { id, facultyId, name, paperCount };
-            }) : []
+        // Process the rows to nest courses under departments and faculties, and include HOD info
+        const departments = {};
+
+        rows.forEach(row => {
+            const { department, course_id, course_name, course_code, course_paper_count, faculty_id, faculty_name, faculty_paper_count, hod_id, hod_faculty_id, hod_name, semcode } = row;
+
+            if (!departments[department]) {
+                departments[department] = {
+                    department,
+                    hod: {
+                        id: hod_id,
+                        facultyId: hod_faculty_id,
+                        name: hod_name
+                    },
+                    courses: {}
+                };
+            }
+
+            if (!departments[department].courses[course_id]) {
+                departments[department].courses[course_id] = {
+                    id: course_id,
+                    name: course_name,
+                    code: course_code,
+                    paperCount: course_paper_count,
+                    faculties: new Map()  // Use a Map to handle duplicates
+                };
+            }
+
+            // Add faculty if not already present
+            if (!departments[department].courses[course_id].faculties.has(faculty_id)) {
+                departments[department].courses[course_id].faculties.set(faculty_id, {
+                    id: faculty_id,
+                    name: faculty_name,
+                    paperCount: faculty_paper_count
+                });
+            }
+        });
+
+        // Prepare the final response structure
+        const parsedResults = Object.values(departments).map(department => ({
+            department: department.department,
+            hod: department.hod,  // Include HOD information
+            courses: Object.values(department.courses).map(course => ({
+                ...course,
+                faculties: Array.from(course.faculties.values()),  // Convert Map back to array
+                semCode: rows[0].semcode
+            }))
         }));
 
         res.status(200).json({ results: parsedResults });
@@ -95,6 +104,9 @@ exports.getPaperAllocationRequests =  async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 }
+
+
+
 
 exports.getAllocationsUnderHOD = async (req, res) => {
     const { hodId } = req.params;

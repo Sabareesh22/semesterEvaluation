@@ -79,13 +79,16 @@ exports.getApprovedFacultyAllocationData = async (req, res) => {
                 acc.push(course);
             }
 
-            // Add faculty information to the course
-            course.faculties.push({
-                facultyId,
-                facultyCode,
-                facultyName,
-                paperCount
-            });
+            // Check for existing faculty entry in the course
+            const existingFaculty = course.faculties.find(f => f.facultyId === facultyId);
+            if (!existingFaculty) {
+                course.faculties.push({
+                    facultyId,
+                    facultyCode,
+                    facultyName,
+                    paperCount
+                });
+            }
 
             return acc;
         }, []);

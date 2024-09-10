@@ -50,3 +50,11 @@ table{
    gap: 10px;
 
 }
+
+.addAdditionalCourses{
+   opacity: 0;
+}
+.addAdditionalCourses:hover{
+    cursor: pointer;
+    opacity: 1;
+}

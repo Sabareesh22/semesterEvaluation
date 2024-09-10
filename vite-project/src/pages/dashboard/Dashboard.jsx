@@ -78,7 +78,25 @@ const Dashboard = (props) => {
         setTotalPaperCount(res.data?.total_papers);
       });
   };
-
+  useEffect(() => {
+    try {
+      if (roles.includes("hod") && !roles.includes("coe")) {
+        axios
+          .get(`${apiHost}/auth/hodDetails`, {
+            headers: {
+              Auth: cookies.auth,
+            },
+          })
+          .then((res) => {
+            console.log(res.data[0]);
+            setHodDetails(res.data[0]);
+            setDepartmentId({ value: res.data[0]?.department });
+          });
+      }
+    } catch (error) {
+      console.error("Error fetching role:", error);
+    }
+  }, [cookies.auth, roles]);
   useEffect(() => {
     if (batch && selectedSemesterCode && departmentId) {
       getTotalPaperCount(

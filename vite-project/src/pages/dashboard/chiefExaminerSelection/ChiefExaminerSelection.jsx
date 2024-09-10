@@ -23,9 +23,9 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
   ];
   const [isAddingFaculty, setIsAddingFaculty] = useState([]);
   const [isAddingCourse, setIsAddingCourse] = useState(false);
-  const [isReplacingCe, setIsReplacingCe] = useState(false);
+  const [isReplacingCe, setIsReplacingCe] = useState([]);
   const [cookies, setCookie] = useCookies(["auth"]);
-  const [changeCeId,setChangeCeId] = useState(null);
+  const [changeCeId, setChangeCeId] = useState(null);
   const [newCourseData, setNewCourseData] = useState({
     course_id: "",
     semester: semcode,
@@ -37,6 +37,7 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
   });
   const [newFacultySuggestion, setNewFacultySuggestion] = useState([]);
   const [newCourseSuggestion, setNewCourseSuggestion] = useState([]);
+  const [isAddingAdditionalCourse, setIsAddingAdditionalCourse] = useState([]);
   const fetchChiefExaminerSelectionTableData = () => {
     axios
       .get(`${apiHost}/api/getCourseMappingData`, {
@@ -60,10 +61,19 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
     fetchChiefExaminerSelectionTableData();
   }, [cookies.auth]);
 
-  const handleChiefExaminerReplace = (mappingId) => {
-    setIsReplacingCe(true);
+  const handleChiefExaminerReplace = (mappingId,index) => {
+    setIsReplacingCe((prev)=>{
+      const newArr = [...prev];
+      newArr[index] =true;
+      return newArr;
+    });
   };
-
+  useEffect(() => {
+    setIsAddingAdditionalCourse(
+      Array(chiefExaminerSelectionTableData.length).fill(false)
+    );
+    setIsReplacingCe(( Array(chiefExaminerSelectionTableData.length).fill(false)))
+  }, [chiefExaminerSelectionTableData]);
   const fetchNewCourseSuggestion = () => {
     console.log("Fetching new course suggestion");
     axios
@@ -91,7 +101,7 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
       });
   };
 
-  const fetchNewFacultySuggestion = (start_date,end_date) => {
+  const fetchNewFacultySuggestion = (start_date, end_date) => {
     console.log("Fetching new course suggestion");
     axios
       .get(`${apiHost}/api/free-faculties`, {
@@ -119,14 +129,17 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
       });
   };
 
-  const handleChangeCe = (mappingId,facultyId)=>{
-    console.log(mappingId,facultyId);
-        if(mappingId && facultyId){
-          axios
-          .put(
-            `${apiHost}/api/board-course-mapping/${mappingId}`,
+  const handleChangeCe = (mappingId, facultyId,index) => {
+    console.log(mappingId, facultyId);
+  
+    if (Array.isArray(mappingId) && facultyId) {
+      // If mappingId is an array, iterate through each item and make API calls
+      Promise.all(
+        mappingId.map((id) =>
+          axios.put(
+            `${apiHost}/api/board-course-mapping/${id}`,
             {
-              in_charge:facultyId
+              in_charge: facultyId,
             },
             {
               headers: {
@@ -134,20 +147,64 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
               },
             }
           )
-          .then((res) => {
+        )
+      )
+        .then((responses) => {
+          // Handle all responses here
+          responses.forEach((res) => {
             console.log(res.data);
             if (res.data) {
               toast.success(res.data.message);
-              setChangeCeId(null);
-              setIsReplacingCe(false);
-              fetchChiefExaminerSelectionTableData();
             }
           });
-        }
-        else{
-          toast.error("Please select a valid faculty and course");
-        }
-  } 
+          setChangeCeId(null);
+          setIsReplacingCe((prev)=>{
+            const newArr = [...prev];
+            newArr[index] =false;
+            return newArr;
+          });
+          fetchChiefExaminerSelectionTableData();
+        })
+        .catch((error) => {
+          toast.error("An error occurred while updating in-charge.");
+          console.error(error);
+        });
+    } else if (mappingId && facultyId) {
+      // If mappingId is not an array, handle the single API call
+      axios
+        .put(
+          `${apiHost}/api/board-course-mapping/${mappingId}`,
+          {
+            in_charge: facultyId,
+          },
+          {
+            headers: {
+              auth: cookies.auth,
+            },
+          }
+        )
+        .then((res) => {
+          console.log(res.data);
+          if (res.data) {
+            toast.success(res.data.message);
+            setChangeCeId(null);
+              setIsReplacingCe((prev)=>{
+            const newArr = [...prev];
+            newArr[index] =false;
+            return newArr;
+          });
+            fetchChiefExaminerSelectionTableData();
+          }
+        })
+        .catch((error) => {
+          toast.error("An error occurred while updating in-charge.");
+          console.error(error);
+        });
+    } else {
+      toast.error("Please select a valid faculty and course");
+    }
+  };
+  
 
   const handleAddCourse = () => {
     if (
@@ -193,7 +250,7 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
   };
 
   useEffect(() => {
-    if (isAddingCourse) {
+    if (isAddingCourse || isAddingAdditionalCourse) {
       fetchNewCourseSuggestion();
     } else {
       setNewCourseData({
@@ -208,7 +265,8 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
       setNewCourseSuggestion([]);
       setNewFacultySuggestion([]);
     }
-  }, [isAddingCourse]);
+  }, [isAddingCourse,isAddingAdditionalCourse]);
+
 
   const handleRemoveCourse = (id) => {
     axios
@@ -348,8 +406,8 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
 
   const renderCourseData = (data, index) => (
     <DataSection
-      items={data.course}
-      mappingId={data.mapping_id}
+      items={data.courses}
+      mappingId={data.mapping_ids}
       index={index}
       isCourse={true}
       isClosable={true}
@@ -376,7 +434,7 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
     <DataSection
       items={data.chiefExaminer}
       index={index}
-      mappingId={data.mapping_id}
+      mappingId={data.mapping_ids}
       isAdding={isAddingFaculty}
       isClosable={false}
       isCourse={false}
@@ -399,14 +457,17 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
   }) => (
     <div className="courseDataBc">
       {items.map((item, i) =>
-        !isReplacingCe || isCourse ? (
+        (!isReplacingCe[index]) || isCourse ? (
           <Label
             onClose={() => {
-              handleRemoveCourse(mappingId);
+              handleRemoveCourse(Number(mappingId[0]));
             }}
             onReplace={() => {
-              handleChiefExaminerReplace(mappingId);
-              fetchNewFacultySuggestion(chiefExaminerSelectionTableData[index].start_date,chiefExaminerSelectionTableData[index].end_date);
+              handleChiefExaminerReplace(mappingId,index);
+              fetchNewFacultySuggestion( 
+                chiefExaminerSelectionTableData[index].start_date,
+                chiefExaminerSelectionTableData[index].end_date
+              );
             }}
             key={i}
             isClosable={isEditable && isClosable}
@@ -416,17 +477,97 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
           />
         ) : (
           <div className="ceSelectContainer">
-            <Select 
-            options={newFacultySuggestion} 
-            value={changeCeId}
-            menuPortalTarget={document.body} 
-    styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-            onChange={setChangeCeId}
+            <Select
+              options={newFacultySuggestion}
+              value={changeCeId}
+              menuPortalTarget={document.body}
+              styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+              onChange={setChangeCeId}
             />
-            <Cancel onClick={()=>{setIsReplacingCe(false)}}/>
-            <Check onClick={()=>{handleChangeCe(mappingId,changeCeId.value)}}/>
+            <Cancel
+              onClick={() => {
+                  setIsReplacingCe((prev)=>{
+            const newArr = [...prev];
+            newArr[index] =false;
+            return newArr;
+          });
+              }}
+            />
+            <Check
+              onClick={() => {
+                handleChangeCe(mappingId, changeCeId.value,index);
+              }}
+            />
           </div>
         )
+      )}
+      {isCourse && !isAddingAdditionalCourse[index] && (
+        <div
+          onClick={() => {
+            setIsAddingAdditionalCourse((prev) => {
+              const newState = [...prev];
+              newState[index] = true;
+              console.log(newState);
+              return newState;
+            });
+          }}
+          className="addAdditionalCourses"
+        >
+          <Button
+            size={"small"}
+            label={
+              <p>
+                <Add />
+              </p>
+            }
+          />
+        </div>
+      )}
+      {isCourse && isAddingAdditionalCourse[index] && (
+        <div className="ceSelectContainer">
+           <Select
+                  menuPortalTarget={document.body}
+                  styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+                  value={newCourseSuggestion.find((data)=>(newCourseData.course_id === data.value))}
+                  onChange={(val) => {
+                    setNewCourseData((prev) => {
+                      const newState = { ...prev };
+                      newState.course_id = val.value;
+                      console.log(chiefExaminerSelectionTableData[index])
+                      newState.start_date=chiefExaminerSelectionTableData[index].start_date,
+                      newState.end_date=chiefExaminerSelectionTableData[index].end_date,
+                      newState.in_charge = Number(chiefExaminerSelectionTableData[index].chiefExaminerIds[0]),
+                      newState.paper_count = val.count;
+                      console.log(newState);
+                      return newState;
+                    });
+                  }}
+                  options={newCourseSuggestion}
+                />
+          <Cancel
+            onClick={() => {
+
+              setIsAddingAdditionalCourse((prev) => {
+                const newState = [...prev];
+                newState[index] = false;
+                console.log(newState);
+                return newState;
+              });
+              setNewCourseData({
+                course_id: "",
+                semester: semcode,
+                department_id: departmentId,
+                paper_count: 0,
+                in_charge: null,
+                start_date: null,
+                end_date: null,
+              });
+              setNewCourseSuggestion([]);
+              setNewFacultySuggestion([]);
+            }}
+          />
+          <Check onClick={()=>handleAddCourse()} />
+        </div>
       )}
     </div>
   );
@@ -534,8 +675,8 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
               </td>
               <td>
                 <Select
-                menuPortalTarget={document.body} 
-                styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                  menuPortalTarget={document.body}
+                  styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
                   onChange={(val) => {
                     setNewCourseData((prev) => {
                       const newState = { ...prev };
@@ -551,8 +692,8 @@ const ChiefExaminerSelection = ({ isEditable, departmentId, semcode }) => {
               <td key={newCourseData.course_id}>{newCourseData.paper_count}</td>
               <td>
                 <Select
-                menuPortalTarget={document.body} 
-                styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                  menuPortalTarget={document.body}
+                  styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
                   isDisabled={
                     !(newCourseData.end_date && newCourseData.start_date)
                   }

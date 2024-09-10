@@ -43,7 +43,7 @@ exports.createAllocation = (req, res) => {
 exports.updateAllocation = (req, res) => {
   const { id } = req.params;
   const { faculty, course, paper_count, semcode, handlingFaculty, status, remark } = req.body;
-  const query = 'UPDATE faculty_paper_allocation SET faculty = ?, course = ?, paper_count = ?, semcode = ?, handlingFaculty = ?, status = ?, remark = ? WHERE id = ?';
+  const query = `UPDATE faculty_paper_allocation SET faculty = ?, course = ?, paper_count = ?, semcode = ?, handlingFaculty = ?, status = ?, remark = ? WHERE id = ?`;
   db.query(query, [faculty, course, paper_count, semcode, handlingFaculty, status, remark, id], (err, results) => {
     if (err) {
       return res.status(500).json({ error: err.message });

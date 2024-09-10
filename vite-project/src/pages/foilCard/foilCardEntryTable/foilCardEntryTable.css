@@ -1,0 +1,11 @@
+.circlesContainer{
+    display: flex;
+    gap: 10px;
+}
+.masterEntryContainer{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}

@@ -10,6 +10,9 @@
     color: white;    /* Text color */
     text-align: center;
 }
+.circle-icon:hover{
+    cursor: pointer;
+}
 
 .circle-text {
     margin: 0;
