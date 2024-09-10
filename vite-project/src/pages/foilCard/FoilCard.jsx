@@ -122,7 +122,7 @@ export default function FoilCard(props) {
           </div>
         }
       />
-     <div><FoilCardEntryTable/></div>
+     <div><FoilCardEntryTable data={foilCardTableData}/></div>
     </div>
   );
 }

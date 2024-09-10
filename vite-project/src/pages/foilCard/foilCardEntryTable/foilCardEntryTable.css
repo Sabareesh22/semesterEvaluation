@@ -9,3 +9,13 @@
     align-items: center;
     gap: 10px;
 }
+.foilNoContainer{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.FoilCardLabelContainer{
+    display: flex;
+    gap: 10px;
+    font-size: 14px;
+}

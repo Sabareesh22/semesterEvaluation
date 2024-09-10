@@ -1,26 +1,40 @@
 const db = require('../config/db'); 
 
-exports.postFoilCard = async(req,res)=>{
-     const {foilCard,allocationId} = req.body;
-     if(!foilCard || !allocationId){
-        return res.status(400).json({ 
-            success: false, 
-            message: 'Foil Card and allocation Id are required.' 
+exports.postFoilCard = async (req, res) => {
+    const { foilCard, allocationId } = req.body;
+
+    if (!foilCard || !allocationId) {
+        return res.status(400).json({
+            success: false,
+            message: 'Foil Card and allocation Id are required.'
         });
-     }
-     try {
-        const query = `INSERT INTO foil_card(foil_card_number,faculty_paper_allocation) VALUES(?,?)`
-        const [rows] = await db.query(query, [foilCard, allocationId]);
-        res.status(200).send({message:"Successfully Added Foil Numbers"})
-     } catch (error) {
-        console.error('Error fetching data:', error);
+    }
+
+    try {
+        // Check if an entry with the given allocationId already exists
+        const checkQuery = `SELECT COUNT(*) as count FROM foil_card WHERE faculty_paper_allocation = ?`;
+        const [checkResult] = await db.query(checkQuery, [allocationId]);
+
+        if (checkResult[0].count > 0) {
+            // Update existing entry
+            const updateQuery = `UPDATE foil_card SET foil_card_number = ? WHERE faculty_paper_allocation = ?`;
+            await db.query(updateQuery, [foilCard, allocationId]);
+            res.status(200).send({ message: "Successfully Updated Foil Number" });
+        } else {
+            // Insert new entry
+            const insertQuery = `INSERT INTO foil_card(foil_card_number, faculty_paper_allocation) VALUES(?,?)`;
+            await db.query(insertQuery, [foilCard, allocationId]);
+            res.status(200).send({ message: "Successfully Added Foil Number" });
+        }
+    } catch (error) {
+        console.error('Error handling request:', error);
         res.status(500).json({
             success: false,
             message: 'Internal Server Error',
             error: error.message
         });
-     }
-}
+    }
+};
 
 exports.updateFoilCard = async(req,res)=>{
 
@@ -71,7 +85,7 @@ exports.getApprovedFacultyAllocationData = async (req, res) => {
             let course = acc.find(c => c.courseId === courseId);
             if (!course) {
                 course = {
-                    allocationId,
+                    
                     courseId,
                     courseCode,
                     faculties: []
@@ -86,6 +100,7 @@ exports.getApprovedFacultyAllocationData = async (req, res) => {
                     facultyId,
                     facultyCode,
                     facultyName,
+                    allocationId,
                     paperCount
                 });
             }
@@ -109,3 +124,44 @@ exports.getApprovedFacultyAllocationData = async (req, res) => {
         });
     }
 };
+
+exports.getFoilCardByMappingId = async(req,res)=>{
+    const {mappingId} = req.query;
+     console.log("sending foil cards")
+    // Validate query parameters
+    if (!mappingId) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Mapping ID is required.' 
+        });
+    }
+
+    try {
+        // Query to fetch foil card numbers
+        const query = `
+            SELECT 
+                fc.foil_card_number
+            FROM foil_card fc
+            JOIN faculty_paper_allocation fpa ON fc.faculty_paper_allocation = fpa.id
+            WHERE fpa.id =?
+        `;
+
+        // Execute the query
+        const [rows] = await db.query(query, [mappingId]);
+
+        // Send the response
+        res.json({
+            success: true,
+            data: rows,
+            message: 'Data fetched successfully.'
+        });
+    } catch (error) {
+        // Handle errors
+        console.error('Error fetching data:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message
+        });
+    }
+}

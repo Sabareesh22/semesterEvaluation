@@ -2,53 +2,70 @@ import { TextField } from "@mui/material";
 import Circle from "../../../components/circle/Circle";
 import "./foilCardEntryTable.css";
 import { useEffect, useState } from "react";
-
-const FoilCardEntryTable = () => {
-  const [data, setData] = useState([
-    {
-      allocationId: 309,
-      courseId: 30,
-      courseCode: "18CS608",
-      faculties: [
-        {
-          facultyId: 78,
-          facultyCode: "CS10907",
-          facultyName: "Dr S.S RAJASEKAR",
-          paperCount: 100,
-        },
-        {
-          facultyId: 61,
-          facultyCode: "CS10025",
-          facultyName: "Mr P.S DINESH",
-          paperCount: 75,
-        },
-        {
-          facultyId: 57,
-          facultyCode: "CS1906",
-          facultyName: "Ms R.RAMYA",
-          paperCount: 14,
-        },
-      ],
-    },
-  ]);
+import Button from "../../../components/button/Button";
+import axios from "axios";
+import apiHost from "../../../../config/config";
+import { toast, ToastContainer } from "react-toastify";
+import { useCookies } from "react-cookie";
+import Label from "./../../../components/label/Label";
+const FoilCardEntryTable = ({ data }) => {
+  const [cookies, setCookie] = useCookies(["auth"]);
 
   const [selectedCircleData, setSelectedCircleData] = useState({});
-
+  const labelColors = ["#D2E0FB", "#F2C18D", "#EFBC9B", "#BED1CF"];
   const [circleActiveState, setCircleActiveState] = useState(() =>
     data.map((eachData) =>
       eachData.faculties.map((faculty) =>
         Array(Math.ceil(faculty.paperCount / 25)).fill(false)
       )
     )
-  );
+  ); 
 
-  const [foilCardNumbers, setFoilCardNumbers] = useState(() =>
-    data.map((eachData) =>
-      eachData.faculties.map((faculty) =>
-        Array(Math.ceil(faculty.paperCount / 25)).fill("hi")
-      )
-    )
-  );
+  const [foilCardNumbers, setFoilCardNumbers] = useState([]);
+
+  useEffect(() => {
+    const fetchFoilCardNumbers = async () => {
+      const newFoilCardNumbers = await Promise.all(
+        data.map(async (eachData) => {
+          return Promise.all(
+            eachData.faculties.map(async (faculty) => {
+              try {
+                const response = await axios.get(`${apiHost}/api/foilCardByMappingId`, {
+                  params: { mappingId: faculty.allocationId },
+                  headers: { Auth: cookies.auth },
+                });
+  
+                let foilCards = response?.data?.data[0]?.foil_card_number.split(',');
+                if(!foilCards){
+                  foilCards = [];
+                }
+                console.log(foilCards) 
+                let returnArray = Array(Math.ceil(faculty.paperCount / 25));
+                for (let index = 0; index < returnArray.length; index++) {
+                  returnArray[index] = foilCards[index] || '';
+                  console.log(returnArray[index])
+                }
+                
+               return returnArray;
+              } catch (error) {
+                console.error("Error fetching foil cards:", error);
+                return []; // Return an empty array on error
+              }
+            })
+          );
+        })
+      );
+  
+      // Flatten the nested arrays (if needed) and set the state
+      setFoilCardNumbers(newFoilCardNumbers);
+    };
+  
+    fetchFoilCardNumbers();
+  }, [data , cookies.auth]); // Include dependencies like `data` and `cookies.auth`
+  
+  useEffect(()=>{
+   console.log(foilCardNumbers)
+  },[foilCardNumbers])
 
   useEffect(() => {
     const updatedState = data.map((eachData) =>
@@ -58,6 +75,40 @@ const FoilCardEntryTable = () => {
     );
     setCircleActiveState(updatedState);
   }, [data]);
+
+  const handleFoilCardsPost = (index, facultyIndex) => {
+    const allocationId = data[index].faculties[facultyIndex].allocationId;
+
+    let containsEmpty = false;
+    foilCardNumbers?.[index]?.[facultyIndex].forEach((card) => {
+      if (card.trim() === "") {
+        containsEmpty = true;
+      }
+    });
+    if (containsEmpty) {
+      toast.error("Please enter all foil card numbers.");
+      return;
+    }
+    const foilCards = foilCardNumbers?.[index]?.[facultyIndex].join(",");
+    axios
+      .post(
+        `${apiHost}/api/addFoilCard`,
+        {
+          allocationId,
+          foilCard: foilCards,
+        },
+        {
+          headers: {
+            Auth: cookies.auth,
+          },
+        }
+      )
+      .then((response) => {
+        toast.success(
+          response.data.message || "Foil Cards added successfully."
+        );
+      });
+  };
 
   const handleCircleClick = (index, facultyIndex, circleIndex) => {
     setCircleActiveState((prevState) => {
@@ -121,34 +172,55 @@ const FoilCardEntryTable = () => {
                       />
                     ))}
                   </div>
-                  <TextField
-                    value={
-                      foilCardNumbers[index]?.[facultyIndex]?.[
-                        selectedCircleData.circleIndex
-                      ]
-                    }
-                    onChange={(e) => {
-                      setFoilCardNumbers((prevState) => {
-                        return prevState.map((item, i) =>
-                          item.map((faculty, j) =>
-                            j === facultyIndex
-                              ? faculty.map((_, k) =>
-                                  i === index &&
-                                  k === selectedCircleData.circleIndex
-                                    ? e.target.value
-                                    : faculty[k]
-                                )
-                              : faculty
-                          )
+                  <div className="FoilCardLabelContainer">
+                    {foilCardNumbers?.[index]?.[facultyIndex]?.map(
+                      (circle, i) => {
+                        return (
+                          <Label
+                            backgroundColor={labelColors[i]}
+                            content={circle}
+                          ></Label>
                         );
-                      });
-                    }}
-                    disabled={
-                      selectedCircleData.index !== index ||
-                      selectedCircleData.facultyIndex !== facultyIndex
-                    }
-                    size="small"
-                  />
+                      }
+                    )}
+                  </div>
+                  <div className="foilNoContainer">
+                    <TextField
+                      value={
+                        foilCardNumbers?.[index]?.[facultyIndex]?.[
+                          selectedCircleData.circleIndex
+                        ]
+                      }
+                      onChange={(e) => {
+                        setFoilCardNumbers((prevState) => {
+                          return prevState.map((item, i) =>
+                            item.map((faculty, j) =>
+                              j === facultyIndex
+                                ? faculty.map((_, k) =>
+                                    i === index &&
+                                    k === selectedCircleData.circleIndex
+                                      ? e.target.value
+                                      : faculty[k]
+                                  )
+                                : faculty
+                            )
+                          );
+                        });
+                      }}
+                      disabled={
+                        selectedCircleData.index !== index ||
+                        selectedCircleData.facultyIndex !== facultyIndex
+                      }
+                      size="small"
+                    />
+                    <Button
+                      size={"small"}
+                      onClick={() => {
+                        handleFoilCardsPost(index, facultyIndex);
+                      }}
+                      label={"Post"}
+                    />
+                  </div>
                 </div>
               </td>
             </tr>
