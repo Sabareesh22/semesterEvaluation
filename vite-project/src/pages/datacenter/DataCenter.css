@@ -1,5 +1,12 @@
+.masterDataCenterContainer{
+    height: 90%;
+}
 .dataCenterContainer{
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    /* background-color: green; */
 }
 .dataCenterGrid{
     display: grid;
@@ -10,31 +17,48 @@
     height:230px;
 }
 .dcCardPageContainer{
-    background: rgba( 255, 255, 255, 0.25 );
-box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
-backdrop-filter: blur( 100px );
+    background: rgba(139, 135, 255, 0.25);
+backdrop-filter: blur( 4px );
 -webkit-backdrop-filter: blur( 4px );
 border-radius: 10px;
-border: 1px solid rgba( 255, 255, 255, 0.18 );
-    height: 100vh;
-    position: relative;
+border-radius: 10px;
+    height: 100%;
+    width: 100%;
     padding: 20px;
-    left: 50%;
-    border-radius: 20px;
-  top: 50%;
-  transform: translate(-50%, -27%);
+    border-radius:0px 20px 20px 20px;
 }
 .dcClickedCloseButtonContainer{
     display: flex;
     width: 100%;
     justify-content: flex-end;
 }
+
+    
+.actualContent{
+    height: 100%;
+}
+
+.dataCenterGrid.active{
+    grid-template-columns: 25% 75%;
+}
+
+.dcSelectContainer{
+    display: flex;
+    width: 100%;
+    background-color: red;
+}
+
+.dcSelectContainer>div{
+    flex: 1;
+}
+
 @media screen and (max-width:1399px) {
     .dataCenterGrid{
         grid-template-columns: 50% 50%;
         
     }
-    /* .dcCardPageContainer{
-        transform: translate(-50%, -100%);
-    } */
+    .dataCenterGrid.active{
+        grid-template-columns: 50% 50%;
+    }
+
 }

@@ -96,7 +96,7 @@ function Layout({ title, userDetails, loading, setLoading }) {
                         </div>
                     </div>
                 </div>
-                <div>
+                <div className="actualContent">
                     {loading && <Loading />}
                     <Outlet />
                 </div>

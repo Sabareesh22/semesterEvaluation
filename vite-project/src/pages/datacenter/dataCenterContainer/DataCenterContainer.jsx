@@ -4,11 +4,14 @@ import Card from "../../../components/card/Card";
 import "./DataCenterContainer.css";
 import { useState } from "react";
 
-const DataCenterContainer = ({title}) => {
+const DataCenterContainer = ({title,backgroundColor}) => {
     
   return (
     <div className="dataCenterContainer">
       <Card
+      styles={{
+        backgroundColor:backgroundColor
+      }}
         content={
           <div className="masterDcCard">
             
