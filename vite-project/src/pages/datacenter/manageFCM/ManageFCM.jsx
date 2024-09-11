@@ -5,13 +5,13 @@ import { useEffect, useState } from "react";
 import apiHost from "../../../../config/config";
 import axios from "axios";
 import { useCookies } from "react-cookie";
-import { ChangeCircle, Delete } from "@mui/icons-material";
+import { Cancel, ChangeCircle, Check, Delete } from "@mui/icons-material";
 const ManageFCM = () => {
   const [fcmTableData, setFcmTableData] = useState([]);
   const [cookies, setCookie] = useCookies(["auth"]);
   const [filteredFCMTableData, setFilteredFCMTableData] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
-
+  const [isReplacingState, setIsReplacingState] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -25,6 +25,18 @@ const ManageFCM = () => {
         setFcmTableData(response.data);
       });
   }, [cookies.auth]);
+
+  const initializeReplaceStates = () => {
+    setIsReplacingState(
+      filteredFCMTableData.map((data, i) => {
+        return false;
+      })
+    );
+  };
+
+  useEffect(() => {
+    initializeReplaceStates();
+  }, [filteredFCMTableData]);
 
   useEffect(() => {
     axios
@@ -111,7 +123,30 @@ const ManageFCM = () => {
                   <td>{data.department}</td>
                   <td>
                     <div className="fcmEditCoursesContainer">
-                      {data.courseCode} <ChangeCircle /> <Delete />
+                      {isReplacingState[i]?<Select/>:<div>{data.courseCode}</div>}
+                      {<div>
+                        {isReplacingState[i]?
+                        <Cancel
+                        onClick ={()=>{
+                          setIsReplacingState((prev)=>{
+                            const newPrev = [...prev]
+                            newPrev[i] = false
+                            return newPrev
+                          })
+                        }}
+                        />:
+                        <ChangeCircle onClick ={()=>{
+                          setIsReplacingState((prev)=>{
+                            const newPrev = [...prev]
+                            newPrev[i] = true
+                            return newPrev
+                          })
+                        }} />} {
+                           isReplacingState[i]?
+                           <Check/>:
+                          <Delete />
+                          }
+                      </div>}
                     </div>
                   </td>
                 </tr>

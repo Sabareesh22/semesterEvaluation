@@ -15,5 +15,10 @@
 }
 .fcmEditCoursesContainer{
     display: flex;
-    gap: 10px;
+    align-items: center;
+}
+
+.fcmEditCoursesContainer>div{
+    flex: 1;
+    display: flex;
 }
