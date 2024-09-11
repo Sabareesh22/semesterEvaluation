@@ -1,0 +1,40 @@
+.dataCenterContainer{
+    padding: 20px;
+}
+.dataCenterGrid{
+    display: grid;
+    grid-template-columns: 25% 25% 25% 25%;
+    
+}
+.grid-item{
+    height:230px;
+}
+.dcCardPageContainer{
+    background: rgba( 255, 255, 255, 0.25 );
+box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
+backdrop-filter: blur( 100px );
+-webkit-backdrop-filter: blur( 4px );
+border-radius: 10px;
+border: 1px solid rgba( 255, 255, 255, 0.18 );
+    height: 100vh;
+    position: relative;
+    padding: 20px;
+    left: 50%;
+    border-radius: 20px;
+  top: 50%;
+  transform: translate(-50%, -27%);
+}
+.dcClickedCloseButtonContainer{
+    display: flex;
+    width: 100%;
+    justify-content: flex-end;
+}
+@media screen and (max-width:1399px) {
+    .dataCenterGrid{
+        grid-template-columns: 50% 50%;
+        
+    }
+    /* .dcCardPageContainer{
+        transform: translate(-50%, -100%);
+    } */
+}

@@ -19,3 +19,11 @@
     gap: 10px;
     font-size: 14px;
 }
+.paginationFoil{
+    display: flex;
+    justify-content: center;
+}
+
+.foilCardEntryTable{
+    overflow: scroll;
+}

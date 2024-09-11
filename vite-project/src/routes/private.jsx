@@ -7,6 +7,7 @@ import COEpage from "../pages/coePage/COEpage";
 import ReportDownloadPage from "../pages/report/ReportDownloadPage"
 import FoilCard from "../pages/foilCard/FoilCard";
 import ManageFaculty from "../pages/manageFaculty/ManageFaculty";
+import DataCenter from "../pages/datacenter/DataCenter";
 export const privateRoutes =(setTitle)=> [
     
 
@@ -58,6 +59,11 @@ export const privateRoutes =(setTitle)=> [
     {
         path:'changerequests',
         element:<FacultyChangeRequests setTitle={setTitle}/>,
+        authorizedRole:"coe"
+    },
+    {
+        path:'datacenter',
+        element:<DataCenter setTitle={setTitle}/>,
         authorizedRole:"coe"
     }
 ]

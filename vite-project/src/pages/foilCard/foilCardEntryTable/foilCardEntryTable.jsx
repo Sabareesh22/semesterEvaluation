@@ -1,4 +1,4 @@
-import { TextField } from "@mui/material";
+import { Pagination, TextField } from "@mui/material";
 import Circle from "../../../components/circle/Circle";
 import "./foilCardEntryTable.css";
 import { useEffect, useState } from "react";
@@ -8,12 +8,14 @@ import apiHost from "../../../../config/config";
 import { toast, ToastContainer } from "react-toastify";
 import { useCookies } from "react-cookie";
 import Label from "./../../../components/label/Label";
+import NoData from "../../../components/noData/NoData";
 const FoilCardEntryTable = ({ data }) => {
   const [cookies, setCookie] = useCookies(["auth"]);
 
   const [selectedCircleData, setSelectedCircleData] = useState({});
   const labelColors = ["#D2E0FB", "#F2C18D", "#EFBC9B", "#BED1CF"];
   const [circleActiveState, setCircleActiveState] = useState(() =>
+    
     data.map((eachData) =>
       eachData.faculties.map((faculty) =>
         Array(Math.ceil(faculty.paperCount / 25)).fill(false)
@@ -21,9 +23,12 @@ const FoilCardEntryTable = ({ data }) => {
     )
   ); 
 
+  const [currentPage, setCurrentPage] = useState(0);
+  
   const [foilCardNumbers, setFoilCardNumbers] = useState([]);
 
   useEffect(() => {
+    console.log(data)
     const fetchFoilCardNumbers = async () => {
       const newFoilCardNumbers = await Promise.all(
         data.map(async (eachData) => {
@@ -130,104 +135,114 @@ const FoilCardEntryTable = ({ data }) => {
   };
 
   return (
-    <table className="foilCardEntryTable">
-      <thead>
-        <tr>
-          <th>S. No.</th>
-          <th>Course Code</th>
-          <th>Faculty Name</th>
-          <th>Paper Count</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((item, index) =>
-          item.faculties.map((faculty, facultyIndex) => (
-            <tr key={`${index}-${facultyIndex}`}>
-              {facultyIndex === 0 && (
-                <>
-                  <td rowSpan={item.faculties.length}>{index + 1}</td>
-                  <td rowSpan={item.faculties.length}>{item.courseCode}</td>
-                </>
-              )}
-              <td>{faculty.facultyName}</td>
-              <td>{faculty.paperCount}</td>
-              <td>
-                <div className="masterEntryContainer">
-                  <div className="circlesContainer">
-                    {Array.from({
-                      length: Math.ceil(faculty.paperCount / 25),
-                    }).map((_, i) => (
-                      <Circle
-                        key={i}
-                        onClick={() =>
-                          handleCircleClick(index, facultyIndex, i)
-                        }
-                        color={
-                          circleActiveState[index]?.[facultyIndex]?.[i]
-                            ? "blue"
-                            : "grey"
-                        }
-                        text={i + 1}
-                      />
-                    ))}
-                  </div>
-                  <div className="FoilCardLabelContainer">
-                    {foilCardNumbers?.[index]?.[facultyIndex]?.map(
-                      (circle, i) => {
-                        return (
-                          <Label
-                            backgroundColor={labelColors[i]}
-                            content={circle}
-                          ></Label>
-                        );
-                      }
-                    )}
-                  </div>
-                  <div className="foilNoContainer">
-                    <TextField
-                      value={
-                        foilCardNumbers?.[index]?.[facultyIndex]?.[
-                          selectedCircleData.circleIndex
-                        ]
-                      }
-                      onChange={(e) => {
-                        setFoilCardNumbers((prevState) => {
-                          return prevState.map((item, i) =>
-                            item.map((faculty, j) =>
-                              j === facultyIndex
-                                ? faculty.map((_, k) =>
-                                    i === index &&
-                                    k === selectedCircleData.circleIndex
-                                      ? e.target.value
-                                      : faculty[k]
-                                  )
-                                : faculty
-                            )
+    data?.length>0 ?
+    <div  className="foilCardEntryTable">
+      <table>
+        <thead>
+          <tr>
+            <th>S. No.</th>
+            <th>Course Code</th>
+            <th>Faculty Name</th>
+            <th>Paper Count</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((item, index) =>
+           index==currentPage&& item.faculties.map((faculty, facultyIndex) => (
+              <tr key={`${index}-${facultyIndex}`}>
+                {facultyIndex === 0 && (
+                  <>
+                    <td rowSpan={item.faculties.length}>{index + 1}</td>
+                    <td rowSpan={item.faculties.length}>{item.courseCode}</td>
+                  </>
+                )}
+                <td>{faculty.facultyName}</td>
+                <td>{faculty.paperCount}</td>
+                <td>
+                  <div className="masterEntryContainer">
+                    <div className="circlesContainer">
+                      {Array.from({
+                        length: Math.ceil(faculty.paperCount / 25),
+                      }).map((_, i) => (
+                        <Circle
+                          key={i}
+                          onClick={() =>
+                            handleCircleClick(index, facultyIndex, i)
+                          }
+                          color={
+                            circleActiveState[index]?.[facultyIndex]?.[i]
+                              ? "blue"
+                              : "grey"
+                          }
+                          text={i + 1}
+                        />
+                      ))}
+                    </div>
+                    <div className="FoilCardLabelContainer">
+                      {foilCardNumbers?.[index]?.[facultyIndex]?.map(
+                        (circle, i) => {
+                          return (
+                            <Label
+                              backgroundColor={labelColors[i]}
+                              content={circle}
+                            ></Label>
                           );
-                        });
-                      }}
-                      disabled={
-                        selectedCircleData.index !== index ||
-                        selectedCircleData.facultyIndex !== facultyIndex
-                      }
-                      size="small"
-                    />
-                    <Button
-                      size={"small"}
-                      onClick={() => {
-                        handleFoilCardsPost(index, facultyIndex);
-                      }}
-                      label={"Post"}
-                    />
+                        }
+                      )}
+                    </div>
+                    <div className="foilNoContainer">
+                      <TextField
+                        value={
+                          foilCardNumbers?.[index]?.[facultyIndex]?.[
+                            selectedCircleData.circleIndex
+                          ]
+                        }
+                        onChange={(e) => {
+                          setFoilCardNumbers((prevState) => {
+                            return prevState.map((item, i) =>
+                              item.map((faculty, j) =>
+                                j === facultyIndex
+                                  ? faculty.map((_, k) =>
+                                      i === index &&
+                                      k === selectedCircleData.circleIndex
+                                        ? e.target.value
+                                        : faculty[k]
+                                    )
+                                  : faculty
+                              )
+                            );
+                          });
+                        }}
+                        disabled={
+                          selectedCircleData.index !== index ||
+                          selectedCircleData.facultyIndex !== facultyIndex
+                        }
+                        size="small"
+                      />
+                      <Button
+                        size={"small"}
+                        onClick={() => {
+                          handleFoilCardsPost(index, facultyIndex);
+                        }}
+                        label={"Post"}
+                      />
+                    </div>
                   </div>
-                </div>
-              </td>
-            </tr>
-          ))
-        )}
-      </tbody>
-    </table>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+        <tbody>
+        <td align="center" colSpan={5}>
+          <div className="paginationFoil">
+            <Pagination  onChange={(_,page)=>{setCurrentPage(page-1)}} count={data.length} />
+          </div>
+        </td>
+        </tbody>
+      </table>
+    </div>:<NoData/>
   );
 };
 

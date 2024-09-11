@@ -8,3 +8,4 @@ export default function Circle({ color = 'grey', text = '' ,onClick}) {
         </div>
     );
 }
+  

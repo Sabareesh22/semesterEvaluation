@@ -1,0 +1,39 @@
+.dcContainerHeading{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+.dcIconContainer{
+    display: flex;
+    align-items: center;
+    
+    gap:10px;
+}
+.masterDcIconContainer{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.dcEditAddButtonContainer{
+    display: flex;
+    gap: 10px;
+}
+.masterDcCard{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+.dcUploadExcelContainer{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.dataCenterContainer{
+    height: 100%;
+}
+.dataCenterContainer:hover{
+    cursor: pointer;
+}
