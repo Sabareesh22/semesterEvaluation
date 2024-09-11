@@ -6,7 +6,6 @@ import Dashboard from "../pages/dashboard/Dashboard";
 import COEpage from "../pages/coePage/COEpage";
 import ReportDownloadPage from "../pages/report/ReportDownloadPage"
 import FoilCard from "../pages/foilCard/FoilCard";
-import ManageFaculty from "../pages/manageFaculty/ManageFaculty";
 import DataCenter from "../pages/datacenter/DataCenter";
 export const privateRoutes =(setTitle)=> [
     
@@ -44,11 +43,6 @@ export const privateRoutes =(setTitle)=> [
     {
         path:'createsemcode',
         element:<COEpage setTitle={setTitle}/>,
-        authorizedRole:"coe"
-    },
-    {
-        path:'managefaculty',
-        element:<ManageFaculty setTitle={setTitle}/>,
         authorizedRole:"coe"
     },
     {

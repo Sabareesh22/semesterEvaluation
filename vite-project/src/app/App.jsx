@@ -3,6 +3,7 @@ import { useCookies } from 'react-cookie';
 import { useEffect, useState } from 'react';
 import { decodeToken } from 'react-jwt';
 import { AppRoutes } from '../routes/AppRoutes';
+import './index.css'
 
 
 function App() {

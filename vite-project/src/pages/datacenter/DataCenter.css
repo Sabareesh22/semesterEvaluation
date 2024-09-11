@@ -18,10 +18,12 @@
 }
 .dcCardPageContainer{
     background: rgba(139, 135, 255, 0.25);
-backdrop-filter: blur( 4px );
--webkit-backdrop-filter: blur( 4px );
+/* backdrop-filter: blur( 4px ); */
+/* -webkit-backdrop-filter: blur( 4px ); */
 border-radius: 10px;
 border-radius: 10px;
+position: relative;
+
     height: 100%;
     width: 100%;
     padding: 20px;
@@ -30,7 +32,7 @@ border-radius: 10px;
 .dcClickedCloseButtonContainer{
     display: flex;
     width: 100%;
-    justify-content: flex-end;
+    justify-content: space-around;
 }
 
     
@@ -51,6 +53,18 @@ border-radius: 10px;
 .dcSelectContainer>div{
     flex: 1;
 }
+
+.dcPageComponentContainer{
+    overflow: scroll;
+    height: 100%;
+}
+.floatingCloseButton{
+    position: absolute;
+    z-index: 500;
+    right:0;
+    top: 0; 
+}
+
 
 @media screen and (max-width:1399px) {
     .dataCenterGrid{

@@ -10,6 +10,7 @@ background: linear-gradient(to right, #13122b, #000000); /* W3C, IE 10+/ Edge, F
   overflow-y:scroll;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+  
 }
 
 

@@ -100,9 +100,6 @@ const handleLogout = ()=>{
      <Link to="dashboard" onClick={closeMobileMenu}>
          <div className="submenuItem"><Dashboard className="icon" /> Dashboard</div>
        </Link>
-       <Link to="managefaculty" onClick={closeMobileMenu}>
-         <div className="submenuItem"><ManageAccounts className="icon" /> Manage Faculty</div>
-       </Link>
        <Link to="createsemcode" onClick={closeMobileMenu}>
          <div className="submenuItem"><Assignment className="icon" /> Create Evaluation</div>
        </Link>

@@ -1,7 +1,7 @@
 import { useCookies } from "react-cookie";
 import "./ManageFaculty.css";
 import axios from "axios";
-import apiHost from "../../../config/config";
+import apiHost from "../../../../config/config";
 import { useEffect, useState } from "react";
 import Select from "react-select";
 import { TextField } from "@mui/material";
@@ -14,51 +14,56 @@ const ManageFaculty = (props) => {
   const [filteredManageFacultyData, setFilteredManageFacultyData] = useState(
     []
   );
-  const [manageFacultyData, setManageFacultyData] = useState([ ]);
+  const [manageFacultyData, setManageFacultyData] = useState([]);
   const [actionOptions, setActionOptions] = useState([
     {
-      value: '1',
+      value: "1",
       label: "Active",
     },
     {
-      value: '0',
+      value: "0",
       label: "Inactive",
     },
   ]);
-  
-useEffect(()=>{
-  props.setTitle("Manage Faculty")
-},[])
 
-  useEffect(()=>{
-    axios.get(`${apiHost}/api/faculty`,{
+  // useEffect(()=>{
+  //   props.setTitle("Manage Faculty")
+  // },[])
+
+  useEffect(() => {
+    axios
+      .get(`${apiHost}/api/faculty`, {
         headers: {
           Auth: cookies.auth,
         },
-  
-    }).then((response)=>{
-        console.log(response.data)
-        setManageFacultyData(response.data)
-    })
+      })
+      .then((response) => {
+        console.log(response.data);
+        setManageFacultyData(response.data);
+      });
+  }, []);
 
-  },[])
-
-  const changeFacultyState = (id,status)=>{
-    axios.put(`${apiHost}/api/faculty/${id}`,{
-      status: status,
-
-    },{
-      headers: {
-        Auth: cookies.auth,
-      },
-    }).then((response)=>{
-      console.log(response.data)
-      const updatedFacultyData = manageFacultyData.map((faculty) =>
-        faculty.id === id? {...faculty, status: status } : faculty
-      );
-      setManageFacultyData(updatedFacultyData)
-    })
-  }
+  const changeFacultyState = (id, status) => {
+    axios
+      .put(
+        `${apiHost}/api/faculty/${id}`,
+        {
+          status: status,
+        },
+        {
+          headers: {
+            Auth: cookies.auth,
+          },
+        }
+      )
+      .then((response) => {
+        console.log(response.data);
+        const updatedFacultyData = manageFacultyData.map((faculty) =>
+          faculty.id === id ? { ...faculty, status: status } : faculty
+        );
+        setManageFacultyData(updatedFacultyData);
+      });
+  };
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -82,12 +87,10 @@ useEffect(()=>{
   }, [cookies.auth]);
   useEffect(() => {
     setFilteredManageFacultyData(
-      manageFacultyData.filter((faculty) => {
+      manageFacultyData?.filter((faculty) => {
         const matchesSearchQuery =
           faculty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          faculty.faculty_id
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase());
+          faculty.faculty_id.toLowerCase().includes(searchQuery.toLowerCase());
 
         const matchesDepartment =
           departmentId && faculty.department === departmentId.value;
@@ -109,7 +112,7 @@ useEffect(()=>{
         );
       })
     );
-  }, [searchQuery,manageFacultyData, departmentId, filterState]);
+  }, [searchQuery, manageFacultyData, departmentId, filterState]);
   return (
     <div className="manageFacultyMasterContainer">
       <div
@@ -127,7 +130,7 @@ useEffect(()=>{
           <TextField
             sx={{ backgroundColor: "white" }}
             onChange={(e) => {
-              setSearchQuery(e.target.value);
+              setSearchQuery((e.target.value.trim()));
             }}
             size="small"
             placeholder="Search"
@@ -169,13 +172,20 @@ useEffect(()=>{
                 <td>{index + 1}</td>
                 <td>{faculty.name}</td>
                 <td>{faculty.faculty_id}</td>
-                <td>{departments.find((data)=>(data.value===faculty.department)).label}</td>
+                <td>
+                  {departments &&
+                    departments?.find(
+                      (data) => data.value === faculty.department
+                    )?.label}
+                </td>
                 <td>
                   <Select
                     value={actionOptions.find(
                       (data) => data.value === faculty.status
                     )}
-                    onChange={(value)=>{changeFacultyState(faculty.id, value.value)}}
+                    onChange={(value) => {
+                      changeFacultyState(faculty.id, value.value);
+                    }}
                     options={actionOptions}
                   />
                 </td>
