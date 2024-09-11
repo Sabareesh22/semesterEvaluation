@@ -5,7 +5,7 @@ import DataCenterContainer from "./dataCenterContainer/DataCenterContainer";
 import Button from "../../components/button/Button";
 import Select from "react-select";
 import ManageFaculty from "./manageFaculty/ManageFaculty";
-import { Close } from "@mui/icons-material";
+import { Close, Upload } from "@mui/icons-material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ManageBoard from "./manageBoard/ManageBoard";
 import ManageFCM from "./manageFCM/ManageFCM";
@@ -15,7 +15,6 @@ const DataCenter = ({ setTitle }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeIndex, setActiveIndex] = useState(null);
-
   useEffect(() => {
     setTitle("Data Center");
   }, [setTitle]);
@@ -26,10 +25,9 @@ const DataCenter = ({ setTitle }) => {
   }, [searchParams]);
 
   const [cardData] = useState([
-    { title: "Manage Faculty", component: <ManageFaculty /> },
-    { title: "Manage Board" , component:<ManageBoard/> },
-    { title: "Manage FCM" ,component:<ManageFCM/>},
-    { title: "Manage Board Courses",component:<ManageBoardCourses/> },
+    { title: "Faculty", component: <ManageFaculty /> },
+    { title: "FCM" ,component:<ManageFCM />},
+    { title: "Board Courses",component:<ManageBoardCourses/> },
   ]);
 
   const handleCardClick = (index) => {
@@ -94,7 +92,9 @@ const DataCenter = ({ setTitle }) => {
                   <Card
                     content={
                       <div className="dcClickedCloseButtonContainer">
-                        <h4>No Actions Selected</h4>
+                                    <div className="dcUploadExcelContainer">
+            <Button size={"small"} label={<div className="dcIconContainer"><Upload/> Upload Excel</div>}/>
+            </div>
                       </div>
                     }
                   />

@@ -62,7 +62,7 @@ function Layout({ title, userDetails, loading, setLoading }) {
                 <Sidebar setIsOpen={setIsOpen} setLoading={setLoading} />
             </div>
             <div className="layoutContent">
-                <div className="layoutHeader">
+                <div  className="layoutHeader">
                     <div className="burgerAndTitle">
                     <div onClick={handleBurgerClick} className="burgerMenu">
                         <MenuOutlined />
@@ -81,7 +81,7 @@ function Layout({ title, userDetails, loading, setLoading }) {
                                             <img onClick={() => { setIsProfileMenuOpen((prev) => (!prev)) }}
                                                 style={{ borderRadius: "100px", height: "2.25rem" }}
                                                 src={userDetails?.picture}
-                                                alt="Profile"
+                                           
                                             />
                                         ) : (
                                             <AccountCircle sx={{ fontSize: "50px" }} />

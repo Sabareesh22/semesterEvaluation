@@ -7,7 +7,6 @@
 
 .layoutContent{
 
-    
     flex:1;
     overflow-y:scroll;
     scrollbar-width:none;
@@ -17,7 +16,6 @@
 
 .layoutHeader{
     background: linear-gradient(to right, #363786,#13122b);
-    
     position: sticky;
     top:0;
     z-index: 100;
@@ -46,6 +44,7 @@
 .profileMenu {
     position: relative;
     top:30px;
+    pointer-events: none;
     min-width: 200px;
     display: flex;
     flex-direction: column;
@@ -59,6 +58,9 @@
     box-shadow: none;
     transition: all 0.3s ease;
 }
+.layoutHeader:hover .profileMenu{
+    pointer-events: all;
+}
 
 .burgerAndTitle{
     display: flex;
@@ -70,6 +72,7 @@
     /* From https://css.glass */
 background: rgba(255, 255, 255, 0.2);
 border-radius: 16px;
+pointer-events:all;
 box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 backdrop-filter: blur(5px);
 -webkit-backdrop-filter: blur(5px);
@@ -89,6 +92,7 @@ border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .profileDetails.active{
+    
     justify-content:space-around;
 }
 
@@ -123,6 +127,7 @@ border: 1px solid rgba(255, 255, 255, 0.3);
 
 .profileOptions.visible {
     opacity: 1;
+    
     width: 100%;
     border-radius: 10px;
     font-weight: bold;

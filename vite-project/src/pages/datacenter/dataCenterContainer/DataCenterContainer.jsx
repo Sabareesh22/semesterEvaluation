@@ -23,9 +23,7 @@ const DataCenterContainer = ({title,backgroundColor}) => {
                 <Button size={"small"} label={<div className="dcIconContainer"><Edit/> Edit</div>}/>
                 <Button size={"small"} label={<div className="dcIconContainer"><Add/> Add</div>}/>
             </div>
-            <div className="dcUploadExcelContainer">
-            <Button size={"small"} label={<div className="dcIconContainer"><Upload/> Upload Excel</div>}/>
-            </div>
+
             </div>
            
           </div>

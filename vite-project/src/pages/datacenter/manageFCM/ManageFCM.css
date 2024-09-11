@@ -1,0 +1,19 @@
+.fcmSelectContainer{
+    display: flex;
+    gap: 10px;
+}
+.fcmPageContainer{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+}
+.fcmTableContainer{
+
+    height: 100%;
+    overflow: scroll;
+}
+.fcmEditCoursesContainer{
+    display: flex;
+    gap: 10px;
+}
