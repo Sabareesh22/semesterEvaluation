@@ -4,7 +4,7 @@ import Card from "../../../components/card/Card";
 import "./DataCenterContainer.css";
 import { useState } from "react";
 
-const DataCenterContainer = ({title,backgroundColor}) => {
+const DataCenterContainer = ({title,backgroundColor,onAdd}) => {
     
   return (
     <div className="dataCenterContainer">
@@ -21,7 +21,7 @@ const DataCenterContainer = ({title,backgroundColor}) => {
             <div className="masterDcIconContainer">
             <div className="dcEditAddButtonContainer">
                 <Button size={"small"} label={<div className="dcIconContainer"><Edit/> Edit</div>}/>
-                <Button size={"small"} label={<div className="dcIconContainer"><Add/> Add</div>}/>
+                <Button size={"small"} onClick={onAdd} label={<div className="dcIconContainer"><Add/> Add</div>}/>
             </div>
 
             </div>

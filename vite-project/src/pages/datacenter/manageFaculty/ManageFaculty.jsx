@@ -4,6 +4,7 @@ import axios from "axios";
 import apiHost from "../../../../config/config";
 import { useEffect, useState } from "react";
 import Select from "react-select";
+import dayjs from "dayjs";
 import { TextField } from "@mui/material";
 const ManageFaculty = (props) => {
   const [departments, setDepartments] = useState([]);
@@ -163,6 +164,9 @@ const ManageFaculty = (props) => {
               <th>Name</th>
               <th>Register Number</th>
               <th>Department</th>
+              <th>Date of Joining</th>
+              <th>Exp in BIT</th>
+              <th>Total Experience</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -172,12 +176,16 @@ const ManageFaculty = (props) => {
                 <td>{index + 1}</td>
                 <td>{faculty.name}</td>
                 <td>{faculty.faculty_id}</td>
+                
                 <td>
                   {departments &&
                     departments?.find(
                       (data) => data.value === faculty.department
                     )?.label}
                 </td>
+                <td>{dayjs(faculty.date_of_joining).format(`DD/MM/YYYY`)}</td>
+                <td>{faculty.experience_in_bit} years</td>
+                <td>{faculty.total_teaching_experience} years</td>
                 <td>
                   <Select
                     value={actionOptions.find(

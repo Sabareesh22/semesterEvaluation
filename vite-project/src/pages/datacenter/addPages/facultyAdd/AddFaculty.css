@@ -1,0 +1,21 @@
+.addFacultyInputContainer{
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    align-items: center;
+    grid-template-rows: max-content;
+    justify-content: center;
+    gap: 10px;
+}
+.addFSaveButton{
+    display: flex;
+    align-items: center;
+    gap:10px;
+    justify-content: center;
+    width: 100%;
+}
+
+@media screen and (max-width:1600px) {
+    .addFacultyInputContainer{
+        grid-template-columns: 100%;
+    }
+}

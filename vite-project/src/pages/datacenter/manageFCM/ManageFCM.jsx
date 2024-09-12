@@ -6,6 +6,7 @@ import apiHost from "../../../../config/config";
 import axios from "axios";
 import { useCookies } from "react-cookie";
 import { Cancel, ChangeCircle, Check, Delete } from "@mui/icons-material";
+import { toast, ToastContainer } from "react-toastify";
 const ManageFCM = () => {
   const [fcmTableData, setFcmTableData] = useState([]);
   const [cookies, setCookie] = useCookies(["auth"]);
@@ -13,8 +14,10 @@ const ManageFCM = () => {
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [isReplacingState, setIsReplacingState] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
+  const [courseReplaceOptions, setCourseReplaceOptions] = useState([]);
+  const [selectedCourseReplaceOptions, setSelectedCourseReplaceOptions] =
+    useState([]);
+  const fetchFcmTableData = () => {
     axios
       .get(`${apiHost}/api/facultyCourseMapping`, {
         headers: {
@@ -24,6 +27,10 @@ const ManageFCM = () => {
       .then((response) => {
         setFcmTableData(response.data);
       });
+  };
+
+  useEffect(() => {
+    fetchFcmTableData();
   }, [cookies.auth]);
 
   const initializeReplaceStates = () => {
@@ -34,8 +41,22 @@ const ManageFCM = () => {
     );
   };
 
+  const initializeCourseReplaceSuggestions = () => {
+    setCourseReplaceOptions(
+      filteredFCMTableData.map((data, i) => {
+        return [];
+      })
+    );
+    setSelectedCourseReplaceOptions(
+      filteredFCMTableData.map((data, i) => {
+        return {};
+      })
+    );
+  };
+
   useEffect(() => {
     initializeReplaceStates();
+    initializeCourseReplaceSuggestions();
   }, [filteredFCMTableData]);
 
   useEffect(() => {
@@ -80,9 +101,45 @@ const ManageFCM = () => {
     );
   };
 
+  const handleChangeCourse = (mappingId, courseId) => {
+    axios
+      .put(
+        `${apiHost}/api/facultyCourseMapping/${Number(mappingId)}`,
+        {
+          course: courseId,
+        },
+        {
+          headers: {
+            auth: cookies.auth,
+          },
+        }
+      )
+      .then((response) => {
+        if (response.status === 200) {
+          toast.success(response.data.message || "successfully updated course");
+          fetchFcmTableData();
+        }
+      });
+  };
+
   useEffect(() => {
     filterData(searchQuery, [true, true, true, true]);
   }, [searchQuery, fcmTableData]);
+
+  const handleDeleteFCM = (mappingId)=>{
+    console.log(mappingId);
+    axios.delete(`${apiHost}/api/facultyCourseMapping/${Number(mappingId)}`,{
+      headers:{
+        auth: cookies.auth,
+      }
+    }).then((response)=>{
+      if(response.status===200){
+        toast.success(response.data.message || "Successfully deleted FCM mapping");
+        fetchFcmTableData();
+      }
+    })
+  }
+
 
   return (
     <div className="fcmPageContainer">
@@ -123,30 +180,86 @@ const ManageFCM = () => {
                   <td>{data.department}</td>
                   <td>
                     <div className="fcmEditCoursesContainer">
-                      {isReplacingState[i]?<Select/>:<div>{data.courseCode}</div>}
-                      {<div>
-                        {isReplacingState[i]?
-                        <Cancel
-                        onClick ={()=>{
-                          setIsReplacingState((prev)=>{
-                            const newPrev = [...prev]
-                            newPrev[i] = false
-                            return newPrev
-                          })
-                        }}
-                        />:
-                        <ChangeCircle onClick ={()=>{
-                          setIsReplacingState((prev)=>{
-                            const newPrev = [...prev]
-                            newPrev[i] = true
-                            return newPrev
-                          })
-                        }} />} {
-                           isReplacingState[i]?
-                           <Check/>:
-                          <Delete />
-                          }
-                      </div>}
+                      {isReplacingState[i] ? (
+                        <Select options={courseReplaceOptions[i]}
+                        onChange={(value)=>{
+                          setSelectedCourseReplaceOptions((prev) => {
+                              const newPrev = [...prev ];
+                              newPrev[i] = value;
+                              return newPrev;
+                            });
+                        }} />
+                      ) : (
+                        <div>{data.courseCode}</div>
+                      )}
+                      {
+                        <div>
+                          {isReplacingState[i] ? (
+                            <Cancel
+                              onClick={() => {
+                                setIsReplacingState((prev) => {
+                                  const newPrev = [...prev];
+                                  newPrev[i] = false;
+                                  return newPrev;
+                                });
+                              }}
+                            />
+                          ) : (
+                            <ChangeCircle
+                              onClick={async () => {
+                                await axios
+                                  .get(
+                                    `${apiHost}/api/facultyCoursesMappingNotMapped/${data.facultyId}`,
+                                    {
+                                      headers: {
+                                        auth: cookies.auth,
+                                      },
+                                    }
+                                  )
+                                  .then((response) => {
+                                    setCourseReplaceOptions((prevReplace) => {
+                                      const newPrevReplace = [...prevReplace];
+                                      newPrevReplace[i] = response.data.map(
+                                        (data) => {
+                                          return {
+                                            value: data.courseId,
+                                            label: data.courseCode,
+                                          };
+                                        }
+                                      );
+                                      return newPrevReplace;
+                                    });
+                                  });
+                                setIsReplacingState((prev) => {
+                                  const newPrev = [...prev];
+                                  newPrev[i] = true;
+                                  return newPrev;
+                                });
+                              }}
+                            />
+                          )}
+
+                          {isReplacingState[i] ? (
+                            <Check
+                              onClick={() => {
+                                handleChangeCourse(
+                                  data.mappingId,
+                                  selectedCourseReplaceOptions[i].value,
+                                );
+                              }}
+                            />
+                          ) : (
+                            <Delete
+                             onClick={
+                             ()=>{
+                              handleDeleteFCM(data.mappingId);
+                             }
+                             }
+                            
+                            />
+                          )}
+                        </div>
+                      }
                     </div>
                   </td>
                 </tr>

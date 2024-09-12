@@ -1,19 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./DataCenter.css";
 import Card from "../../components/card/Card";
 import DataCenterContainer from "./dataCenterContainer/DataCenterContainer";
 import Button from "../../components/button/Button";
 import Select from "react-select";
 import ManageFaculty from "./manageFaculty/ManageFaculty";
-import { Close, Upload } from "@mui/icons-material";
+import { Cancel, Check, Close, Upload } from "@mui/icons-material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ManageBoard from "./manageBoard/ManageBoard";
 import ManageFCM from "./manageFCM/ManageFCM";
+import * as xlsx from "xlsx";
 import ManageBoardCourses from "./manageBoardCourses/ManageBoardCourses";
-
+import { toast, ToastContainer } from "react-toastify";
+import ExcelViewer from "../../components/excelViewer/ExcelViewer";
+import AddFaculty from "./addPages/facultyAdd/AddFaculty";
+import AddFacultyCourse from "./addPages/facultyCourseAdd/AddFacultyCourse";
+import AddBoardCourses from "./addPages/boardCourseAdd/AddBoardCourses";
 const DataCenter = ({ setTitle }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const inputRef = useRef(null);
+  const [isAdding,setIsAdding] = useState(false)
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const uploadIconRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(null);
   useEffect(() => {
     setTitle("Data Center");
@@ -25,17 +34,24 @@ const DataCenter = ({ setTitle }) => {
   }, [searchParams]);
 
   const [cardData] = useState([
-    { title: "Faculty", component: <ManageFaculty /> },
-    { title: "FCM" ,component:<ManageFCM />},
-    { title: "Board Courses",component:<ManageBoardCourses/> },
+    { title: "Faculty", component: <ManageFaculty />,addComponent:<AddFaculty setIsAdding = {setIsAdding}/> },
+    { title: "FCM", component: <ManageFCM /> ,addComponent:<AddFacultyCourse setIsAdding = {setIsAdding}/>},
+    { title: "Board Courses", component: <ManageBoardCourses />,addComponent:<AddBoardCourses setIsAdding = {setIsAdding}/> },
   ]);
 
   const handleCardClick = (index) => {
     setSearchParams({ activeIndex: index });
   };
 
+  const handleExcelUpload = (e) => {
+    console.log(uploadIconRef.current, e.target);
+    if (e.target !== uploadIconRef.current) return;
+    inputRef.current.click();
+  };
+
   return (
     <div className="masterDataCenterContainer">
+      <ToastContainer />
       <div className="dataCenterContainer">
         <div
           className={`dataCenterGrid${activeIndex !== null ? " active" : ""}`}
@@ -59,6 +75,7 @@ const DataCenter = ({ setTitle }) => {
                 className="grid-item"
               >
                 <DataCenterContainer
+                  onAdd = {()=>{setIsAdding(true)}}
                   backgroundColor={activeIndex === i ? "white" : ""}
                   title={data.title}
                 />
@@ -74,6 +91,8 @@ const DataCenter = ({ setTitle }) => {
                   <div
                     onClick={() => {
                       setActiveIndex(null);
+                      setUploadedFile(null);
+                      setIsAdding(false);
                       setSearchParams({});
                     }}
                     className="floatingCloseButton"
@@ -92,9 +111,68 @@ const DataCenter = ({ setTitle }) => {
                   <Card
                     content={
                       <div className="dcClickedCloseButtonContainer">
-                                    <div className="dcUploadExcelContainer">
-            <Button size={"small"} label={<div className="dcIconContainer"><Upload/> Upload Excel</div>}/>
-            </div>
+                        <div
+                          
+                          className="dcUploadExcelContainer"
+                        >
+                          {!uploadedFile && !isAdding ? (
+                            <Button
+                              size={"small"}
+                              label={
+                                <div
+                                // onClick={(e) => {
+                                //   handleExcelUpload(e);
+                                // }}
+                                  ref={uploadIconRef}
+                                  id="excelUpload"
+                                  className="dcIconContainer"
+                                >
+                                  <Upload /> Upload Excel
+                                </div>
+                              }
+                            />
+                          ) : (
+                            !isAdding ?
+                            <>
+                            <Button
+                              size={"small"}
+                              label={
+                                <div
+                              
+                                  id="excelUpload"
+                                  className="dcIconContainer"
+                                >
+                                  <Check /> Confirm Upload
+                                </div>
+                              }
+                            />
+                            <Button
+                              size={"small"}
+                              label={
+                                <div
+                                  onClick={() => setUploadedFile(null)}
+                                  className="dcIconContainer"
+                                >
+                                  <Cancel /> Cancel
+                                </div>
+                              }
+                            />
+                            </>:
+                            cardData[activeIndex].addComponent
+                          )}
+                          
+                        </div>
+                        <input
+                          ref={inputRef}
+                          id="excelUpload"
+                          className="dcUploadInput"
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={(e) => {
+                            setUploadedFile(e.target.files[0]);
+                            toast.success("Excel uploaded successfully!");
+                          }}
+                        ></input>
                       </div>
                     }
                   />
@@ -106,9 +184,13 @@ const DataCenter = ({ setTitle }) => {
         {activeIndex !== null && (
           <div style={{ width: "100%" }} className="dcCardPageContainer">
             <div className="dcClickedCloseButtonContainer"></div>
-            <div className="dcPageComponentContainer">
-              {cardData[activeIndex]?.component}
-            </div>
+            {!uploadedFile ? (
+              <div className="dcPageComponentContainer">
+                {cardData[activeIndex]?.component}
+              </div>
+            ) : (
+              <ExcelViewer excelFile={uploadedFile} />
+            )}
           </div>
         )}
       </div>

@@ -8,5 +8,5 @@ router.get('/facultyCourseMapping/:id', facultyCourseMappingController.getMappin
 router.post('/facultyCourseMapping', facultyCourseMappingController.createMapping); // Create a new mapping
 router.put('/facultyCourseMapping/:id', facultyCourseMappingController.updateMapping); // Update a mapping
 router.delete('/facultyCourseMapping/:id', facultyCourseMappingController.deleteMapping); // Delete a mapping
-
+router.get('/facultyCoursesMappingNotMapped/:facultyId', facultyCourseMappingController.getCoursesNotMappedToFaculty);
 module.exports = router;

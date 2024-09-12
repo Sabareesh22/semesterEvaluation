@@ -1,5 +1,38 @@
 const db = require('../config/db'); 
 
+
+
+exports.createFaculty = async (req, res) => {
+    const { name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status } = req.body;
+
+    // Validate required fields
+    if (!name || !faculty_id || department == null || !email || experience_in_bit == null || total_teaching_experience == null || !status) {
+        return res.status(400).json({ error: 'All fields are required.' });
+    }
+
+    // Validate data types
+    if (typeof name !== 'string' || typeof faculty_id !== 'string' || typeof email !== 'string' || !Number.isInteger(department) || !Number.isInteger(experience_in_bit) || !Number.isInteger(total_teaching_experience) || !['0', '1'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid data types or values.' });
+    }
+
+    try {
+        const query = `
+            INSERT INTO master_faculty (name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        const values = [name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status];
+        
+        const [result] = await db.query(query, values);
+
+        res.status(201).json({ id: result.insertId, ...req.body });
+    } catch (error) {
+        console.error('Error inserting new faculty:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+
+
 exports.uploadEligibleFaculty = async (req, res) => {
     const facultyData = req.body;
     if (!Array.isArray(facultyData) || facultyData.length === 0) {
@@ -155,7 +188,7 @@ exports.getFaculty = async (req, res) => {
 
         // Main query with subquery to fetch the minimum id per faculty_id
         let query = `
-            SELECT id, faculty_id, CONCAT(faculty_id, ' - ', name) as faculty_info,name,department,status
+            SELECT *, faculty_id, CONCAT(faculty_id, ' - ', name) as faculty_info,name,department,status
             FROM master_faculty
             WHERE id IN (
                 SELECT MIN(id)
@@ -193,19 +226,7 @@ exports.getFacultyById = async(req, res) => {
       res.json(results[0]);
   };
 
-  exports.createFaculty = async (req, res) => {
-    const { name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status } = req.body;
-  
-    try {
-      const [result] = await pool.query(
-        'INSERT INTO master_faculty (name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status]
-      );
-      res.status(201).json({ id: result.insertId, ...req.body });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  };
+
   
   // controllers/facultyController.js
 

@@ -1,0 +1,31 @@
+.bcSelectContainer{
+    display: flex;
+    gap: 20px;
+}
+
+.bcSelectContainer>div{
+    
+}
+.bcPageMasterContainer{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.sNoPlusEdit{
+ display: flex;
+}
+
+.sNoPlusEdit p{
+    opacity: 1;
+    position: relative;
+}
+
+.sNoPlusEdit:hover  p{
+    opacity: 0;
+}
+.sNoPlusEdit:hover div{
+    opacity: 1;
+}
+.sNoPlusEdit div{
+    opacity: 0;
+}
