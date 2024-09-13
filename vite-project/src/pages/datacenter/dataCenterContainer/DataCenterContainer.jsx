@@ -1,10 +1,10 @@
-import { Add, Edit, Upload } from "@mui/icons-material";
+import { Add, Cancel, Edit, Remove, Upload } from "@mui/icons-material";
 import Button from "../../../components/button/Button";
 import Card from "../../../components/card/Card";
 import "./DataCenterContainer.css";
 import { useState } from "react";
 
-const DataCenterContainer = ({title,backgroundColor,onAdd}) => {
+const DataCenterContainer = ({title,backgroundColor,onAdd,onCancel,isAdding}) => {
     
   return (
     <div className="dataCenterContainer">
@@ -23,7 +23,9 @@ const DataCenterContainer = ({title,backgroundColor,onAdd}) => {
                 <Button size={"small"} label={<div className="dcIconContainer"><Edit/> Edit</div>}/>
                 <Button size={"small"} onClick={onAdd} label={<div className="dcIconContainer"><Add/> Add</div>}/>
             </div>
-
+            <div className="cancelAddingFaculty">
+            {isAdding&&<Button size={"small"} onClick={onCancel} label={<div className="dcIconContainer"><Cancel/> Cancel</div>}/>}
+            </div>
             </div>
            
           </div>

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import Select from "react-select";
 import dayjs from "dayjs";
 import { TextField } from "@mui/material";
-const ManageFaculty = (props) => {
+const ManageFaculty = ({isAdding}) => {
   const [departments, setDepartments] = useState([]);
   const [departmentId, setDepartmentId] = useState(null);
   const [cookies, setCookies] = useCookies(["auth"]);
@@ -42,7 +42,7 @@ const ManageFaculty = (props) => {
         console.log(response.data);
         setManageFacultyData(response.data);
       });
-  }, []);
+  }, [cookies.auth,isAdding]);
 
   const changeFacultyState = (id, status) => {
     axios
@@ -164,6 +164,7 @@ const ManageFaculty = (props) => {
               <th>Name</th>
               <th>Register Number</th>
               <th>Department</th>
+              <th>Email</th>
               <th>Date of Joining</th>
               <th>Exp in BIT</th>
               <th>Total Experience</th>
@@ -183,19 +184,24 @@ const ManageFaculty = (props) => {
                       (data) => data.value === faculty.department
                     )?.label}
                 </td>
+
+                <td>{faculty.email}</td>
+
                 <td>{dayjs(faculty.date_of_joining).format(`DD/MM/YYYY`)}</td>
                 <td>{faculty.experience_in_bit} years</td>
-                <td>{faculty.total_teaching_experience} years</td>
-                <td>
-                  <Select
-                    value={actionOptions.find(
-                      (data) => data.value === faculty.status
-                    )}
-                    onChange={(value) => {
-                      changeFacultyState(faculty.id, value.value);
-                    }}
-                    options={actionOptions}
-                  />
+                <td >{faculty.total_teaching_experience} years</td>
+                <td >
+                  <div>
+                    <Select
+                      value={actionOptions.find(
+                        (data) => data.value === faculty.status
+                      )}
+                      onChange={(value) => {
+                        changeFacultyState(faculty.id, value.value);
+                      }}
+                      options={actionOptions}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}

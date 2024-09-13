@@ -37,3 +37,7 @@
 .dataCenterContainer:hover{
     cursor: pointer;
 }
+.cancelAddingFaculty{
+    display: flex;
+    justify-content: center;
+}

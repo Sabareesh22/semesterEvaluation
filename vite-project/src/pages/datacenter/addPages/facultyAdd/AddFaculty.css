@@ -1,11 +1,19 @@
 .addFacultyInputContainer{
-    display: grid;
-    grid-template-columns: 33% 33% 33%;
-    align-items: center;
-    grid-template-rows: max-content;
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
 }
+.addFacultyInputMasterContainer{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.addFacultyInputContainer>div{
+   flex: 1;
+}
+
 .addFSaveButton{
     display: flex;
     align-items: center;
@@ -14,8 +22,14 @@
     width: 100%;
 }
 
-@media screen and (max-width:1600px) {
+/* @media screen and (max-width:1600px) {
     .addFacultyInputContainer{
-        grid-template-columns: 100%;
+        grid-template-columns: min-content min-content;
     }
 }
+
+@media screen and (max-width:1150px) {
+    .addFacultyInputContainer{
+        grid-template-columns: min-content;
+    }
+} */

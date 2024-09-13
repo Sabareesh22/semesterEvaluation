@@ -1,0 +1,19 @@
+.newBoardCourseMappingForm{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    align-items:end;
+    justify-content: space-around;
+}
+.newBoardCourseMappingMasterContainer{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.saveBoardCourseContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}

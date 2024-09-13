@@ -34,7 +34,7 @@ const DataCenter = ({ setTitle }) => {
   }, [searchParams]);
 
   const [cardData] = useState([
-    { title: "Faculty", component: <ManageFaculty />,addComponent:<AddFaculty setIsAdding = {setIsAdding}/> },
+    { title: "Faculty", component: <ManageFaculty isAdding={isAdding} />,addComponent:<AddFaculty setIsAdding = {setIsAdding}/> },
     { title: "FCM", component: <ManageFCM /> ,addComponent:<AddFacultyCourse setIsAdding = {setIsAdding}/>},
     { title: "Board Courses", component: <ManageBoardCourses />,addComponent:<AddBoardCourses setIsAdding = {setIsAdding}/> },
   ]);
@@ -75,7 +75,9 @@ const DataCenter = ({ setTitle }) => {
                 className="grid-item"
               >
                 <DataCenterContainer
+                isAdding={isAdding}
                   onAdd = {()=>{setIsAdding(true)}}
+                  onCancel = {()=>{setIsAdding(false)}}
                   backgroundColor={activeIndex === i ? "white" : ""}
                   title={data.title}
                 />
@@ -120,9 +122,9 @@ const DataCenter = ({ setTitle }) => {
                               size={"small"}
                               label={
                                 <div
-                                // onClick={(e) => {
-                                //   handleExcelUpload(e);
-                                // }}
+                                onClick={(e) => {
+                                  handleExcelUpload(e);
+                                }}
                                   ref={uploadIconRef}
                                   id="excelUpload"
                                   className="dcIconContainer"
@@ -158,7 +160,10 @@ const DataCenter = ({ setTitle }) => {
                               }
                             />
                             </>:
-                            cardData[activeIndex].addComponent
+                            <div className="dcAddComponentContainer">
+
+                            {cardData[activeIndex].addComponent}
+                            </div>
                           )}
                           
                         </div>
