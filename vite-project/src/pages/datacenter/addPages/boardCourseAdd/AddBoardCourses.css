@@ -1,7 +1,7 @@
 .newBoardCourseMappingForm{
     display: flex;
     flex-wrap: wrap;
-    gap: 30px;
+    gap: 20px;
     align-items:end;
     justify-content: space-around;
 }

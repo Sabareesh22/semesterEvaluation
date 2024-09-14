@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import './ExcelViewer.css'
 import * as xlsx from 'xlsx'
-const ExcelViewer = ({excelFile})=>{
+const ExcelViewer = ({excelFile,setParsedJSONOfExcel})=>{
     const [excelData, setExcelData] = useState([]);
 
     useEffect(() => {
@@ -13,6 +13,7 @@ const ExcelViewer = ({excelFile})=>{
           const sheet = workbook.Sheets[sheetName];
           const sheetData = xlsx.utils.sheet_to_json(sheet);
           console.log(sheetData);
+          setParsedJSONOfExcel(sheetData);
           setExcelData(sheetData);
           }
           

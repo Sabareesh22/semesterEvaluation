@@ -25,7 +25,7 @@ export function AppRoutes(props) {
   };
 
   const publicRouteObjects = parsedRouteObjects(publicRoutes(setLoading));
-  const privateRouteObjects = parsedRouteObjects(privateRoutes(setTitle,true));
+  const privateRouteObjects = parsedRouteObjects(privateRoutes(setTitle),true);
   const fallbackRouteObjects = parsedRouteObjects(fallbackRoutes);
  
   // Create a separate ProtectedRoutes wrapper for Layout

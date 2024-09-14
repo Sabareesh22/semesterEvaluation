@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./DataCenter.css";
 import Card from "../../components/card/Card";
 import DataCenterContainer from "./dataCenterContainer/DataCenterContainer";
@@ -16,12 +16,18 @@ import ExcelViewer from "../../components/excelViewer/ExcelViewer";
 import AddFaculty from "./addPages/facultyAdd/AddFaculty";
 import AddFacultyCourse from "./addPages/facultyCourseAdd/AddFacultyCourse";
 import AddBoardCourses from "./addPages/boardCourseAdd/AddBoardCourses";
+import dayjs from "dayjs";
+import axios from "axios";
+import apiHost from "../../../config/config";
+import { useCookies } from "react-cookie";
 const DataCenter = ({ setTitle }) => {
   const navigate = useNavigate();
+  const [cookies,setCookie] = useCookies(['auth']);
   const [searchParams, setSearchParams] = useSearchParams();
   const inputRef = useRef(null);
-  const [isAdding,setIsAdding] = useState(false)
+  const [isAdding, setIsAdding] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [parsedJSONOfExcel, setParsedJSONOfExcel] = useState([]);
   const uploadIconRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(null);
   useEffect(() => {
@@ -33,10 +39,77 @@ const DataCenter = ({ setTitle }) => {
     setActiveIndex(index ? parseInt(index, 10) : null);
   }, [searchParams]);
 
+  const uploadFacultyExcel = async(jsonExcelValue) => {
+    // excelRawJSON:
+    // {
+    //   "Name": "Priyadarshan",
+    //   "Faculty Id": "CS1111",
+    //   "Department": "CSE",
+    //   "Email": "priyadarshan@bitsathy.ac.in",
+    //   "Date Of Joining": "10/10/2024",
+    //   "Experience Before BIT": 2
+    // }
+    console.log("This is going to be formatted");
+    var departments = null;
+   await axios.get(`${apiHost}/departments`,{
+      headers:{auth:cookies.auth}
+    }).then((response)=>{
+      departments = response.data.map((item) => ({
+        value: item.id,
+        label: item.department,
+      }));
+    })
+    const modifiedJSON = jsonExcelValue.map((data)=>{
+      const today = dayjs();
+      const date_of_joining  = dayjs(data["Date Of Joining"]).format('YYYY/MM/DD')
+      const experience_in_bit = today.diff(dayjs(data["Date Of Joining"]),'year')
+      const departmentId = departments.find((dept)=>(dept.label===data["Department"]))?.value;
+      return( {
+         name : data["Name"],
+         faculty_id:data["Faculty Id"],
+         department:departmentId,
+         email:data["Email"],
+         date_of_joining:date_of_joining,
+         experience_in_bit:experience_in_bit,
+         total_teaching_experience:data["Experience Before BIT"]+experience_in_bit,
+         status:'1'
+         
+       })
+     })
+    modifiedJSON.forEach((data)=>{
+      axios
+      .post(`${apiHost}/api/faculty`, data, {
+         headers: {
+           auth: cookies.auth,
+         },
+       })
+    })
+    console.log(modifiedJSON);  // Logs the latest value
+};
+
+  
+useEffect(()=>{
+   console.log(parsedJSONOfExcel);
+},[parsedJSONOfExcel])
+
+
   const [cardData] = useState([
-    { title: "Faculty", component: <ManageFaculty isAdding={isAdding} />,addComponent:<AddFaculty setIsAdding = {setIsAdding}/> },
-    { title: "FCM", component: <ManageFCM /> ,addComponent:<AddFacultyCourse setIsAdding = {setIsAdding}/>},
-    { title: "Board Courses", component: <ManageBoardCourses />,addComponent:<AddBoardCourses setIsAdding = {setIsAdding}/> },
+    {
+      title: "Faculty",
+      component: <ManageFaculty isAdding={isAdding} />,
+      addComponent: <AddFaculty setIsAdding={setIsAdding} />,
+      uploadExcelFunction:(excelJson)=>{uploadFacultyExcel(excelJson)},
+    },
+    {
+      title: "FCM",
+      component: <ManageFCM />,
+      addComponent: <AddFacultyCourse setIsAdding={setIsAdding} />,
+    },
+    {
+      title: "Board Courses",
+      component: <ManageBoardCourses />,
+      addComponent: <AddBoardCourses setIsAdding={setIsAdding} />,
+    },
   ]);
 
   const handleCardClick = (index) => {
@@ -75,9 +148,13 @@ const DataCenter = ({ setTitle }) => {
                 className="grid-item"
               >
                 <DataCenterContainer
-                isAdding={isAdding}
-                  onAdd = {()=>{setIsAdding(true)}}
-                  onCancel = {()=>{setIsAdding(false)}}
+                  isAdding={isAdding}
+                  onAdd={() => {
+                    setIsAdding(true);
+                  }}
+                  onCancel={() => {
+                    setIsAdding(false);
+                  }}
                   backgroundColor={activeIndex === i ? "white" : ""}
                   title={data.title}
                 />
@@ -113,18 +190,15 @@ const DataCenter = ({ setTitle }) => {
                   <Card
                     content={
                       <div className="dcClickedCloseButtonContainer">
-                        <div
-                          
-                          className="dcUploadExcelContainer"
-                        >
+                        <div className="dcUploadExcelContainer">
                           {!uploadedFile && !isAdding ? (
                             <Button
                               size={"small"}
                               label={
                                 <div
-                                onClick={(e) => {
-                                  handleExcelUpload(e);
-                                }}
+                                  onClick={(e) => {
+                                    handleExcelUpload(e);
+                                  }}
                                   ref={uploadIconRef}
                                   id="excelUpload"
                                   className="dcIconContainer"
@@ -133,39 +207,37 @@ const DataCenter = ({ setTitle }) => {
                                 </div>
                               }
                             />
-                          ) : (
-                            !isAdding ?
+                          ) : !isAdding && parsedJSONOfExcel.length>0 ? (
                             <>
-                            <Button
-                              size={"small"}
-                              label={
-                                <div
-                              
-                                  id="excelUpload"
-                                  className="dcIconContainer"
-                                >
-                                  <Check /> Confirm Upload
-                                </div>
-                              }
-                            />
-                            <Button
-                              size={"small"}
-                              label={
-                                <div
-                                  onClick={() => setUploadedFile(null)}
-                                  className="dcIconContainer"
-                                >
-                                  <Cancel /> Cancel
-                                </div>
-                              }
-                            />
-                            </>:
+                              <Button
+                                size={"small"}
+                                label={
+                                  <div
+                                  onClick={()=>{data.uploadExcelFunction(parsedJSONOfExcel)}}
+                                    id="excelUpload"
+                                    className="dcIconContainer"
+                                  >
+                                    <Check /> Confirm Upload
+                                  </div>
+                                }
+                              />
+                              <Button
+                                size={"small"}
+                                label={
+                                  <div
+                                    onClick={() => setUploadedFile(null)}
+                                    className="dcIconContainer"
+                                  >
+                                    <Cancel /> Cancel
+                                  </div>
+                                }
+                              />
+                            </>
+                          ) : (
                             <div className="dcAddComponentContainer">
-
-                            {cardData[activeIndex].addComponent}
+                              {cardData[activeIndex].addComponent}
                             </div>
                           )}
-                          
                         </div>
                         <input
                           ref={inputRef}
@@ -194,7 +266,10 @@ const DataCenter = ({ setTitle }) => {
                 {cardData[activeIndex]?.component}
               </div>
             ) : (
-              <ExcelViewer excelFile={uploadedFile} />
+              <ExcelViewer
+                setParsedJSONOfExcel={setParsedJSONOfExcel}
+                excelFile={uploadedFile}
+              />
             )}
           </div>
         )}

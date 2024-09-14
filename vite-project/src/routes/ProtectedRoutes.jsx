@@ -19,6 +19,7 @@ const ProtectedRoutes = ({ authorizedRole, children, setLoading }) => {
             },
           });
           setRole(response.data.roles);
+          console.log(response.data.roles)
         } else {
           setRole([]);
         }
@@ -38,7 +39,9 @@ const ProtectedRoutes = ({ authorizedRole, children, setLoading }) => {
 
     fetchRole();
   }, [cookies.auth]);
-
+  // console.log(role)
+  // console.log(authorizedRole)
+  // console.log( role?.includes(authorizedRole))
   if (role != null && !role?.includes(authorizedRole)) {
     if (setLoading) {
       setLoading(true);
