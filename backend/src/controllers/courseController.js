@@ -136,3 +136,88 @@ exports.courseFacultyDetails  = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 }
+
+// Create Course
+exports.createCourse = async (req, res) => {
+    try {
+      const { course_name, course_code, department, semester, regulation, status } = req.body;
+      const sql = 'INSERT INTO master_courses (course_name, course_code, department, semester, regulation, status) VALUES (?, ?, ?, ?, ?, ?)';
+      const [results] = await db.query(sql, [course_name, course_code, department, semester, regulation, status]);
+      res.json({ message: 'Course created successfully', courseId: results.insertId });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  };
+  
+  // Get Courses (Dynamic Filtering)
+  exports.getCourses = async (req, res) => {
+    try {
+      const filters = req.query;  // e.g. { department: 1, semester: 2 }
+      let sql = 'SELECT * FROM master_courses';
+      let queryParams = [];
+      let whereClauses = [];
+  
+      // Dynamically build the WHERE clause
+      for (const [key, value] of Object.entries(filters)) {
+        whereClauses.push(`${key} = ?`);
+        queryParams.push(value);
+      }
+  
+      if (whereClauses.length > 0) {
+        sql += ` WHERE ${whereClauses.join(' AND ')}`;
+      }
+  
+      const [results] = await db.query(sql, queryParams);
+      res.json(results);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  };
+  
+  // Update Course (Dynamic Fields)
+  exports.updateCourse = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;  // e.g. { course_name: 'New Name', status: '1' }
+      let sql = 'UPDATE master_courses SET ';
+      let queryParams = [];
+      let setClauses = [];
+  
+      // Dynamically build the SET clause
+      for (const [key, value] of Object.entries(updates)) {
+        setClauses.push(`${key} = ?`);
+        queryParams.push(value);
+      }
+  
+      if (setClauses.length === 0) {
+        return res.status(400).json({ error: 'No fields provided for update' });
+      }
+  
+      sql += `${setClauses.join(', ')} WHERE id = ?`;
+      queryParams.push(id);
+  
+      const [results] = await db.query(sql, queryParams);
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: 'Course not found' });
+      }
+      res.json({ message: 'Course updated successfully' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  };
+  
+  // Delete Course
+  exports.deleteCourse = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const sql = 'DELETE FROM master_courses WHERE id = ?';
+      const [results] = await db.query(sql, [id]);
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: 'Course not found' });
+      }
+      res.json({ message: 'Course deleted successfully' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  };
+  

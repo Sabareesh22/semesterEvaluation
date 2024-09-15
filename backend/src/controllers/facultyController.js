@@ -177,7 +177,7 @@ exports.checkOldFaculty = async (req, res) => {
 }
 
 exports.getFaculty = async (req, res) => {
-    const { excludeId } = req.query;
+    const { excludeId, department, status, facultyId, name } = req.query;
     let excludeIds;
 
     try {
@@ -186,9 +186,9 @@ exports.getFaculty = async (req, res) => {
             excludeIds = Array.isArray(excludeId) ? excludeId : [excludeId];
         }
 
-        // Main query with subquery to fetch the minimum id per faculty_id
+        // Base query to fetch the minimum id per faculty_id
         let query = `
-            SELECT *, faculty_id, CONCAT(faculty_id, ' - ', name) as faculty_info,name,department,status
+            SELECT *, faculty_id, CONCAT(faculty_id, ' - ', name) AS faculty_info, name, department, status
             FROM master_faculty
             WHERE id IN (
                 SELECT MIN(id)
@@ -197,22 +197,59 @@ exports.getFaculty = async (req, res) => {
             )
         `;
 
-        // If excludeIds are provided, add the WHERE clause to exclude them
+        // Parameters for the query
+        let queryParams = [];
+
+        // Dynamic WHERE clauses
+        let whereClauses = [];
+
+        // Add filtering by department if provided
+        if (department) {
+            whereClauses.push('department = ?');
+            queryParams.push(department);
+        }
+
+        // Add filtering by status if provided
+        if (status) {
+            whereClauses.push('status = ?');
+            queryParams.push(status);
+        }
+
+        // Add filtering by faculty_id if provided
+        if (facultyId) {
+            whereClauses.push('faculty_id = ?');
+            queryParams.push(facultyId);
+        }
+
+        // Add filtering by name if provided
+        if (name) {
+            whereClauses.push('name LIKE ?');
+            queryParams.push(`%${name}%`);
+        }
+
+        // Add the dynamic WHERE clauses to the main query
+        if (whereClauses.length > 0) {
+            query += ' AND ' + whereClauses.join(' AND ');
+        }
+
+        // If excludeIds are provided, exclude them from the results
         if (excludeIds) {
             query += ` AND id NOT IN (${excludeIds.map(() => '?').join(', ')})`;
+            queryParams = queryParams.concat(excludeIds);
         }
 
         // Final query with sorting
         query += ` ORDER BY faculty_id;`;
 
         // Execute the query with provided parameters
-        const [rows] = await db.query(query, excludeIds || []);
+        const [rows] = await db.query(query, queryParams);
         res.json(rows);
     } catch (error) {
         console.error('Error fetching faculty data:', error);
         res.status(500).json({ error: 'An error occurred while fetching faculty data' });
     }
 };
+
 
 exports.getFacultyById = async(req, res) => {
     const facultyId = req.params.id; // Extract the faculty ID from the request parameters

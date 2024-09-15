@@ -2,15 +2,29 @@ const pool = require('../config/db'); // Use the pool instead of a single connec
 const jwt = require('jsonwebtoken') 
 
 exports.getDepartments = async (req, res) => {
-    const query = `SELECT id, department FROM master_department WHERE status = '1'`;
+    let query = `SELECT id, department FROM master_department WHERE status = '1'`;
+    const queryParams = [];
+
+    // Dynamically add conditions based on the query parameters in the request
+    if (req.query.department) {
+        query += ` AND department = ?`;
+        queryParams.push(req.query.department);
+    }
+
+    if (req.query.id) {
+        query += ` AND id = ?`;
+        queryParams.push(req.query.id);
+    }
+
     try {
-        const [results] = await pool.query(query); // Use the pool's query method
+        const [results] = await pool.query(query, queryParams); // Use queryParams for dynamic binding
         console.log('sending departments');
         res.json(results);
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
 }
+
 
 exports.getYears  =  async (req, res) => {
     const query = `SELECT id, year FROM master_year WHERE status = '1'`;
@@ -35,7 +49,29 @@ exports.getSemesters = async (req, res) => {
 }
 
 exports.getBatches = async (req, res) => {
-    const query = `SELECT DISTINCT id, batch FROM master_batch WHERE status = '1'`;
+    // Extract parameters from the request
+    const { status = '1', batch, id } = req.query;
+
+    // Initialize an array to hold the conditions
+    const conditions = [];
+
+    // Add conditions based on provided parameters
+    if (status) {
+        conditions.push(`status = '${status}'`);
+    }
+    if (batch) {
+        conditions.push(`batch = '${batch}'`);
+    }
+    if (id) {
+        conditions.push(`id = '${id}'`);
+    }
+
+    // Build the WHERE clause dynamically
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // Define the SQL query with the dynamic WHERE clause
+    const query = `SELECT DISTINCT id, batch FROM master_batch ${whereClause}`;
+
     try {
         const [results] = await pool.query(query); // Use the pool's query method
         console.log('sending batches');
@@ -43,7 +79,8 @@ exports.getBatches = async (req, res) => {
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
-}
+};
+
 
 exports.getRegulations = async (req, res) => {
     const query = `SELECT id, regulation FROM master_regulation WHERE status = '1'`;

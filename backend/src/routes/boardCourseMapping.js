@@ -8,5 +8,5 @@ router.post('/boardCourseMapping', boardCourseMappingController.createBoardCours
 router.get('/boardCourseMapping', boardCourseMappingController.getBoardCourseMapping);
 router.put('/boardCourseMapping/:id', boardCourseMappingController.updateBoardCourseMapping);
 router.delete('/boardCourseMapping/:id', boardCourseMappingController.deleteBoardCourseMapping);
-
+router.get('/unmappedCoursesForBCM',boardCourseMappingController.getUnmappedCourses);
 module.exports = router;

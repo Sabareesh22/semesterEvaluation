@@ -5,6 +5,11 @@
     align-items:end;
     justify-content: space-around;
 }
+
+.newBoardCourseMappingForm>div{
+    flex: 1;
+}
+
 .newBoardCourseMappingMasterContainer{
     display: flex;
     flex-direction: column;

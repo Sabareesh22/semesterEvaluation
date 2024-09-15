@@ -61,14 +61,14 @@ exports.postSemcodes = async (req, res) => {
 
 
 exports.getSemcodes = async (req, res) => {
-    const { batch, year } = req.query;
+    const { batch, year, semcode } = req.query;
 
     try {
         let getAllSemcodesQuery;
         const queryParams = [];
 
-        if (batch == null && year == null) {
-            // Query when both batch and year are not provided
+        if (batch == null && year == null && semcode == null) {
+            // Query when batch, year, and semcode are not provided
             getAllSemcodesQuery = `
                 SELECT id, semcode
                 FROM master_semcode
@@ -81,7 +81,7 @@ exports.getSemcodes = async (req, res) => {
                 JOIN semcodeMapping sm ON ms.id = sm.semcode_id
             `;
 
-            // Conditions to filter by batch and year
+            // Conditions to filter by batch, year, and optional semcode
             const conditions = [];
 
             if (batch != null) {
@@ -91,6 +91,10 @@ exports.getSemcodes = async (req, res) => {
             if (year != null) {
                 conditions.push('sm.year = ?');
                 queryParams.push(year);
+            }
+            if (semcode != null) {
+                conditions.push('ms.semcode = ?');
+                queryParams.push(semcode);
             }
 
             // Add conditions to the query if any exist
