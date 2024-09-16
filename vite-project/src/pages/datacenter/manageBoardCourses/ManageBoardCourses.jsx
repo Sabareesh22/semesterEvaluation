@@ -7,7 +7,8 @@ import dayjs from "dayjs";
 import { TextField } from "@mui/material";
 import Select from "react-select";
 import NoData from "../../../components/noData/NoData";
-import { Delete, Edit } from "@mui/icons-material";
+import { Cancel, Check, Delete, Edit } from "@mui/icons-material";
+import { toast } from "react-toastify";
 const ManageBoardCourses = () => {
   const [departments, setDepartments] = useState([]);
   const [cookies, setCookie] = useCookies(["auth"]);
@@ -15,6 +16,8 @@ const ManageBoardCourses = () => {
   const [boardCoursesData, setBoardCoursesData] = useState([]);
   const [filteredBoardCoursesData, setFilteredBoardCoursesData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [editBoardCoursesState, setEditBoardCoursesState] = useState([]);
+  const [editBoardCoursesData, setEditBoardCoursesData] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [selectedSemcode, setSelectedSemcode] = useState(null);
   useEffect(() => {
@@ -29,7 +32,73 @@ const ManageBoardCourses = () => {
       })
     );
   }, [boardCoursesData, searchQuery]);
+  const handleEditBoardCourseData = (data) => {
+    const modifiedData  = {
+    paper_count: data.paper_count
+    }
+    try {
+      axios
+        .put(`${apiHost}/api/boardCourseMapping/${data.id}`, modifiedData, {
+          headers: {
+            auth: cookies.auth,
+          },
+        })
+        .then((response) => {
+          toast.success(response.data.message ||"Successfully Edited" );
+          fetchBoardCourseMapping();
+        });
+    } catch (error) {
+      toast.error(error.message || "Failed to edit");
+    }
+  };
 
+  const deleteBoardCourseMapping = (data)=>{
+    try {
+      axios
+       .delete(`${apiHost}/api/boardCourseMapping/${data.id}`, {
+          headers: {
+            auth: cookies.auth,
+          },
+        })
+       .then((response) => {
+          toast.success(response.data.message || "Successfully Deleted");
+          fetchBoardCourseMapping();
+        });
+    } catch (error) {
+      toast.error(error.message || "Failed to delete");
+    }
+  }
+
+  useEffect(() => {
+    setEditBoardCoursesState(
+      filteredBoardCoursesData.map((_, i) => {
+        return false;
+      })
+    );
+    setEditBoardCoursesData(
+      filteredBoardCoursesData.map((data, i) => {
+        return {
+          id: data.id,
+          department: data.department,
+          course: data.course,
+          paper_count: data.paper_count,
+          semcode: data.semcode,
+          batch: data.batch,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          in_charge: data.in_charge,
+          time_in_days: data.time_in_days,
+          status: data.status,
+          course_code: data.course_code,
+          department_name: data.department_name,
+        };
+      })
+    );
+  }, [filteredBoardCoursesData]);
+
+  useEffect(() => {
+    console.log(editBoardCoursesData);
+  }, [editBoardCoursesData]);
   const fetchSemcodes = (params) => {
     axios
       .get(`${apiHost}/api/semcodes`, {
@@ -146,27 +215,97 @@ const ManageBoardCourses = () => {
               <th>Paper Count</th>
             </thead>
             <tbody>
-              {filteredBoardCoursesData.map((data, index) => (
-                <tr key={index}>
-                  <td>
-                    <div className="sNoPlusEdit">
-                      <p>{index + 1}</p>{" "}
-                      <div>
-                        <Edit />
+              {filteredBoardCoursesData.map((data, index) =>
+                !editBoardCoursesState[index] ? (
+                  <tr key={index}>
+                    <td>
+                      <div className="sNoPlusEdit">
+                        <p>{index + 1}</p>{" "}
+                        <div>
+                          <Edit
+                            onClick={() => {
+                              setEditBoardCoursesState((prev) => {
+                                const newPrev = [...prev];
+                                newPrev[index] = true;
+                                return newPrev;
+                              });
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Delete onClick={()=>{deleteBoardCourseMapping(editBoardCoursesData[index])}} />
+                        </div>
                       </div>
-                      <div>
-                        <Delete />
+                    </td>
+                    <td>{data.department_name}</td>
+                    <td>{data.course_code}</td>
+                    <td>
+                      {dayjs(data.end_date).diff(dayjs(data.start_date), "day")}
+                    </td>
+                    <td>{dayjs(data.start_date).format("DD/MM/YYYY")}</td>
+                    <td>{dayjs(data.end_date).format("DD/MM/YYYY")}</td>
+                    <td>{data.paper_count}</td>
+                  </tr>
+                ) : (
+                  <tr key={index}>
+                    <td>
+                      <div className="sNoPlusEdit">
+                        <p>{index + 1}</p>{" "}
+                        <div>
+                          <Cancel
+                            onClick={() => {
+                              setEditBoardCoursesState((prev) => {
+                                const newPrev = [...prev];
+                                newPrev[index] = false;
+                                return newPrev;
+                              });
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Check
+                            onClick={() => {
+                              handleEditBoardCourseData(editBoardCoursesData[index]);
+                            }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td>{data.department_name}</td>
-                  <td>{data.course_code}</td>
-                  <td>{dayjs(data.end_date).diff(dayjs(data.start_date),'day')}</td>
-                  <td>{dayjs(data.start_date).format("DD/MM/YYYY")}</td>
-                  <td>{dayjs(data.end_date).format("DD/MM/YYYY")}</td>
-                  <td>{data.paper_count}</td>
-                </tr>
-              ))}
+                    </td>
+                    <td>{data.department_name}</td>
+                    <td>{data.course_code}</td>
+                    <td>
+                      {dayjs(data.end_date).diff(dayjs(data.start_date), "day")}
+                    </td>
+                    <td>{dayjs(data.start_date).format("DD/MM/YYYY")}</td>
+                    <td>{dayjs(data.end_date).format("DD/MM/YYYY")}</td>
+                    <td>
+                      <div className="editFaculyName">
+                        <TextField
+                          style={{
+                            width: 150,
+                            backgroundColor: "white",
+                            borderRadius: "5px",
+                          }}
+                          onChange={(e) => {
+                            setEditBoardCoursesData((prevData) => {
+                              const newPrev = [...prevData];
+                              newPrev[index].paper_count = Number(
+                                e.target.value
+                              );
+                              return newPrev;
+                            });
+                          }}
+                          fullWidth={true}
+                          size="small"
+                          type="Number"
+                          InputProps={{ inputProps: { min: 0 } }}
+                          value={editBoardCoursesData[index]?.paper_count}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
         ) : (
