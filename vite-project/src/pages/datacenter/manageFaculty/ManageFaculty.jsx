@@ -7,6 +7,8 @@ import Select from "react-select";
 import dayjs from "dayjs";
 import { TextField } from "@mui/material";
 import DatePickerWithRange from "../../../components/datePicker/DatePicker";
+import { Cancel, Check, Edit } from "@mui/icons-material";
+import { toast } from "react-toastify";
 const ManageFaculty = ({ isAdding }) => {
   const [departments, setDepartments] = useState([]);
   const [departmentId, setDepartmentId] = useState(null);
@@ -34,16 +36,37 @@ const ManageFaculty = ({ isAdding }) => {
   //   props.setTitle("Manage Faculty")
   // },[])
 
+  const handleEditFaculty = (data)=>{
+        console.log(data);
+      try {
+
+        axios.put(`${apiHost}/api/faculty/${data.id}`,data,{
+          headers:{
+            auth: cookies.auth,
+          }
+        }).then((response)=>{
+          if(response.status===200){
+            toast.success(response.data.message||"Faculty Updated Successfully");
+            fetchManageFacultyData();
+          }
+        })
+        
+      } catch (error) {
+         toast.error(error.message||"Unable to Edit");
+      }
+  }
+
+
   useEffect(() => {
     setEditedFacultyData(
       filteredManageFacultyData.map((v, i) => {
         return {
-          allocationId: null,
+          id: v.id,
           faculty_id: v.faculty_id,
-          faculty_name: v.name,
+          name: v.name,
           department: v.department,
           email: v.email,
-          date_of_joining: v.date_of_joining,
+          date_of_joining: dayjs(v.date_of_joining).format('YYYY/MM/DD'),
           experience_in_bit: v.experience_in_bit,
           total_teaching_experience: v.total_teaching_experience,
           status: v.status,
@@ -62,17 +85,21 @@ const ManageFaculty = ({ isAdding }) => {
     console.log(facultyEditState);
   }, [editedFacultyData, facultyEditState]);
 
-  useEffect(() => {
+
+  const fetchManageFacultyData = ()=>{
     axios
-      .get(`${apiHost}/api/faculty`, {
-        headers: {
-          Auth: cookies.auth,
-        },
-      })
-      .then((response) => {
-        console.log(response.data);
-        setManageFacultyData(response.data);
-      });
+    .get(`${apiHost}/api/faculty`, {
+      headers: {
+        Auth: cookies.auth,
+      },
+    })
+    .then((response) => {
+      console.log(response.data);
+      setManageFacultyData(response.data);
+    });
+  }
+  useEffect(() => {
+     fetchManageFacultyData();
   }, [cookies.auth, isAdding]);
 
   const changeFacultyState = (id, status) => {
@@ -204,9 +231,28 @@ const ManageFaculty = ({ isAdding }) => {
           </thead>
           <tbody>
             {filteredManageFacultyData.map((faculty, index) =>
-              facultyEditState[index] ? (
+              !facultyEditState[index] ? (
                 <tr key={index}>
-                  <td>{index + 1}</td>
+                  <td>
+                    <div
+                      className="
+                  sNoWithEditFaculty"
+                    >
+                      <p>{index + 1}</p>
+                      <div
+                        onClick={() => {
+                          setFacultyEditState((prev) => {
+                            const newPrev = [...prev];
+                            newPrev[index] = true;
+                            return newPrev;
+                          });
+                        }}
+                        className="EditFacultyIcon"
+                      >
+                        <Edit />
+                      </div>
+                    </div>
+                  </td>
                   <td>{faculty.name}</td>
                   <td>{faculty.faculty_id}</td>
 
@@ -238,42 +284,66 @@ const ManageFaculty = ({ isAdding }) => {
                 </tr>
               ) : (
                 <tr key={index}>
-                  <td>{index + 1}</td>
+                  <td>
+                    <div
+                      className="
+                  sNoWithEditFaculty"
+                    >
+                      {index + 1}
+                      <div className="cancelIconsFaculty">
+                        <Cancel onClick={() => {
+                          setFacultyEditState((prev) => {
+                            const newPrev = [...prev];
+                            newPrev[index] = false;
+                            return newPrev;
+                          });
+                        }} />
+                        <Check
+                        onClick={()=>{handleEditFaculty(editedFacultyData[index])}}
+                        />
+                      </div>
+                    </div>
+                  </td>
                   <td>
                     <div className="editFaculyName">
                       <TextField
-                      onChange={
-                        (e)=>{
+                        onChange={(e) => {
                           setEditedFacultyData(
                             editedFacultyData.map((item, i) =>
                               i === index
-                               ? {...item, faculty_name: e.target.value }
+                                ? { ...item, name: e.target.value }
                                 : item
                             )
                           );
-                        }
-                      }
-                        style = {{width:200,backgroundColor:"white",borderRadius:"5px"}}
+                        }}
+                        style={{
+                          width: 200,
+                          backgroundColor: "white",
+                          borderRadius: "5px",
+                        }}
                         fullWidth={true}
                         size="small"
-                        value={editedFacultyData[index]?.faculty_name}
+                        value={editedFacultyData[index]?.name}
                       />
                     </div>
                   </td>
                   <td>
                     <div className="editFaculyName">
                       <TextField
-
-                      onClick={(e)=>{
-                        setEditedFacultyData(
-                          editedFacultyData.map((item, i) =>
-                            i === index
-                             ? {...item, faculty_id: e.target.value }
-                              : item
-                          )
-                        );
-                      }}
-                        style = {{width:150,backgroundColor:"white",borderRadius:"5px"}}
+                        onClick={(e) => {
+                          setEditedFacultyData(
+                            editedFacultyData.map((item, i) =>
+                              i === index
+                                ? { ...item, faculty_id: e.target.value }
+                                : item
+                            )
+                          );
+                        }}
+                        style={{
+                          width: 150,
+                          backgroundColor: "white",
+                          borderRadius: "5px",
+                        }}
                         fullWidth={true}
                         size="small"
                         value={editedFacultyData[index]?.faculty_id}
@@ -282,36 +352,39 @@ const ManageFaculty = ({ isAdding }) => {
                   </td>
                   <td>
                     <Select
-                     value={departments?.find(
-                      (data) => data.value === editedFacultyData[index]?.department
-              )}
-                     options={departments}
-                     onChange={(selectedOption)=>{
-                       setEditedFacultyData(
-                         editedFacultyData.map((item, i) =>
-                           i === index
-                            ? {...item, department: selectedOption.value }
-                             : item
-                         )
-                       );
-                     }}
-                     />
+                      value={departments?.find(
+                        (data) =>
+                          data.value === editedFacultyData[index]?.department
+                      )}
+                      options={departments}
+                      onChange={(selectedOption) => {
+                        setEditedFacultyData(
+                          editedFacultyData.map((item, i) =>
+                            i === index
+                              ? { ...item, department: selectedOption.value }
+                              : item
+                          )
+                        );
+                      }}
+                    />
                   </td>
                   <td>
                     <div className="editFaculyName">
                       <TextField
-                      onChange={
-                        (e)=>{
+                        onChange={(e) => {
                           setEditedFacultyData(
                             editedFacultyData.map((item, i) =>
                               i === index
-                               ? {...item, email: e.target.value }
+                                ? { ...item, email: e.target.value }
                                 : item
                             )
                           );
-                        }
-                      }
-                        style = {{width:150,backgroundColor:"white",borderRadius:"5px"}}
+                        }}
+                        style={{
+                          width: 150,
+                          backgroundColor: "white",
+                          borderRadius: "5px",
+                        }}
                         fullWidth={true}
                         size="small"
                         value={editedFacultyData[index]?.email}
@@ -319,39 +392,43 @@ const ManageFaculty = ({ isAdding }) => {
                     </div>
                   </td>
                   <td>
-                    
                     <DatePickerWithRange
-                    onChange={
-                      (date)=>{
+                      onChange={(date) => {
                         setEditedFacultyData(
                           editedFacultyData.map((item, i) =>
                             i === index
-                             ? {...item, date_of_joining: date }
-                              : item
-                          )
-                        );
-                      }
-                    }
-                    value={dayjs(editedFacultyData[index]?.date_of_joining)}
-                    />
-              </td>
-              <td>
-                    <div className="editFaculyName">
-                      <TextField
-                      onChange={(e)=>{
-                        setEditedFacultyData(
-                          editedFacultyData.map((item, i) =>
-                            i === index
-                             ? {...item, experience_in_bit: parseInt(e.target.value) }
+                              ? { ...item, date_of_joining: dayjs(date).format('YYYY/MM/DD') }
                               : item
                           )
                         );
                       }}
-                        style = {{width:150,backgroundColor:"white",borderRadius:"5px"}}
+                      value={dayjs(editedFacultyData[index]?.date_of_joining)}
+                    />
+                  </td>
+                  <td>
+                    <div className="editFaculyName">
+                      <TextField
+                        onChange={(e) => {
+                          setEditedFacultyData(
+                            editedFacultyData.map((item, i) =>
+                              i === index
+                                ? {
+                                    ...item,
+                                    experience_in_bit: parseInt(e.target.value),
+                                  }
+                                : item
+                            )
+                          );
+                        }}
+                        style={{
+                          width: 150,
+                          backgroundColor: "white",
+                          borderRadius: "5px",
+                        }}
                         fullWidth={true}
                         size="small"
                         type="Number"
-                        InputProps={{inputProps:{min:0}}}
+                        InputProps={{ inputProps: { min: 0 } }}
                         value={editedFacultyData[index]?.experience_in_bit}
                       />
                     </div>
@@ -359,34 +436,48 @@ const ManageFaculty = ({ isAdding }) => {
                   <td>
                     <div className="editFaculyName">
                       <TextField
-                      onChange={(e)=>{
-                        setEditedFacultyData(
-                          editedFacultyData.map((item, i) =>
-                            i === index
-                             ? {...item, total_teaching_experience: parseInt(e.target.value) }
-                              : item
-                          )
-                        );
-                      }}
-                        style = {{width:150,backgroundColor:"white",borderRadius:"5px"}}
+                        onChange={(e) => {
+                          setEditedFacultyData(
+                            editedFacultyData.map((item, i) =>
+                              i === index
+                                ? {
+                                    ...item,
+                                    total_teaching_experience: parseInt(
+                                      e.target.value
+                                    ),
+                                  }
+                                : item
+                            )
+                          );
+                        }}
+                        style={{
+                          width: 150,
+                          backgroundColor: "white",
+                          borderRadius: "5px",
+                        }}
                         fullWidth={true}
                         size="small"
                         type="Number"
-                        InputProps={{inputProps:{min:0}}}
-                        value={editedFacultyData[index]?.total_teaching_experience}
+                        InputProps={{ inputProps: { min: 0 } }}
+                        value={
+                          editedFacultyData[index]?.total_teaching_experience
+                        }
                       />
                     </div>
                   </td>
                   <td>
                     <div>
                       <Select
-                      onChange={(selectedOption)=>{
-                        changeFacultyState(editedFacultyData[index].id, selectedOption.value);
-                      }}
+                        onChange={(selectedOption) => {
+                          changeFacultyState(
+                            editedFacultyData[index].id,
+                            selectedOption.value
+                          );
+                        }}
                         value={actionOptions.find(
-                          (data) => data.value === editedFacultyData[index]?.status
+                          (data) =>
+                            data.value === editedFacultyData[index]?.status
                         )}
-
                         options={actionOptions}
                       />
                     </div>

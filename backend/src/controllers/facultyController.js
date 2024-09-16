@@ -16,17 +16,33 @@ exports.createFaculty = async (req, res) => {
     }
 
     try {
-        const query = `
-            INSERT INTO master_faculty (name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-        const values = [name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status];
-        
-        const [result] = await db.query(query, values);
+        // Check if the faculty_id already exists
+        const [existingFaculty] = await db.query('SELECT * FROM master_faculty WHERE faculty_id = ?', [faculty_id]);
 
-        res.status(201).json({ id: result.insertId, ...req.body });
+        if (existingFaculty.length > 0) {
+            // Update the existing faculty
+            const updateQuery = `
+                UPDATE master_faculty 
+                SET name = ?, department = ?, email = ?, experience_in_bit = ?, total_teaching_experience = ?, date_of_joining = ?, status = ?
+                WHERE faculty_id = ?
+            `;
+            const updateValues = [name, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status, faculty_id];
+            await db.query(updateQuery, updateValues);
+
+            res.status(200).json({ message: 'Faculty details updated successfully', ...req.body });
+        } else {
+            // Insert new faculty
+            const insertQuery = `
+                INSERT INTO master_faculty (name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+            const insertValues = [name, faculty_id, department, email, experience_in_bit, total_teaching_experience, date_of_joining, status];
+            const [result] = await db.query(insertQuery, insertValues);
+
+            res.status(201).json({ id: result.insertId, ...req.body });
+        }
     } catch (error) {
-        console.error('Error inserting new faculty:', error);
+        console.error('Error processing faculty data:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };

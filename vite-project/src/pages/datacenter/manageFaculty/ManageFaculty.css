@@ -11,3 +11,22 @@
     width: 
     100%;
 }
+
+.sNoWithEditFaculty{
+    display: flex;
+    gap:10px;
+}
+.sNoWithEditFaculty  .EditFacultyIcon{
+opacity: 0;
+}
+
+.sNoWithEditFaculty:hover .EditFacultyIcon{
+    opacity: 1;    
+}
+
+.sNoWithEditFaculty:hover p{
+    opacity: 0;
+}
+.cancelIconsFaculty{
+    display: flex;
+}
