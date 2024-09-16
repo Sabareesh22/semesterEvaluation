@@ -7,7 +7,7 @@ import Select from "react-select";
 import dayjs from "dayjs";
 import { TextField } from "@mui/material";
 import DatePickerWithRange from "../../../components/datePicker/DatePicker";
-import { Cancel, Check, Edit } from "@mui/icons-material";
+import { Cancel, Check, Delete, Edit } from "@mui/icons-material";
 import { toast } from "react-toastify";
 const ManageFaculty = ({ isAdding }) => {
   const [departments, setDepartments] = useState([]);
@@ -36,26 +36,27 @@ const ManageFaculty = ({ isAdding }) => {
   //   props.setTitle("Manage Faculty")
   // },[])
 
-  const handleEditFaculty = (data)=>{
-        console.log(data);
-      try {
-
-        axios.put(`${apiHost}/api/faculty/${data.id}`,data,{
-          headers:{
+  const handleEditFaculty = (data) => {
+    console.log(data);
+    try {
+      axios
+        .put(`${apiHost}/api/faculty/${data.id}`, data, {
+          headers: {
             auth: cookies.auth,
-          }
-        }).then((response)=>{
-          if(response.status===200){
-            toast.success(response.data.message||"Faculty Updated Successfully");
+          },
+        })
+        .then((response) => {
+          if (response.status === 200) {
+            toast.success(
+              response.data.message || "Faculty Updated Successfully"
+            );
             fetchManageFacultyData();
           }
-        })
-        
-      } catch (error) {
-         toast.error(error.message||"Unable to Edit");
-      }
-  }
-
+        });
+    } catch (error) {
+      toast.error(error.message || "Unable to Edit");
+    }
+  };
 
   useEffect(() => {
     setEditedFacultyData(
@@ -66,7 +67,7 @@ const ManageFaculty = ({ isAdding }) => {
           name: v.name,
           department: v.department,
           email: v.email,
-          date_of_joining: dayjs(v.date_of_joining).format('YYYY/MM/DD'),
+          date_of_joining: dayjs(v.date_of_joining).format("YYYY/MM/DD"),
           experience_in_bit: v.experience_in_bit,
           total_teaching_experience: v.total_teaching_experience,
           status: v.status,
@@ -85,22 +86,43 @@ const ManageFaculty = ({ isAdding }) => {
     console.log(facultyEditState);
   }, [editedFacultyData, facultyEditState]);
 
-
-  const fetchManageFacultyData = ()=>{
+  const fetchManageFacultyData = () => {
     axios
-    .get(`${apiHost}/api/faculty`, {
-      headers: {
-        Auth: cookies.auth,
-      },
-    })
-    .then((response) => {
-      console.log(response.data);
-      setManageFacultyData(response.data);
-    });
-  }
+      .get(`${apiHost}/api/faculty`, {
+        headers: {
+          Auth: cookies.auth,
+        },
+      })
+      .then((response) => {
+        console.log(response.data);
+        setManageFacultyData(response.data);
+      });
+  };
   useEffect(() => {
-     fetchManageFacultyData();
+    fetchManageFacultyData();
   }, [cookies.auth, isAdding]);
+
+  const handleDeleteFaculty = (id) => {
+    try {
+      axios.delete(`${apiHost}/api/faculty/${id}`,{
+        headers:{
+          auth: cookies.auth,
+        }
+      }).then((response) => {
+        console.log(response.data.message.message);
+        if (response.status === 200) {
+          toast.success(
+            response.data.message || "Faculty Deleted Successfully"
+          );
+          fetchManageFacultyData();
+        } else {
+          toast.error(response.data.message.message || "Unable to Delete");
+        }
+      });
+    } catch (error) {
+      toast.error(error.message || "Unable to Delete");
+    }
+  };
 
   const changeFacultyState = (id, status) => {
     axios
@@ -239,17 +261,21 @@ const ManageFaculty = ({ isAdding }) => {
                   sNoWithEditFaculty"
                     >
                       <p>{index + 1}</p>
-                      <div
-                        onClick={() => {
-                          setFacultyEditState((prev) => {
-                            const newPrev = [...prev];
-                            newPrev[index] = true;
-                            return newPrev;
-                          });
-                        }}
-                        className="EditFacultyIcon"
-                      >
-                        <Edit />
+                      <div className="EditFacultyIcon">
+                        <Edit
+                          onClick={() => {
+                            setFacultyEditState((prev) => {
+                              const newPrev = [...prev];
+                              newPrev[index] = true;
+                              return newPrev;
+                            });
+                          }}
+                        />
+                        <Delete onClick={
+                          ()=>{
+                            handleDeleteFaculty(faculty.id);
+                          }
+                        } />
                       </div>
                     </div>
                   </td>
@@ -291,15 +317,19 @@ const ManageFaculty = ({ isAdding }) => {
                     >
                       {index + 1}
                       <div className="cancelIconsFaculty">
-                        <Cancel onClick={() => {
-                          setFacultyEditState((prev) => {
-                            const newPrev = [...prev];
-                            newPrev[index] = false;
-                            return newPrev;
-                          });
-                        }} />
+                        <Cancel
+                          onClick={() => {
+                            setFacultyEditState((prev) => {
+                              const newPrev = [...prev];
+                              newPrev[index] = false;
+                              return newPrev;
+                            });
+                          }}
+                        />
                         <Check
-                        onClick={()=>{handleEditFaculty(editedFacultyData[index])}}
+                          onClick={() => {
+                            handleEditFaculty(editedFacultyData[index]);
+                          }}
                         />
                       </div>
                     </div>
@@ -397,7 +427,11 @@ const ManageFaculty = ({ isAdding }) => {
                         setEditedFacultyData(
                           editedFacultyData.map((item, i) =>
                             i === index
-                              ? { ...item, date_of_joining: dayjs(date).format('YYYY/MM/DD') }
+                              ? {
+                                  ...item,
+                                  date_of_joining:
+                                    dayjs(date).format("YYYY/MM/DD"),
+                                }
                               : item
                           )
                         );

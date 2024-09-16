@@ -315,3 +315,18 @@ exports.updateFacultyById = async (req, res) => {
     }
   };
   
+
+  exports.deleteFaculty = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [result] = await db.query('DELETE FROM master_faculty WHERE id = ?', [id]);
+        
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'Faculty record deleted successfully.' });
+        } else {
+            res.status(404).json({ message: 'Faculty record not found.' });
+        }
+    } catch (error) {
+        res.status(230).json({ message: error });
+    }
+}
