@@ -1,0 +1,46 @@
+.manageCoursesSelectsContainer{
+    display: flex;
+    gap: 10px;
+    width: 100%;
+ 
+
+}
+.manageCoursesSelectsContainer>div{
+    flex:1;
+}
+.manageCoursesTableContainer{
+    overflow: scroll;
+    height: 100%;
+}
+.manageCoursesMasterContainer{
+    height: 100%;
+}
+.manageCoursesSelectsContainerMaster{
+    padding: 10px;
+}
+.manageCoursesEditContainer{
+    display: flex;
+    align-items: center;
+    gap:5px;
+    opacity: 0;
+}
+
+.manageCoursesEditAndSNo:hover p{
+    opacity: 0;
+}
+
+.manageCoursesEditAndSNo:hover
+.manageCoursesEditContainer {
+    opacity: 1;
+}
+
+.manageCoursesEditAndSNo{
+    display: flex;
+    align-items: center;
+    gap:5px;
+}
+.manageCoursesCancelEditContainer{
+    display: flex;
+    align-items: center;
+    gap:5px;
+}

@@ -20,6 +20,7 @@ import dayjs from "dayjs";
 import axios from "axios";
 import apiHost from "../../../config/config";
 import { useCookies } from "react-cookie";
+import ManageCourses from "./manageCourses/ManageCourses";
 const DataCenter = ({ setTitle }) => {
   const navigate = useNavigate();
   const [cookies, setCookie] = useCookies(["auth"]);
@@ -293,6 +294,33 @@ axios.post(
         uploadBoardCourseMapping(exportJson);
       },
     },
+    
+    {
+      title:"Courses",
+      component:<ManageCourses />,
+    },
+    {
+      title:"Semcodes"
+    },
+    {
+      title:"COEs"
+    },
+    {
+      title:"HODs"
+    },
+    {
+      title:"Regulations"
+    },
+    {
+      title:"Years"
+    },
+    {
+      title:"Semesters"
+    },
+    {
+      title:"Batches"
+    },
+    
   ]);
 
   const handleCardClick = (index) => {
