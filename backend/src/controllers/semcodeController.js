@@ -70,7 +70,7 @@ exports.getSemcodes = async (req, res) => {
         if (batch == null && year == null && semcode == null) {
             // Query when batch, year, and semcode are not provided
             getAllSemcodesQuery = `
-                SELECT id, semcode
+                SELECT *
                 FROM master_semcode
             `;
         } else {

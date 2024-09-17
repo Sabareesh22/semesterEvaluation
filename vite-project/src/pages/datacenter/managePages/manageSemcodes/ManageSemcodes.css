@@ -1,0 +1,13 @@
+.snoAndEditContainer{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.snoAndEditContainer:hover .editAndDeleteSemcode{
+    opacity: 1;
+}
+
+.editAndDeleteSemcode{
+    opacity: 0;
+}
