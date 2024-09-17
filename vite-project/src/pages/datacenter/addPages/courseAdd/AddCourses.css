@@ -1,0 +1,19 @@
+.saveButtonForAddCourses{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.addCoursesMasterContainer{
+
+}
+
+.addCoursesFormContainer{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: end;
+}
+
+.addCoursesFormContainer>div{
+    flex: 1;
+}

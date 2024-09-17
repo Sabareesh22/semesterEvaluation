@@ -4,13 +4,13 @@ import Card from "../../components/card/Card";
 import DataCenterContainer from "./dataCenterContainer/DataCenterContainer";
 import Button from "../../components/button/Button";
 import Select from "react-select";
-import ManageFaculty from "./manageFaculty/ManageFaculty";
+import ManageFaculty from "./managePages/manageFaculty/ManageFaculty";
 import { Cancel, Check, Close, Upload } from "@mui/icons-material";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import ManageBoard from "./manageBoard/ManageBoard";
-import ManageFCM from "./manageFCM/ManageFCM";
+import ManageBoard from "./managePages/manageBoard/ManageBoard";
+import ManageFCM from "./managePages/manageFCM/ManageFCM";
 import * as xlsx from "xlsx";
-import ManageBoardCourses from "./manageBoardCourses/ManageBoardCourses";
+import ManageBoardCourses from "./managePages/manageBoardCourses/ManageBoardCourses";
 import { toast, ToastContainer } from "react-toastify";
 import ExcelViewer from "../../components/excelViewer/ExcelViewer";
 import AddFaculty from "./addPages/facultyAdd/AddFaculty";
@@ -20,7 +20,9 @@ import dayjs from "dayjs";
 import axios from "axios";
 import apiHost from "../../../config/config";
 import { useCookies } from "react-cookie";
-import ManageCourses from "./manageCourses/ManageCourses";
+import ManageCourses from "./managePages/manageCourses/ManageCourses";
+import AddCourses from "./addPages/courseAdd/AddCourses";
+import ManageSemcodes from "./managePages/manageSemcodes/ManageSemcodes"
 const DataCenter = ({ setTitle }) => {
   const navigate = useNavigate();
   const [cookies, setCookie] = useCookies(["auth"]);
@@ -379,10 +381,13 @@ axios.post(
       component:<ManageCourses />,
       uploadExcelFunction: (exportJson) => {
           uploadCourseExcel(exportJson);
-      } 
+      },
+      addComponent:<AddCourses setIsAdding={setIsAdding}/> 
     },
     {
-      title:"Semcodes"
+      title:"Semcodes",
+      component:<ManageSemcodes />,
+
     },
     {
       title:"COEs"

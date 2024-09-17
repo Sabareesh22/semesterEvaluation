@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import "./ManageCourses.css";
 import { useCookies } from "react-cookie";
 import axios from "axios";
-import apiHost from "../../../../config/config";
+import apiHost from "../../../../../config/config";
 import Select from "react-select";
 import { TextField } from "@mui/material";
-import Card from "../../../components/card/Card";
+import Card from "../../../../components/card/Card";
 import { Cancel, Check, Delete, Edit } from "@mui/icons-material";
 import { toast, ToastContainer } from "react-toastify";
 const ManageCourses = () => {

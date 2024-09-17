@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import "./ManageBoardCourses.css";
 import { useCookies } from "react-cookie";
 import axios from "axios";
-import apiHost from "../../../../config/config";
+import apiHost from "../../../../../config/config";
 import dayjs from "dayjs";
 import { TextField } from "@mui/material";
 import Select from "react-select";
-import NoData from "../../../components/noData/NoData";
+import NoData from "../../../../components/noData/NoData";
 import { Cancel, Check, Delete, Edit } from "@mui/icons-material";
 import { toast } from "react-toastify";
 const ManageBoardCourses = () => {

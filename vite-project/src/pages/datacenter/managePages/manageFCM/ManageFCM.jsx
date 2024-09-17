@@ -2,7 +2,7 @@ import { TextField } from "@mui/material";
 import "./ManageFCM.css";
 import Select from "react-select";
 import { useEffect, useState } from "react";
-import apiHost from "../../../../config/config";
+import apiHost from "../../../../../config/config";
 import axios from "axios";
 import { useCookies } from "react-cookie";
 import { Cancel, ChangeCircle, Check, Delete } from "@mui/icons-material";

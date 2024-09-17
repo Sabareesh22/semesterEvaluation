@@ -1,12 +1,12 @@
 import { useCookies } from "react-cookie";
 import "./ManageFaculty.css";
 import axios from "axios";
-import apiHost from "../../../../config/config";
+import apiHost from "../../../../../config/config";
 import { useEffect, useState } from "react";
 import Select from "react-select";
 import dayjs from "dayjs";
 import { TextField } from "@mui/material";
-import DatePickerWithRange from "../../../components/datePicker/DatePicker";
+import DatePickerWithRange from "../../../../components/datePicker/DatePicker";
 import { Cancel, Check, Delete, Edit } from "@mui/icons-material";
 import { toast } from "react-toastify";
 const ManageFaculty = ({ isAdding }) => {
