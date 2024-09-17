@@ -38,7 +38,17 @@ exports.getYears  =  async (req, res) => {
 }
 
 exports.getSemesters = async (req, res) => {
-    const query = `SELECT DISTINCT id, semester FROM master_semester WHERE status = '1'`;
+    const { status, semester } = req.query;
+    let query = `SELECT DISTINCT id, semester FROM master_semester WHERE 1=1`;
+
+    // Dynamically add conditions based on request parameters
+    if (status) {
+        query += ` AND status = ${pool.escape(status)}`;
+    }
+    if (semester) {
+        query += ` AND semester = ${pool.escape(semester)}`;
+    }
+
     try {
         const [results] = await pool.query(query); // Use the pool's query method
         console.log('sending semesters');
@@ -47,6 +57,7 @@ exports.getSemesters = async (req, res) => {
         return res.status(500).json({ error: err.message });
     }
 }
+
 
 exports.getBatches = async (req, res) => {
     // Extract parameters from the request
@@ -83,7 +94,17 @@ exports.getBatches = async (req, res) => {
 
 
 exports.getRegulations = async (req, res) => {
-    const query = `SELECT id, regulation FROM master_regulation WHERE status = '1'`;
+    const { status, regulation } = req.query;
+    let query = `SELECT id, regulation FROM master_regulation WHERE 1=1`;
+
+    // Dynamically add conditions based on request parameters
+    if (status) {
+        query += ` AND status = ${pool.escape(status)}`;
+    }
+    if (regulation) {
+        query += ` AND regulation = ${pool.escape(regulation)}`;
+    }
+
     try {
         const [results] = await pool.query(query); // Use the pool's query method
         console.log('sending regulations');

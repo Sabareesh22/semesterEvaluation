@@ -208,6 +208,85 @@ axios.post(
     
   };
 
+  const uploadCourseExcel =  async (jsonExcelValue)=>{
+    // excelRawJSON:
+    // [
+    //   {
+    //     "Name": "COMPUTER DESIGN",
+    //     "Code": "18CS100",
+    //     "Department": "CSE",
+    //     "Semester": "2 - EVEN",
+    //     "Regulation": 2022,
+    //     "Status": "Active"
+    //   }
+    // ]
+     const modifiedJSON = jsonExcelValue.map(async(data)=>{
+            let department;
+            let semester;
+            let regulation;
+            await axios
+        .get(`${apiHost}/departments`, {
+          params: {
+            department: data["Department"],
+          },
+          headers: { auth: cookies.auth },
+        })
+        .then((response) => {
+          department = response.data[0].id;
+        });
+
+        await axios
+        .get(`${apiHost}/regulations`, {
+          params: {
+            regulation: data["Regulation"],
+          },
+          headers: { auth: cookies.auth },
+        })
+        .then((response) => {
+          regulation = response.data[0].id;
+        });
+
+        await axios
+        .get(`${apiHost}/semesters`, {
+          params: {
+            semester: data["Semester"],
+          },
+          headers: { auth: cookies.auth },
+        })
+        .then((response) => {
+          semester = response.data[0].id;
+        });
+
+            return(
+              {
+                course_name : data["Name"],
+                course_code : data["Code"],
+                department,
+                regulation,
+                semester,
+                status:'1'
+              }
+            )
+     })
+     try{Promise.all(modifiedJSON).then((array)=>{
+      array.map((courseData)=>{
+           axios.post(`${apiHost}/api/courses`,courseData,{
+            headers:{
+              auth: cookies.auth
+            }
+           })
+      })
+
+       toast.success("Successfully Added Courses")
+       setUploadedFile(null);
+       setParsedJSONOfExcel(null);
+     })}
+     catch(error){
+       console.log(error)
+       toast.error("Failed to add courses" || error.message)
+     }
+  }
+
   const uploadFacultyExcel = async (jsonExcelValue) => {
     // excelRawJSON:
     // {
@@ -298,6 +377,9 @@ axios.post(
     {
       title:"Courses",
       component:<ManageCourses />,
+      uploadExcelFunction: (exportJson) => {
+          uploadCourseExcel(exportJson);
+      } 
     },
     {
       title:"Semcodes"

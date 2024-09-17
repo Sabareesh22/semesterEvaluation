@@ -7,6 +7,7 @@ import Select from "react-select";
 import { TextField } from "@mui/material";
 import Card from "../../../components/card/Card";
 import { Cancel, Check, Delete, Edit } from "@mui/icons-material";
+import { toast, ToastContainer } from "react-toastify";
 const ManageCourses = () => {
   const [cookies, setCookie] = useCookies(["auth"]);
   const [courseData, setCourseData] = useState([]);
@@ -16,6 +17,7 @@ const ManageCourses = () => {
   const [semesterOptions, setSemesterOptions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [editCourseState, setEditCourseState] = useState([]);
+  const [editCourseData, setEditCourseData] = useState([]);
   const [filters, setFilters] = useState({
     department: null,
     regulation: null,
@@ -107,7 +109,14 @@ const ManageCourses = () => {
      setEditCourseState(filteredCoursesData.map((_,i)=>{
         return(false);
      }))
+     setEditCourseData(
+      [...filteredCoursesData]
+     )
   },[filteredCoursesData])
+
+  useEffect(()=>{
+     console.log(editCourseData)
+  },[editCourseData])
 
   useEffect(() => {
     filterCoursesData();
@@ -118,6 +127,48 @@ const ManageCourses = () => {
     fetchRegulations();
     fetchSemesters();
   }, [cookies.auth, filters]);
+
+  const handleEditCourse = (data)=>{
+    try {
+
+        axios.put(`${apiHost}/api/courses/${data.id}`, {...data}, {
+          headers: {
+            auth: cookies.auth,
+          },
+        }).then((response)=>{
+          if(response.status===200){
+            toast.success("Course edited successfully");
+            fetchCourses();
+          }
+        });
+       
+    } catch (error) {
+      
+
+        toast.error("Failed to edit course" || error.message);
+
+    }
+  }
+  
+  const handleDeleteCourse = (data)=>{
+         try {
+
+          axios.delete(`${apiHost}/api/courses/${data.id}`, {
+            headers: {
+              auth: cookies.auth,
+            },
+          }).then((response)=>{
+            if(response.status===200){
+              toast.success("Course deleted successfully");
+              fetchCourses();
+            }
+          })
+          
+         } catch (error) {
+           toast.error("Failed to delete course" || error.message);
+         }
+  } 
+
   return (
     <div className="manageCoursesMasterContainer">
       <div className="manageCoursesSelectsContainerMaster">
@@ -222,14 +273,25 @@ const ManageCourses = () => {
           <tbody>
             {filteredCoursesData.map((data, index) => {
               return (
-                editCourseState?.[index]?
+                !editCourseState?.[index]?
                 <tr key={index}>
                   <td>
                     <div className="manageCoursesEditAndSNo">
                       <p>{index + 1}</p>
                       <div className="manageCoursesEditContainer">
-                        <Edit />
-                        <Delete />
+                        <Edit  onClick={()=>{
+                         setEditCourseState((prev) => {
+                           const newPrev = [...prev];
+                           newPrev[index] = true;
+                           return newPrev;
+                         });
+                       }}  />
+                        
+                        <Delete 
+                          onClick={()=>{
+                            handleDeleteCourse(data);
+                          }}
+                        />
                       </div>
                     </div>
                   </td>
@@ -268,8 +330,18 @@ const ManageCourses = () => {
                  <td>
                    <div className="manageCoursesEditAndSNo">
                      <div className="manageCoursesCancelEditContainer">
-                       <Cancel />
-                       <Check />
+                       <Cancel onClick={()=>{
+                         setEditCourseState((prev) => {
+                           const newPrev = [...prev];
+                           newPrev[index] = false;
+                           return newPrev;
+                         });
+                       }} />
+                       <Check 
+                       onClick={()=>{
+                        handleEditCourse(editCourseData[index])
+                       }}
+                       />
                      </div>
                    </div>
                  </td>
@@ -285,41 +357,98 @@ const ManageCourses = () => {
                         }}
                         fullWidth={true}
                         size="small"
-                        type="Number"
-                        InputProps={{ inputProps: { min: 0 } }}
-                        value={editedFacultyData[index]?.experience_in_bit}
+                        onChange={(e)=>{
+                          setEditCourseData((prev) => {
+                            const newPrev = [...prev];
+                            newPrev[index] = {...prev[index], course_name: e.target.value };
+                            return newPrev;
+                          });
+                        }}
+                        value={editCourseData?.[index]?.course_name}
                       />
                     </div>
                  </td>
-                 <td>{data.course_name}</td>
-                 <td>{data.course_code}</td>
                  <td>
-                   {
-                     departmentOptions?.find(
-                       (dept) => data.department === dept.value
-                     )?.label
-                   }
+                 <div className="editFaculyName">
+                      <TextField
+                       
+                        style={{
+                          width: 150,
+                          backgroundColor: "white",
+                          borderRadius: "5px",
+                        }}
+                        fullWidth={true}
+                        size="small"
+                        onChange={(e)=>{
+                          setEditCourseData((prev) => {
+                            const newPrev = [...prev];
+                            newPrev[index] = {...prev[index], course_code: e.target.value };
+                            return newPrev;
+                          });
+                        }}
+                        value={editCourseData?.[index]?.course_code}
+                      />
+                    </div>
                  </td>
                  <td>
-                   {
-                     semesterOptions?.find(
-                       (sem) => data.semester === sem.value
-                     )?.label
-                   }
+                   <Select
+                   value={departmentOptions.find((dept)=>(dept.value===editCourseData?.[index]?.department))}
+                   placeholder="Department"
+                   onChange={(selectedOption)=>{
+                    setEditCourseData(
+                      (prev) => {
+                        const newPrev = [...prev];
+                        newPrev[index] = {...prev[index], department: selectedOption.value };
+                        return newPrev;
+                      });
+                    }}
+                   options={departmentOptions}
+                   />
                  </td>
                  <td>
-                   {
-                     regulationOptions?.find(
-                       (reg) => data.regulation === reg.value
-                     )?.label
-                   }
+                   <Select
+                   value={semesterOptions.find((sem)=>(sem.value===editCourseData?.[index]?.semester))}
+                   placeholder="Semester"
+                   options={semesterOptions}
+                   onChange={(selectedOption)=>{
+                    setEditCourseData(
+                      (prev) => {
+                        const newPrev = [...prev];
+                        newPrev[index] = {...prev[index], semester: selectedOption.value };
+                        return newPrev;
+                      });
+                    }}
+                   />
                  </td>
                  <td>
-                   {
-                     activeOptions?.find(
-                       (status) => data.status === status.value
-                     )?.label
-                   }
+                   <Select
+                   value={regulationOptions.find((reg)=>(reg.value===editCourseData?.[index]?.regulation))}
+                   placeholder="Regulation"
+                   options={regulationOptions}
+                   onChange={(selectedOption)=>{
+                    setEditCourseData(
+                      (prev) => {
+                        const newPrev = [...prev];
+                        newPrev[index] = {...prev[index], regulation: selectedOption.value };
+                        return newPrev;
+                      });
+                    }}
+                   />
+                 </td>
+                 <td>
+                   <Select
+                   value={activeOptions.find((status)=>(status.value===editCourseData?.[index]?.status))}
+                   placeholder="Status"
+                   options={activeOptions}
+                   onChange={(selectedOption)=>{
+                    setEditCourseData(
+                      (prev) => {
+                        const newPrev = [...prev];
+                        newPrev[index] = {...prev[index], status: selectedOption.value };
+                        return newPrev;
+                      });
+                    }}
+                   />
                  </td>
                </tr>
               );

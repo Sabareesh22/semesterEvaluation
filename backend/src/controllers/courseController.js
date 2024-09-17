@@ -139,15 +139,28 @@ exports.courseFacultyDetails  = async (req, res) => {
 
 // Create Course
 exports.createCourse = async (req, res) => {
-    try {
-      const { course_name, course_code, department, semester, regulation, status } = req.body;
-      const sql = 'INSERT INTO master_courses (course_name, course_code, department, semester, regulation, status) VALUES (?, ?, ?, ?, ?, ?)';
-      const [results] = await db.query(sql, [course_name, course_code, department, semester, regulation, status]);
-      res.json({ message: 'Course created successfully', courseId: results.insertId });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+  try {
+    const { course_name, course_code, department, semester, regulation, status } = req.body;
+    
+    // Check if the course code already exists
+    const checkSql = 'SELECT id FROM master_courses WHERE course_code = ?';
+    const [existingCourse] = await db.query(checkSql, [course_code]);
+
+    if (existingCourse.length > 0) {
+      // Course code already exists, so ignore the insertion
+      return res.status(200).json({ message: 'Course code already exists' });
     }
-  };
+
+    // Insert the new course
+    const insertSql = 'INSERT INTO master_courses (course_name, course_code, department, semester, regulation, status) VALUES (?, ?, ?, ?, ?, ?)';
+    const [results] = await db.query(insertSql, [course_name, course_code, department, semester, regulation, status]);
+
+    res.json({ message: 'Course created successfully', courseId: results.insertId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
   
   // Get Courses (Dynamic Filtering)
   exports.getCourses = async (req, res) => {
