@@ -32,6 +32,10 @@ import ManageRegualtion from "./managePages/manageRegulation/ManageRegulation";
 import AddRegulation from "./addPages/regulationAdd/AddRegulation";
 import ManageYear from "./managePages/manageYear/ManageYear";
 import AddYear from "./addPages/yearAdd/AddYear";
+import ManageSemester from "./managePages/manageSemester/ManageSemester";
+import AddSemester from "./addPages/semesterAdd/AddSemester";
+import ManageBatch from "./managePages/manageBatch/ManageBatch";
+import AddBatch from "./addPages/batchAdd/AddBatch";
 const DataCenter = ({ setTitle }) => {
   const navigate = useNavigate();
   const [cookies, setCookie] = useCookies(["auth"]);
@@ -422,10 +426,14 @@ axios.post(
       addComponent:<AddYear setIsAdding={setIsAdding}/>
     },
     {
-      title:"Semesters"
+      title:"Semesters",
+      component:<ManageSemester/>,
+      addComponent:<AddSemester setIsAdding={setIsAdding}/>
     },
     {
-      title:"Batches"
+      title:"Batches",
+      component:<ManageBatch/>,
+      addComponent:<AddBatch setIsAdding={setIsAdding}/>
     },
     
   ]);
