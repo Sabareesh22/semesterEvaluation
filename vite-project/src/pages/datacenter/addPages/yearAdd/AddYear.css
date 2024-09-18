@@ -1,0 +1,9 @@
+.addYearFormContainer{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: end;
+}
+.addYearFormContainer>div{
+    flex: 1;
+}

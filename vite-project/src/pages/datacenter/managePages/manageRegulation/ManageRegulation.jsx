@@ -178,7 +178,7 @@ const ManageRegualtion = () => {
                       onChange={(date) => {
                         setEditRegulationData((prev) => {
                           const newPrev = { ...prev };
-                          newPrev[index].regulation = date.year().toString();
+                          newPrev[index].regulation = date?.year()?.toString();
                           return newPrev;
                         });
                       }}

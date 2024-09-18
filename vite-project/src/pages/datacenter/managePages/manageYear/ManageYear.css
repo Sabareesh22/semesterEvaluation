@@ -1,0 +1,22 @@
+.editAndDeleteYear{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    opacity: 0;
+}
+
+.snoAndEditYear{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.snoAndEditYear:hover p{
+    opacity: 0;
+}
+.snoAndEditYear p{
+   opacity: 1;
+}
+.snoAndEditYear:hover  .editAndDeleteYear{
+    opacity: 1;
+}

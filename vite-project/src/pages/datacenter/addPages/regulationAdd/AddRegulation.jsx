@@ -19,6 +19,9 @@ const AddRegulation = ({setIsAdding}) => {
     const [cookies,setCookie] = useCookies(['auth'])
 
     const addNewRegulation  = ()=>{
+      if(newRegulation.regulation === ''){
+         return toast.error('Invalid Regulation');
+      }
         try {
             axios.post(`${apiHost}/api/regulation`,newRegulation,{
                 headers:{

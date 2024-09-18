@@ -30,6 +30,8 @@ import ManageHOD from "./managePages/manageHOD/ManageHOD";
 import AddHOD from "./addPages/hodAdd/AddHOD";
 import ManageRegualtion from "./managePages/manageRegulation/ManageRegulation";
 import AddRegulation from "./addPages/regulationAdd/AddRegulation";
+import ManageYear from "./managePages/manageYear/ManageYear";
+import AddYear from "./addPages/yearAdd/AddYear";
 const DataCenter = ({ setTitle }) => {
   const navigate = useNavigate();
   const [cookies, setCookie] = useCookies(["auth"]);
@@ -415,7 +417,9 @@ axios.post(
       addComponent:<AddRegulation setIsAdding={setIsAdding}/>
     },
     {
-      title:"Years"
+      title:"Years",
+      component:<ManageYear/>,
+      addComponent:<AddYear setIsAdding={setIsAdding}/>
     },
     {
       title:"Semesters"

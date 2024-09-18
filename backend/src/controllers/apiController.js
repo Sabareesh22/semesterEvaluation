@@ -27,7 +27,10 @@ exports.getDepartments = async (req, res) => {
 
 
 exports.getYears  =  async (req, res) => {
-    const query = `SELECT id, year FROM master_year WHERE status = '1'`;
+    let query = `SELECT id, year,status FROM master_year WHERE status = '1'`;
+    if(req.query.allYears){
+        query = `SELECT id, year, status FROM master_year`;
+    }
     try {
         const [results] = await pool.query(query); // Use the pool's query method
         console.log('sending years');
