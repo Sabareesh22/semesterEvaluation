@@ -17,7 +17,7 @@
     max-height: 70%; /* Set a max height for the table container */
     overflow-y: auto; /* Allow vertical scrolling */
     overflow-x: auto; /* Allow horizontal scrolling if necessary */
-    border-radius: 4px; /* Optional: Rounded corners */
+    border-radius: 4px; Optional: Rounded corners
 }
 
 table {

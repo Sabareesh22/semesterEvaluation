@@ -11,3 +11,14 @@
 .editAndDeleteSemcode{
     opacity: 0;
 }
+
+.manageSemcodesMasterContainer{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.manageSemcodesTableContainer{
+    height: 100%;
+    overflow:scroll;
+}

@@ -23,6 +23,9 @@ import { useCookies } from "react-cookie";
 import ManageCourses from "./managePages/manageCourses/ManageCourses";
 import AddCourses from "./addPages/courseAdd/AddCourses";
 import ManageSemcodes from "./managePages/manageSemcodes/ManageSemcodes"
+import COEpage from "../coePage/COEpage";
+import ManageCOE from "./managePages/manageCOE/ManageCOE";
+import AddCOE from "./addPages/coeAdd/AddCOE";
 const DataCenter = ({ setTitle }) => {
   const navigate = useNavigate();
   const [cookies, setCookie] = useCookies(["auth"]);
@@ -34,7 +37,10 @@ const DataCenter = ({ setTitle }) => {
   const uploadIconRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(null);
   useEffect(() => {
-    setTitle("Data Center");
+    if(setTitle){
+      setTitle("Data Center");
+
+    }
   }, [setTitle]);
 
   useEffect(() => {
@@ -387,10 +393,12 @@ axios.post(
     {
       title:"Semcodes",
       component:<ManageSemcodes />,
-
+      addComponent:<COEpage setIsAdding={setIsAdding}/>
     },
     {
-      title:"COEs"
+      title:"COEs",
+      component:<ManageCOE/>,
+      addComponent:<AddCOE setIsAdding={setIsAdding}/>
     },
     {
       title:"HODs"
@@ -564,7 +572,7 @@ axios.post(
           <div style={{ width: "100%" }} className="dcCardPageContainer">
             <div className="dcClickedCloseButtonContainer"></div>
             {!uploadedFile ? (
-              <div className="dcPageComponentContainer">
+              <div key={isAdding} className="dcPageComponentContainer">
                 {cardData[activeIndex]?.component}
               </div>
             ) : (

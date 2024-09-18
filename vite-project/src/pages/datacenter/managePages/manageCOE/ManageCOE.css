@@ -1,0 +1,25 @@
+.manageCOEMasterContainer{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.manageCOETableContainer{
+    height: 100%;
+    overflow: scroll;
+}
+.snoAndDeleteCOE{
+    display: flex;
+    gap: 10px;
+}
+.snoAndDeleteCOE:hover p{
+    opacity: 0;
+}
+
+.snoAndDeleteCOE:hover .deleteCOEIcon{
+    opacity: 1;
+}
+
+.deleteCOEIcon{
+    opacity: 0;
+}
+

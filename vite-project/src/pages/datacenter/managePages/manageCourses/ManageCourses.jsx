@@ -349,12 +349,14 @@ const ManageCourses = () => {
                  <td>
                  <div className="editFaculyName">
                       <TextField
-                       
+                         
                         style={{
-                          width: 150,
+                          maxWidth:200,
                           backgroundColor: "white",
                           borderRadius: "5px",
                         }}
+
+                        
                         fullWidth={true}
                         size="small"
                         onChange={(e)=>{
@@ -369,11 +371,11 @@ const ManageCourses = () => {
                     </div>
                  </td>
                  <td>
-                 <div className="editFaculyName">
+                 <div style={{width:"100%"}} className="editFaculyName">
                       <TextField
                        
                         style={{
-                          width: 150,
+                        maxWidth:200,
                           backgroundColor: "white",
                           borderRadius: "5px",
                         }}

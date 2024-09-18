@@ -111,3 +111,90 @@ exports.getSemcodes = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 }
+
+
+exports.updateSemcodes = async (req, res) => {
+    const { id, semcode, semester, batch, year, regulation, status } = req.body;
+
+    if (!id) {
+        return res.status(400).json({ message: 'Semcode ID is required for update.' });
+    }
+
+    // Build dynamic update query
+    let updateFields = [];
+    let updateValues = [];
+
+    if (semcode) {
+        updateFields.push('semcode = ?');
+        updateValues.push(semcode);
+    }
+    if (semester) {
+        updateFields.push('semester = ?');
+        updateValues.push(semester);
+    }
+    if (batch) {
+        updateFields.push('batch = ?');
+        updateValues.push(batch);
+    }
+    if (year) {
+        updateFields.push('year = ?');
+        updateValues.push(year);
+    }
+    if (regulation) {
+        updateFields.push('regulation = ?');
+        updateValues.push(regulation);
+    }
+    if (status) {
+        updateFields.push('status = ?');
+        updateValues.push(status);
+    }
+
+    // Ensure there are fields to update
+    if (updateFields.length === 0) {
+        return res.status(400).json({ message: 'No fields to update.' });
+    }
+
+    // Add ID to the values for the WHERE clause
+    updateValues.push(id);
+
+    const updateQuery = `
+        UPDATE master_semcode 
+        SET ${updateFields.join(', ')} 
+        WHERE id = ?
+    `;
+
+    try {
+        await db.query(updateQuery, updateValues);
+        res.status(200).json({ message: 'Semcode updated successfully' });
+    } catch (error) {
+        console.error('Error updating semcode:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+}
+
+
+exports.deleteSemcode = async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({ message: 'Semcode ID is required for deletion.' });
+    }
+
+    const deleteQuery = `
+        DELETE FROM master_semcode 
+        WHERE id = ?
+    `;
+
+    try {
+        const [result] = await db.query(deleteQuery, [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Semcode not found.' });
+        }
+
+        res.status(200).json({ message: 'Semcode deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting semcode:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+}

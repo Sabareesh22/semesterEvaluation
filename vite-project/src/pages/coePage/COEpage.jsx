@@ -30,7 +30,10 @@ const COEpage = (props) => {
   const [batchOptions, setBatchOptions] = useState([]);
   const [semesterOptions, setSemesterOptions] = useState([]);
   useEffect(() => {
-    props.setTitle("Create SemCode");
+    if(props.setTitle){
+      props.setTitle("Create SemCode");
+
+    }
   }, []);
   useEffect(() => {
     console.log(year);

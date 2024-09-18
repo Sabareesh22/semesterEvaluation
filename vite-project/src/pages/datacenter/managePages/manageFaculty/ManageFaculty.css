@@ -1,9 +1,11 @@
 .manageFacultyMasterContainer{
     padding: 20px;
+    height: 100%;
 }
 
 .facultyManageDataTable{
     overflow: scroll;
+    height: 100%;
 }
 
 
