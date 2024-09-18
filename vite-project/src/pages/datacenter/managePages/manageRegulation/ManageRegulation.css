@@ -1,0 +1,27 @@
+.cancelCheckRegulationContainer{
+    display: flex;
+    gap: 10px;
+}
+.cancelCheckRegulation{
+    display:flex;
+    gap: 5px;
+}
+
+.editDeleteRegulationContainer{
+    display: flex;
+    gap: 10px;
+}
+
+.editDeleteRegulationContainer:hover p{
+    opacity: 0;
+}
+
+.editDeleteRegulationContainer:hover .editDeleteRegulation{
+    opacity: 1;
+}
+
+.editDeleteRegulation{
+    display:flex;
+    gap: 5px;
+    opacity: 0;
+}

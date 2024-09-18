@@ -13,6 +13,7 @@ export default function DatePickerWithRange({
   value,
   onChange,
   size,
+  views
 }) {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -23,6 +24,7 @@ export default function DatePickerWithRange({
           onChange={onChange}
           disabled={isDisabled}
           value={value}
+          views={views}
           minDate={startDate}
           maxDate={endDate}
           label={label}

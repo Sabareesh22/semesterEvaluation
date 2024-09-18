@@ -5,7 +5,7 @@ import DataCenterContainer from "./dataCenterContainer/DataCenterContainer";
 import Button from "../../components/button/Button";
 import Select from "react-select";
 import ManageFaculty from "./managePages/manageFaculty/ManageFaculty";
-import { Cancel, Check, Close, Upload } from "@mui/icons-material";
+import { AddReaction, Cancel, Check, Close, Upload } from "@mui/icons-material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ManageBoard from "./managePages/manageBoard/ManageBoard";
 import ManageFCM from "./managePages/manageFCM/ManageFCM";
@@ -26,6 +26,10 @@ import ManageSemcodes from "./managePages/manageSemcodes/ManageSemcodes"
 import COEpage from "../coePage/COEpage";
 import ManageCOE from "./managePages/manageCOE/ManageCOE";
 import AddCOE from "./addPages/coeAdd/AddCOE";
+import ManageHOD from "./managePages/manageHOD/ManageHOD";
+import AddHOD from "./addPages/hodAdd/AddHOD";
+import ManageRegualtion from "./managePages/manageRegulation/ManageRegulation";
+import AddRegulation from "./addPages/regulationAdd/AddRegulation";
 const DataCenter = ({ setTitle }) => {
   const navigate = useNavigate();
   const [cookies, setCookie] = useCookies(["auth"]);
@@ -401,10 +405,14 @@ axios.post(
       addComponent:<AddCOE setIsAdding={setIsAdding}/>
     },
     {
-      title:"HODs"
+      title:"HODs",
+      component:<ManageHOD/>,
+      addComponent:<AddHOD setIsAdding={setIsAdding}/>
     },
     {
-      title:"Regulations"
+      title:"Regulations",
+      component:<ManageRegualtion/>,
+      addComponent:<AddRegulation setIsAdding={setIsAdding}/>
     },
     {
       title:"Years"

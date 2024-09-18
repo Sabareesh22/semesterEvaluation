@@ -209,10 +209,11 @@ const AddFaculty = ({ setIsAdding }) => {
           />
         </div>
         <Button
+        onClick={()=>{handleAddFaculty()}}
           key={"add"}
           size={"small"}
-          label={
-            <div onClick={()=>{handleAddFaculty()}} className="addFSaveButton">
+          label={ 
+            <div  className="addFSaveButton">
               <Save /> Save
             </div>
           }

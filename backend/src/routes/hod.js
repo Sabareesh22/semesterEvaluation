@@ -6,5 +6,5 @@ router.post('/hod', hodController.createHOD);
 router.get('/hod', hodController.getAllHODs);
 router.put('/hod/:id', hodController.updateHOD);
 router.delete('/hod/:id', hodController.deleteHOD);
-
+router.get('/hodDeptsFree', hodController.getDepartmentsNotInHOD);
 module.exports = router;

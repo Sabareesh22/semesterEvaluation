@@ -95,7 +95,7 @@ exports.getBatches = async (req, res) => {
 
 exports.getRegulations = async (req, res) => {
     const { status, regulation } = req.query;
-    let query = `SELECT id, regulation FROM master_regulation WHERE 1=1`;
+    let query = `SELECT id, regulation,status FROM master_regulation WHERE 1=1`;
 
     // Dynamically add conditions based on request parameters
     if (status) {

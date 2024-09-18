@@ -19,6 +19,8 @@ const facultyPaperAllocationRoutes = require('./routes/facultyPaperAllocation');
 const facultyCourseMappingRoutes = require('./routes/facultyCourseMapping');
 const boardCourseMappingRoutes = require('./routes/boardCourseMapping');
 const coeRoutes= require('./routes/coe')
+const hodRoutes = require('./routes/hod')
+const regulationRoutes = require('./routes/regulation')
 // Middleware
 app.use(express.json());
 
@@ -40,7 +42,9 @@ app.use(
   facultyPaperAllocationRoutes,
   facultyCourseMappingRoutes,
   boardCourseMappingRoutes,
-  coeRoutes// Protected routes for faculty paper allocation
+  coeRoutes,
+  hodRoutes,
+  regulationRoutes// Protected routes for faculty paper allocation
 ); // Protected routes
 app.use("/",
    verifyToken,

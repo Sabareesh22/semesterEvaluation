@@ -5,8 +5,8 @@ const db = require('../config/db');
 
 exports.createHOD = async (req, res) => {
     try {
-        const { faculty_id, department_id, status } = req.body;
-        const [result] = await db.execute('INSERT INTO master_hod (faculty, department, status) VALUES (?, ?, ?)', [faculty_id, department_id, status]);
+        const { faculty, department, status } = req.body;
+        const [result] = await db.execute('INSERT INTO master_hod (faculty, department, status) VALUES (?, ?, ?)', [faculty, department, status]);
         res.status(201).json({ id: result.insertId });
     } catch (err) {
         res.status(500).json(err);
@@ -19,7 +19,7 @@ exports.getAllHODs = async (req, res) => {
 
         let query = `
             SELECT h.id, h.faculty, h.department, h.status, 
-                   f.name AS faculty_name, d.department AS department_name 
+                   f.name AS faculty_name,f.faculty_id, d.department AS department_name 
             FROM master_hod h 
             JOIN master_faculty f ON h.faculty = f.id 
             JOIN master_department d ON h.department = d.id
@@ -95,6 +95,21 @@ exports.deleteHOD = async (req, res) => {
         }
 
         res.json({ message: 'HOD deleted successfully' });
+    } catch (err) {
+        res.status(500).json(err);
+    }
+};
+
+exports.getDepartmentsNotInHOD = async (req, res) => {
+    try {
+        const query = `
+            SELECT d.id, d.department 
+            FROM master_department d
+            LEFT JOIN master_hod h ON d.id = h.department
+            WHERE h.id IS NULL
+        `;
+        const [results] = await db.execute(query);
+        res.json(results);
     } catch (err) {
         res.status(500).json(err);
     }
