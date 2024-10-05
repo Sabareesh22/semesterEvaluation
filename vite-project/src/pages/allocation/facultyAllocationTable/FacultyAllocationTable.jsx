@@ -17,6 +17,7 @@ const FacultyAllocationTable = ({
     selectedSemesterCode,
     courses,
   }) => {
+    console.log(courses)
     const [currentPage, setCurrentPage] = useState(0);
     const [allocations, setAllocations] = useState({});
     const [paperCounts, setPaperCounts] = useState({});
@@ -481,6 +482,7 @@ const FacultyAllocationTable = ({
     };
   
     const handlePageChange = (event, newPage) => {
+      console.log(courses[newPage])
       setCurrentPage(newPage); // Update to the new page
     };
     function roundToHalfOrCeiling(value) {
@@ -490,7 +492,7 @@ const FacultyAllocationTable = ({
     const currentCourse = courses[currentPage];
   
     return (
-      <div>
+      <div className='allocationTableMasterContainer'>
         <div>
           <TableContainer
             className="allocationTable"
@@ -580,8 +582,9 @@ const FacultyAllocationTable = ({
                   </TableCell>
                 </TableRow>
               </TableHead>
-              <TableBody>
-                {courses.slice(currentPage, currentPage + 1).map((course) =>
+              <TableBody key={currentPage}>
+                {
+                [courses?.[currentPage]]?.map((course) =>
                   course.faculties.map((faculty, i) => (
                     <TableRow key={`${course.courseId}-${faculty.facultyId}`}>
                       {i === 0 && (
@@ -1147,6 +1150,7 @@ const FacultyAllocationTable = ({
           </TableContainer>
           <center>
             <TablePagination
+            className='pagination'
               rowsPerPageOptions={[1]} // Set to 1 to show one course per page
               count={courses.length} // Total number of courses
               rowsPerPage={1} // Show one course per page

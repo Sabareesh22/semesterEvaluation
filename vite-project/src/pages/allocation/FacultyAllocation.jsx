@@ -285,9 +285,8 @@ const FacultyAllocation = (props) => {
   };
 
   return (
-    <div>
-      <div style={{ padding: "10px" }}></div>
-
+    <div className="allocationMasterContainer">
+      
       <div
         className="selectContainer"
         style={{
@@ -296,6 +295,7 @@ const FacultyAllocation = (props) => {
           borderRadius: "10px",
           display: "flex",
           gap: "10px",
+          flex:"1",
           justifyContent: "space-between",
         }}
       >
